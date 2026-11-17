@@ -157,38 +157,104 @@
         .admin-group { display: flex; flex-direction: column; gap: 5px; }
         .admin-group label { font-size: 0.85rem; color: #e9d5ff; }
         .admin-input, .admin-select { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--admin-purple); background: #1e1b4b; color: #fff; font-size: 0.95rem; outline: none; }
-        
-        /* --- Scoreboard (Long Tape) --- */
-        .scoreboard-panel { background: rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 15px; width: 100%; overflow: hidden; }
-        .scoreboard-header { display: flex; justify-content: space-between; font-size: 0.9rem; color: #94a3b8; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
-        
-        /* ตารางยาวแบบเลื่อนได้ */
-        .history-tape {
+
+        /* ====================================================
+           ตารางสถิติแบบคาสิโน (Bead Plate & Big Road)
+           ==================================================== */
+        .casino-scoreboard {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 10px;
             display: flex;
-            gap: 8px;
+            gap: 10px;
             overflow-x: auto;
-            padding-bottom: 10px;
-            scrollbar-width: thin;
-            scrollbar-color: var(--gold) rgba(255,255,255,0.1);
+            width: 100%;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
         }
-        .history-tape::-webkit-scrollbar { height: 8px; }
-        .history-tape::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); border-radius: 4px; }
-        .history-tape::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 4px; }
-        
-        .tape-cell {
-            flex: 0 0 auto;
-            width: 36px; height: 36px;
+
+        /* --- Bead Plate (ตารางซ้าย) --- */
+        .bead-plate {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-auto-rows: 35px;
+            gap: 2px;
+            background: #fff;
+            border: 1px solid #000;
+            padding: 4px;
+            min-width: 210px;
+            flex-shrink: 0;
+        }
+        .bead-cell {
+            display: flex; justify-content: center; align-items: center;
+            border: 1px solid #eee;
+            font-size: 0;
+            position: relative;
+        }
+        .bead-circle {
+            width: 28px; height: 28px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.05);
-            border: 1px dashed rgba(255,255,255,0.2);
-            display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 0.9rem;
-            color: #6b7280;
+            display: flex; justify-content: center; align-items: center;
+            font-weight: bold; font-size: 0.85rem; color: #fff;
+            animation: popIn 0.3s ease-out;
         }
-        .tape-cell.p-win { background: var(--player-blue); border: none; color: white; }
-        .tape-cell.b-win { background: var(--banker-red); border: none; color: white; }
-        .tape-cell.t-win { background: var(--tie-green); border: none; color: white; }
+        .bead-circle.p-win { background: var(--player-blue); }
+        .bead-circle.b-win { background: var(--banker-red); }
+        .bead-circle.t-win { background: var(--tie-green); }
+        @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+
+        /* --- Big Road (ตารางขวา) --- */
+        .big-road-container {
+            flex-grow: 1;
+            overflow-x: auto;
+            background: #fff;
+            border: 1px solid #000;
+            position: relative;
+            min-width: 400px;
+        }
+        .big-road {
+            display: grid;
+            grid-template-columns: repeat(40, 30px);
+            grid-template-rows: repeat(6, 30px);
+            gap: 2px;
+            padding: 4px;
+        }
+        .road-cell {
+            width: 30px; height: 30px;
+            border: 1px solid #e0e0e0;
+            display: flex; justify-content: center; align-items: center;
+            position: relative;
+        }
+        .road-marker {
+            width: 24px; height: 24px;
+            border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            font-weight: bold; font-size: 0.7rem; color: #fff;
+            position: absolute;
+            border: 2px solid transparent;
+            animation: popIn 0.3s ease-out;
+        }
+        .road-marker.p-win { border-color: var(--player-blue); color: var(--player-blue); background: #fff; }
+        .road-marker.b-win { border-color: var(--banker-red); color: var(--banker-red); background: #fff; }
+        .road-marker.t-win { border-color: var(--tie-green); color: var(--tie-green); background: #fff; border-radius: 4px; font-size: 0.6rem;}
         
+        /* จุดสีแดง/น้ำเงินใน Big Road */
+        .road-dot {
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            position: absolute;
+        }
+        .road-dot.p-win { background: var(--player-blue); }
+        .road-dot.b-win { background: var(--banker-red); }
+        
+        /* ไอคอนมงกุฎสำหรับสตรีค */
+        .crown-icon {
+            position: absolute;
+            top: -5px; right: -5px;
+            font-size: 0.6rem;
+            color: gold;
+            text-shadow: 0 0 2px #000;
+        }
+
         /* --- Modals --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); display: flex; justify-content: center; align-items: center; z-index: 1001; display: none; }
         .modal-card { background: #111827; border: 2px solid var(--gold); border-radius: 15px; width: 90%; max-width: 380px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); }
@@ -344,14 +410,22 @@
             </div>
         </div>
 
-        <!-- ส่วนที่แก้ไข: กระดานสถิติแบบ Long Tape -->
-        <div class="scoreboard-panel">
-            <div class="scoreboard-header">
-                <div><i class="fa-solid fa-list-check"></i> สถิติ (50 ตา)</div>
-                <div>รอบ: <span id="round-count">0</span>/50</div>
+        <!-- ==========================================
+             ตารางสถิติแบบคาสิโน (Bead Plate & Big Road)
+             ========================================== -->
+        <div class="scoreboard-panel" style="background:transparent; border:none; padding:0;">
+            <div class="scoreboard-header" style="color:#fff; margin-bottom:5px;">
+                <div><i class="fa-solid fa-list-check"></i> สถิติคาสิโน</div>
+                <div>รอบ: <span id="round-count">0</span> / 50</div>
             </div>
-            <div class="history-tape" id="history-tape">
-                <!-- เซลล์จะถูกสร้างด้วย JavaScript -->
+            <div class="casino-scoreboard">
+                <!-- Bead Plate (ตารางซ้าย) -->
+                <div class="bead-plate" id="bead-plate"></div>
+                
+                <!-- Big Road (ตารางขวา) -->
+                <div class="big-road-container">
+                    <div class="big-road" id="big-road"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -520,34 +594,109 @@
             }
         }
 
-        // ปรับปรุงฟังก์ชันสร้างกระดานแบบ Long Tape
-        function initScoreboard() {
-            const tape = document.getElementById('history-tape');
-            tape.innerHTML = '';
-            // สร้าง 50 ช่องรอไว้
-            for (let i = 0; i < 50; i++) {
+        /* ==========================================
+           ระบบวาดตารางสถิติแบบคาสิโน
+           ========================================== */
+        function drawCasinoScoreboard() {
+            // 1. อัปเดต Bead Plate (ตารางซ้าย)
+            const beadPlate = document.getElementById('bead-plate');
+            beadPlate.innerHTML = '';
+            // แสดงผลย้อนหลัง 24 ตาล่าสุด
+            const recentHistory = serverHistory.slice(-24);
+            
+            // สร้างช่อง 6x4
+            for (let i = 0; i < 24; i++) {
                 const cell = document.createElement('div');
-                cell.className = 'tape-cell'; 
-                cell.id = `cell-${i}`;
-                tape.appendChild(cell);
+                cell.className = 'bead-cell';
+                if (recentHistory[i]) {
+                    const circle = document.createElement('div');
+                    circle.className = `bead-circle ${recentHistory[i] === 'player' ? 'p-win' : recentHistory[i] === 'banker' ? 'b-win' : 't-win'}`;
+                    circle.innerText = recentHistory[i] === 'player' ? 'P' : recentHistory[i] === 'banker' ? 'B' : 'T';
+                    cell.appendChild(circle);
+                }
+                beadPlate.appendChild(cell);
             }
-            document.getElementById('round-count').innerText = serverHistory.length;
-        }
-        
-        function drawScoreboard() {
-            initScoreboard(); // สร้างช่องเปล่าก่อน
+
+            // 2. อัปเดต Big Road (ตารางขวา)
+            const bigRoad = document.getElementById('big-road');
+            bigRoad.innerHTML = '';
+            
+            // คำนวณ Grid 40 คอลัมน์ x 6 แถว
+            const cols = 40;
+            const rows = 6;
+            const grid = Array.from({ length: rows }, () => Array(cols).fill(null));
+            
+            let currentCol = 0;
+            let currentRow = 0;
+            let lastResult = null;
+            let streakCount = 0;
+
             serverHistory.forEach((result, index) => {
-                const cell = document.getElementById(`cell-${index}`);
-                if (cell) {
-                    if (result === 'player') { cell.classList.add('p-win'); cell.innerText = 'P'; }
-                    if (result === 'banker') { cell.classList.add('b-win'); cell.innerText = 'B'; }
-                    if (result === 'tie') { cell.classList.add('t-win'); cell.innerText = 'T'; }
+                if (index === 0) {
+                    grid[currentRow][currentCol] = result;
+                    lastResult = result;
+                    streakCount = 1;
+                    currentRow++;
+                } else {
+                    if (result === lastResult) {
+                        // ถ้าซ้ำ (สตรีค) ให้ลงไปแถวถัดไป
+                        streakCount++;
+                        if (currentRow < rows) {
+                            grid[currentRow][currentCol] = result;
+                            currentRow++;
+                        } else {
+                            // ถ้าเต็มแถวแล้ว (6 ตัว) ให้ขยับไปคอลัมน์ถัดไป (แบบคาสิโน)
+                            currentCol++;
+                            currentRow = 0;
+                            grid[currentRow][currentCol] = result;
+                            currentRow++;
+                        }
+                    } else {
+                        // ถ้าเปลี่ยนฝั่ง ให้ขยับไปคอลัมน์ใหม่
+                        currentCol++;
+                        currentRow = 0;
+                        if (currentCol >= cols) currentCol = cols - 1; // ไม่ให้เกินขอบ
+                        grid[currentRow][currentCol] = result;
+                        currentRow++;
+                        lastResult = result;
+                        streakCount = 1;
+                    }
                 }
             });
-            
-            // เลื่อนสกроллไปที่ช่องล่าสุด (ขวาสุด)
-            const tape = document.getElementById('history-tape');
-            tape.scrollLeft = tape.scrollWidth;
+
+            // วาด Grid ลงใน HTML
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'road-cell';
+                    
+                    if (grid[r][c]) {
+                        const marker = document.createElement('div');
+                        const winner = grid[r][c];
+                        
+                        // เช็กว่ามีสตรีคก่อนหน้าหรือไม่ (เพื่อใส่ไอคอนมงกุฎ)
+                        let isStreak = false;
+                        if (r > 0 && grid[r-1][c] === winner) isStreak = true;
+                        if (isStreak) {
+                            marker.className = `road-marker ${winner === 'player' ? 'p-win' : winner === 'banker' ? 'b-win' : 't-win'}`;
+                            const crown = document.createElement('i');
+                            crown.className = 'fa-solid fa-crown crown-icon';
+                            marker.appendChild(crown);
+                        } else {
+                            marker.className = `road-dot ${winner === 'player' ? 'p-win' : winner === 'banker' ? 'b-win' : 't-win'}`;
+                        }
+                        
+                        // ถ้าเป็น Tie ให้แสดงตัว T
+                        if (winner === 'tie') {
+                            marker.innerText = 'T';
+                            marker.className = `road-marker t-win`;
+                        }
+                        
+                        cell.appendChild(marker);
+                    }
+                    bigRoad.appendChild(cell);
+                }
+            }
         }
 
         /* ==== CODE SYSTEM ==== */
@@ -896,7 +1045,7 @@
             // อัปเดตสถิติจาก Server ทุกครั้ง
             if (state.history) {
                 serverHistory = state.history;
-                drawScoreboard();
+                drawCasinoScoreboard(); // วาดตารางแบบใหม่
             }
             
             if (gameState === 'BETTING') {
@@ -925,7 +1074,7 @@
 
         socket.on('resetScoreboard', () => {
             serverHistory = [];
-            drawScoreboard();
+            drawCasinoScoreboard();
         });
 
         socket.on('startDealing', (serverResult) => {
@@ -940,8 +1089,8 @@
         };
 
         updateUI();
-        initScoreboard();
         renderCodeList();
+        drawCasinoScoreboard(); // เริ่มวาดตารางครั้งแรก
     </script>
 </body>
 </html>
