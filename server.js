@@ -8,56 +8,42 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, 'public')));
-
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ---------------- สถานะกลางของเซิร์ฟเวอร์ ----------------
 let globalState = {
   gameState: 'BETTING',
   countdown: 10,
-  adminWinMode: 'normal', // normal | force_player | force_banker | force_tie
+  adminWinMode: 'normal',
 };
 
 let timerInterval = null;
-
 const suits = ['♠', '♥', '♦', '♣'];
 
-// ฟังก์ชันสร้างไพ่จากค่าที่กำหนด
 const createCard = (valStr) => {
   const suit = suits[Math.floor(Math.random() * suits.length)];
-  return {
-    value: valStr,
-    suit: suit,
-    isRed: ['♥','♦'].includes(suit)
-  };
+  return { value: valStr, suit: suit, isRed: ['♥','♦'].includes(suit) };
 };
 
 const getVal = (card) => ['10','J','Q','K'].includes(card.value) ? 0 : card.value === 'A' ? 1 : parseInt(card.value);
 const calcScore = (hand) => hand.reduce((sum, c) => sum + getVal(c), 0) % 10;
 
 // ฟังก์ชันสร้างชุดไพ่ให้ได้แต้มที่ต้องการ (0-9)
-function createHandWithScore(targetScore, isThirdCard = false) {
+function createHandWithScore(targetScore) {
   if (targetScore > 9) targetScore = 9;
   if (targetScore < 0) targetScore = 0;
 
   let hand = [];
-  let currentScore = 0;
-
-  // สุ่มหน้าไพ่ใบแรก (พยายามให้แต้มไม่เกิน targetScore)
   let v1 = Math.floor(Math.random() * (targetScore + 1));
   hand.push(createCard(v1 === 0 ? '10' : v1.toString()));
-  currentScore = v1;
-
-  // ถ้า targetScore เป็น 0 และสุ่มใบแรกได้ 0 ให้จบเลย
+  
   if (targetScore === 0 && v1 === 0) {
     hand.push(createCard('10')); 
     return hand;
   }
 
-  // ใบที่สอง ให้เติมให้เต็ม targetScore
-  let v2 = targetScore - currentScore;
+  let v2 = targetScore - v1;
   if (v2 < 0) v2 = 0;
   hand.push(createCard(v2 === 0 ? '10' : v2.toString()));
   
@@ -68,44 +54,32 @@ function generateGameResult() {
   let pHand, bHand;
   let pScore, bScore;
 
-  // ==========================================
-  // โหมดแอดมินบังคับผล
-  // ==========================================
   if (globalState.adminWinMode === 'force_player') {
-    // ล็อกให้ Player ชนะ (ให้ได้ 8 หรือ 9 แต้ม, Banker ได้ 0-7 แต้ม)
     pScore = Math.random() < 0.5 ? 8 : 9;
     bScore = Math.floor(Math.random() * 8); // 0-7
-
     pHand = createHandWithScore(pScore);
     bHand = createHandWithScore(bScore);
 
   } else if (globalState.adminWinMode === 'force_banker') {
-    // ล็อกให้ Banker ชนะ
     bScore = Math.random() < 0.5 ? 8 : 9;
     pScore = Math.floor(Math.random() * 8); // 0-7
-
     pHand = createHandWithScore(pScore);
     bHand = createHandWithScore(bScore);
 
   } else if (globalState.adminWinMode === 'force_tie') {
-    // ล็อกให้เสมอ
-    pScore = Math.floor(Math.random() * 10); // 0-9
+    pScore = Math.floor(Math.random() * 10);
     bScore = pScore;
-
     pHand = createHandWithScore(pScore);
     bHand = createHandWithScore(bScore);
 
   } else {
-    // ==========================================
     // โหมดสุ่มปกติ (Normal)
-    // ==========================================
     pHand = [createCard(Math.floor(Math.random()*10).toString()), createCard(Math.floor(Math.random()*10).toString())];
     bHand = [createCard(Math.floor(Math.random()*10).toString()), createCard(Math.floor(Math.random()*10).toString())];
     
     pScore = calcScore(pHand);
     bScore = calcScore(bHand);
 
-    // กฎการจั่วไพ่ใบที่ 3 (แบบเป๊ะๆ)
     let pDrewThird = false;
     let pThirdVal = null;
 
@@ -135,7 +109,6 @@ function generateGameResult() {
       }
     }
   }
-
   return { pHand, bHand };
 }
 
@@ -171,12 +144,10 @@ io.on('connection', (socket) => {
   socket.on('adminAction', (data) => {
     if (data.type === 'SET_WIN_MODE') {
       globalState.adminWinMode = data.mode;
-      console.log('Admin changed win mode to:', data.mode);
     }
   });
 });
 
 startRound();
-
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
