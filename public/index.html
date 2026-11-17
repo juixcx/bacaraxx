@@ -195,12 +195,10 @@
             border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
             font-weight: bold; font-size: 0.85rem; color: #fff;
-            animation: popIn 0.3s ease-out;
         }
         .bead-circle.p-win { background: var(--player-blue); }
         .bead-circle.b-win { background: var(--banker-red); }
         .bead-circle.t-win { background: var(--tie-green); }
-        @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
 
         /* --- Big Road (ตารางขวา) --- */
         .big-road-container {
@@ -213,46 +211,53 @@
         }
         .big-road {
             display: grid;
-            grid-template-columns: repeat(40, 30px);
-            grid-template-rows: repeat(6, 30px);
+            grid-template-columns: repeat(40, 34px); /* กว้างขึ้นเพื่อให้เห็นชัด */
+            grid-template-rows: repeat(6, 34px);
             gap: 2px;
             padding: 4px;
         }
         .road-cell {
-            width: 30px; height: 30px;
+            width: 34px; height: 34px;
             border: 1px solid #e0e0e0;
             display: flex; justify-content: center; align-items: center;
             position: relative;
+            background: #fff;
         }
+        
+        /* สไตล์ตัวไพ่ใน Big Road */
         .road-marker {
-            width: 24px; height: 24px;
-            border-radius: 50%;
+            width: 30px; height: 30px;
             display: flex; justify-content: center; align-items: center;
-            font-weight: bold; font-size: 0.7rem; color: #fff;
             position: absolute;
-            border: 2px solid transparent;
-            animation: popIn 0.3s ease-out;
+            box-sizing: border-box;
         }
-        .road-marker.p-win { border-color: var(--player-blue); color: var(--player-blue); background: #fff; }
-        .road-marker.b-win { border-color: var(--banker-red); color: var(--banker-red); background: #fff; }
-        .road-marker.t-win { border-color: var(--tie-green); color: var(--tie-green); background: #fff; border-radius: 4px; font-size: 0.6rem;}
+
+        /* เส้นทางที่ 1 (ช่องแรก): สี่เหลี่ยมทึบสี */
+        .road-marker.first {
+            background: var(--banker-red);
+        }
+        .road-marker.first.p-win { background: var(--player-blue); }
         
-        /* จุดสีแดง/น้ำเงินใน Big Road */
-        .road-dot {
-            width: 20px; height: 20px;
+        /* เส้นทางที่ 2 เป็นต้นไป (ไหลลงมา): วงกลมโปร่งใส ขอบสี */
+        .road-marker.streak {
+            background: transparent;
+            border: 3px solid var(--banker-red);
             border-radius: 50%;
-            position: absolute;
         }
-        .road-dot.p-win { background: var(--player-blue); }
-        .road-dot.b-win { background: var(--banker-red); }
-        
-        /* ไอคอนมงกุฎสำหรับสตรีค */
-        .crown-icon {
+        .road-marker.streak.p-win { border-color: var(--player-blue); }
+
+        /* เส้นทแยงสีเขียวสำหรับ Tie */
+        .tie-slash {
             position: absolute;
-            top: -5px; right: -5px;
-            font-size: 0.6rem;
-            color: gold;
-            text-shadow: 0 0 2px #000;
+            width: 38px; height: 4px;
+            background: #4ade80; /* สีเขียว */
+            transform: rotate(-45deg);
+            z-index: 10;
+            box-shadow: 0 0 2px rgba(0,0,0,0.2);
+        }
+        /* ถ้า Tie ซ้อนบนช่องที่มีไพ่อยู่แล้ว ให้เส้นสีเขียวอยู่ข้างหลัง */
+        .road-cell.has-content .tie-slash {
+            z-index: 5;
         }
 
         /* --- Modals --- */
@@ -583,6 +588,9 @@
         let isAdmin = false;
         let adminWinMode = 'normal';
         let creditCodes = []; 
+        
+        // ตัวแปรสำหรับเช็กว่าต้องวาดตารางใหม่หรือไม่
+        let lastDrawnHistoryLength = -1; 
 
         function toggleDrawer() {
             const drawer = document.getElementById('side-drawer');
@@ -595,16 +603,18 @@
         }
 
         /* ==========================================
-           ระบบวาดตารางสถิติแบบคาสิโน
+           ระบบวาดตารางสถิติแบบคาสิโน (แบบไม่กระพริบ)
            ========================================== */
         function drawCasinoScoreboard() {
+            // ถ้าจำนวนประวัติไม่เปลี่ยน ไม่ต้องวาดใหม่ (แก้ปัญหากระพริบ)
+            if (serverHistory.length === lastDrawnHistoryLength) return;
+            lastDrawnHistoryLength = serverHistory.length;
+
             // 1. อัปเดต Bead Plate (ตารางซ้าย)
             const beadPlate = document.getElementById('bead-plate');
             beadPlate.innerHTML = '';
-            // แสดงผลย้อนหลัง 24 ตาล่าสุด
             const recentHistory = serverHistory.slice(-24);
             
-            // สร้างช่อง 6x4
             for (let i = 0; i < 24; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'bead-cell';
@@ -621,7 +631,6 @@
             const bigRoad = document.getElementById('big-road');
             bigRoad.innerHTML = '';
             
-            // คำนวณ Grid 40 คอลัมน์ x 6 แถว
             const cols = 40;
             const rows = 6;
             const grid = Array.from({ length: rows }, () => Array(cols).fill(null));
@@ -629,37 +638,33 @@
             let currentCol = 0;
             let currentRow = 0;
             let lastResult = null;
-            let streakCount = 0;
 
             serverHistory.forEach((result, index) => {
                 if (index === 0) {
                     grid[currentRow][currentCol] = result;
                     lastResult = result;
-                    streakCount = 1;
                     currentRow++;
                 } else {
                     if (result === lastResult) {
-                        // ถ้าซ้ำ (สตรีค) ให้ลงไปแถวถัดไป
-                        streakCount++;
+                        // สตรีค: ไหลลงไปแถวถัดไป
                         if (currentRow < rows) {
                             grid[currentRow][currentCol] = result;
                             currentRow++;
                         } else {
-                            // ถ้าเต็มแถวแล้ว (6 ตัว) ให้ขยับไปคอลัมน์ถัดไป (แบบคาสิโน)
+                            // ถ้าเต็มคอลัมน์ ให้ขยับไปคอลัมน์ใหม่ (แบบ Dragon Tail)
                             currentCol++;
                             currentRow = 0;
                             grid[currentRow][currentCol] = result;
                             currentRow++;
                         }
                     } else {
-                        // ถ้าเปลี่ยนฝั่ง ให้ขยับไปคอลัมน์ใหม่
+                        // เปลี่ยนฝั่ง: ขยับคอลัมน์ใหม่
                         currentCol++;
                         currentRow = 0;
-                        if (currentCol >= cols) currentCol = cols - 1; // ไม่ให้เกินขอบ
+                        if (currentCol >= cols) currentCol = cols - 1;
                         grid[currentRow][currentCol] = result;
                         currentRow++;
                         lastResult = result;
-                        streakCount = 1;
                     }
                 }
             });
@@ -671,25 +676,22 @@
                     cell.className = 'road-cell';
                     
                     if (grid[r][c]) {
-                        const marker = document.createElement('div');
                         const winner = grid[r][c];
+                        const marker = document.createElement('div');
                         
-                        // เช็กว่ามีสตรีคก่อนหน้าหรือไม่ (เพื่อใส่ไอคอนมงกุฎ)
-                        let isStreak = false;
-                        if (r > 0 && grid[r-1][c] === winner) isStreak = true;
-                        if (isStreak) {
-                            marker.className = `road-marker ${winner === 'player' ? 'p-win' : winner === 'banker' ? 'b-win' : 't-win'}`;
-                            const crown = document.createElement('i');
-                            crown.className = 'fa-solid fa-crown crown-icon';
-                            marker.appendChild(crown);
-                        } else {
-                            marker.className = `road-dot ${winner === 'player' ? 'p-win' : winner === 'banker' ? 'b-win' : 't-win'}`;
-                        }
+                        // เช็กว่าเป็นการไหลลงมาหรือไม่ (ถ้าแถวบนมีผลเหมือนกัน)
+                        const isStreak = (r > 0 && grid[r-1][c] === winner);
                         
-                        // ถ้าเป็น Tie ให้แสดงตัว T
+                        // กำหนดสไตล์ตามแบบภาพที่ 2
                         if (winner === 'tie') {
-                            marker.innerText = 'T';
-                            marker.className = `road-marker t-win`;
+                            // ถ้าเป็น Tie ให้เป็นเส้นขีดเขียว
+                            marker.className = 'tie-slash';
+                        } else if (isStreak) {
+                            // ถ้าไหลลงมา ให้เป็นวงกลมโปร่งใส ขอบสี
+                            marker.className = `road-marker streak ${winner === 'player' ? 'p-win' : 'b-win'}`;
+                        } else {
+                            // ถ้าเป็นตัวแรกของคอลัมน์ ให้เป็นสี่เหลี่ยมทึบสี
+                            marker.className = `road-marker first ${winner === 'player' ? 'p-win' : 'b-win'}`;
                         }
                         
                         cell.appendChild(marker);
@@ -1045,7 +1047,7 @@
             // อัปเดตสถิติจาก Server ทุกครั้ง
             if (state.history) {
                 serverHistory = state.history;
-                drawCasinoScoreboard(); // วาดตารางแบบใหม่
+                drawCasinoScoreboard(); // วาดตาราง
             }
             
             if (gameState === 'BETTING') {
@@ -1074,6 +1076,7 @@
 
         socket.on('resetScoreboard', () => {
             serverHistory = [];
+            lastDrawnHistoryLength = -1; // บังคับให้วาดใหม่
             drawCasinoScoreboard();
         });
 
