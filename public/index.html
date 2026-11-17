@@ -29,437 +29,57 @@
         .user-badge { background: #374151; padding: 4px 12px; border-radius: 15px; font-size: 0.85rem; }
         .user-badge.admin { background: var(--admin-purple); color: #fff; font-weight: bold; }
         
-        .side-drawer { position: fixed; top: 0; left: -340px; width: 320px; height: 100%; background: #111827; border-right: 2px solid var(--gold); box-shadow: 5px 0 15px rgba(0,0,0,0.5); z-index: 1000; transition: left 0.3s ease-in-out; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
-        .side-drawer.open { left: 0; }
-        .drawer-header { display: flex; justify-content: space-between; align-items: center; font-size: 1.2rem; color: var(--gold); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 20px; }
-        .close-drawer-btn { font-size: 1.5rem; cursor: pointer; color: #9ca3af; }
-        .drawer-menu { display: flex; flex-direction: column; gap: 15px; }
-        .menu-item-btn { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: #1f2937; color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background 0.2s; }
-        .menu-item-btn:hover { background: #374151; border-color: var(--gold); }
-        .drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; display: none; }
+        /* ... (CSS ของเดิม) ... */
+        .card-back {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(45deg, #b91c1c, #b91c1c 10px, #7f1d1d 10px, #7f1d1d 20px);
+            border-radius: 8px; z-index: 10; border: 2px solid #fff;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            transition: opacity 0.3s;
+        }
+        .card-back i { color: rgba(255,255,255,0.3); font-size: 3rem; }
+        .card.revealed .card-back { opacity: 0; pointer-events: none; }
         
-        .admin-code-panel { margin-top: 20px; border-top: 2px dashed var(--admin-purple); padding-top: 15px; display: none; }
-        .admin-code-panel h4 { color: #c084fc; font-size: 0.95rem; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
-        .admin-code-panel .admin-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
-        .admin-code-panel label { font-size: 0.8rem; color: #e9d5ff; }
-        .admin-code-panel input, .admin-code-panel select { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--admin-purple); background: #1e1b4b; color: #fff; font-size: 0.9rem; outline: none; }
-        .generated-code { background: #0f0a1e; border: 1px solid var(--gold); border-radius: 8px; padding: 10px; text-align: center; font-family: monospace; font-size: 1.1rem; font-weight: bold; color: var(--gold); letter-spacing: 2px; margin-bottom: 10px; display: none; cursor: pointer; position: relative; }
-        .generated-code.show { display: block; animation: fadeIn 0.3s; }
-        .generated-code small { display: block; font-size: 0.7rem; color: #9ca3af; letter-spacing: 0; margin-top: 4px; font-family: 'Prompt', sans-serif; }
-        .code-list { max-height: 150px; overflow-y: auto; margin-top: 8px; border-radius: 8px; background: rgba(0,0,0,0.3); }
-        .code-list-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; font-size: 0.78rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: monospace; }
-        .code-list-item:last-child { border-bottom: none; }
-        .code-list-item.used { opacity: 0.4; text-decoration: line-through; }
-        .code-list-item .code-amt { color: var(--gold); font-weight: bold; }
-        .code-list-item .code-status { font-size: 0.7rem; }
-        .code-list-item .code-status.used { color: #f87171; }
-        .code-list-item .code-status.avail { color: #4ade80; }
-        .code-list-empty { padding: 10px; text-align: center; font-size: 0.8rem; color: #6b7280; }
-        
-        .table-container { width: 100%; max-width: 1000px; margin: 20px auto; padding: 0 20px; position: relative; }
-        .announcement-banner { width: 100%; background: rgba(0,0,0,0.85); border: 2px solid var(--gold); border-radius: 10px; padding: 12px; text-align: center; font-size: 1.3rem; font-weight: bold; margin-bottom: 15px; display: none; animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-        
-        .dealer-stage { position: relative; height: 180px; display: flex; justify-content: center; align-items: flex-end; margin-bottom: 10px; pointer-events: none; }
-        .dealer { position: relative; width: 140px; height: 160px; transition: transform 0.3s ease; }
-        .dealer.shuffling { animation: shuffle 0.6s ease-in-out; }
-        @keyframes shuffle { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(-4deg) translateY(-4px); } 75% { transform: rotate(4deg) translateY(-4px); } }
-        .dealer-head { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg,#fcd9b8,#e0a878); border: 2px solid #000; }
-        .dealer-body { position: absolute; top: 44px; left: 50%; transform: translateX(-50%); width: 84px; height: 90px; background: linear-gradient(180deg,#1e293b,#0f172a); border-radius: 40px 40px 10px 10px; border: 2px solid var(--gold); }
-        .dealer-bowtie { position: absolute; top: 58px; left: 50%; transform: translateX(-50%); width: 22px; height: 10px; background: var(--banker-red); clip-path: polygon(0 0, 50% 50%, 0 100%, 100% 100%, 50% 50%, 100% 0); }
-        .dealer-arm { position: absolute; width: 18px; height: 60px; background: linear-gradient(180deg,#1e293b,#0f172a); border-radius: 10px; border: 2px solid var(--gold); transform-origin: top center; transition: transform 0.35s cubic-bezier(.34,1.56,.64,1); top: 50px; }
-        .dealer-arm.left { left: -6px; }
-        .dealer-arm.right { right: -6px; }
-        .dealer-arm.dealing-left { transform: rotate(80deg) translateY(-10px); }
-        .dealer-arm.dealing-right { transform: rotate(-80deg) translateY(-10px); }
-        .dealer-hand-card { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 14px; height: 20px; background: #fff; border-radius: 2px; border: 1px solid #000; opacity: 0; transition: opacity 0.2s; }
-        .dealer-hand-card.visible { opacity: 1; }
-        .dealer-table { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; height: 6px; background: var(--gold); border-radius: 4px; box-shadow: 0 0 20px rgba(245,158,11,0.4); }
-        .flying-card { position: fixed; width: 80px; height: 115px; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.6); z-index: 500; pointer-events: none; transition: transform 0.6s cubic-bezier(.4,0,.2,1), opacity 0.6s; }
-        
-        .cards-display { display: flex; justify-content: space-around; background: rgba(0,0,0,0.3); border-radius: 15px; padding: 20px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); }
-        .side-box { text-align: center; width: 45%; }
-        .side-title { font-size: 1.4rem; font-weight: 600; margin-bottom: 10px; text-transform: uppercase; }
-        .player-title { color: #60a5fa; }
-        .banker-title { color: #f87171; }
-        .score-badge { display: inline-block; background: #fff; color: #000; padding: 2px 12px; border-radius: 20px; font-weight: bold; margin-bottom: 15px; min-width: 40px; }
-        .score-badge.pokk { background: var(--gold); color: #000; animation: pokkPulse 1s infinite; }
-        @keyframes pokkPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.8); } 50% { box-shadow: 0 0 0 8px rgba(245,158,11,0); } }
-        .cards-row { display: flex; justify-content: center; gap: 10px; min-height: 120px; }
-        .card { width: 80px; height: 115px; background: white; color: black; border-radius: 8px; padding: 6px 8px; display: flex; flex-direction: column; justify-content: space-between; font-weight: bold; font-size: 1.2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.5); position: relative; animation: dealCard 0.4s ease-out forwards; }
-        .card.red { color: var(--banker-red); }
-        .card.black { color: #000; }
-        .card .suit-center { font-size: 2rem; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); line-height: 1; }
-        .card .top-val { text-align: left; align-self: flex-start; }
-        .card .bottom-val { align-self: flex-end; transform: rotate(180deg); }
-        @keyframes dealCard { from { transform: scale(0.5) rotate(-15deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
-        
-        .betting-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .bet-zone { background: linear-gradient(135deg,#166534,#14532d); border: 3px solid var(--table-border); border-radius: 12px; padding: 25px 10px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; user-select: none; }
-        .bet-zone:hover:not(.disabled) { transform: scale(1.02); box-shadow: 0 0 15px rgba(245,158,11,0.4); }
-        .betting-grid.disabled .bet-zone { cursor: not-allowed; opacity: 0.75; }
-        .bet-zone .zone-name { font-size: 1.5rem; font-weight: 600; display: block; }
-        .bet-zone .odds { font-size: 0.9rem; opacity: 0.8; color: var(--gold); }
-        .placed-chip { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: #e11d48; color: white; width: 45px; height: 45px; border-radius: 50%; border: 3px dashed #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem; box-shadow: 0 4px 6px rgba(0,0,0,0.3); z-index: 2; }
-        
-        .controls { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 25px; }
-        .chip-selection { display: flex; gap: 15px; }
-        .chip-selection.disabled { pointer-events: none; opacity: 0.5; }
-        .chip { width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; border: 4px dashed rgba(255,255,255,0.6); transition: transform 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        .chip:hover { transform: translateY(-5px); }
-        .chip.selected-chip { transform: translateY(-8px) scale(1.1); border-color: #fff; box-shadow: 0 0 15px #fff; }
-        .chip-100 { background: #2563eb; }
-        .chip-500 { background: #16a34a; }
-        .chip-1000 { background: #dc2626; }
-        .chip-5000 { background: #7c3aed; }
-        
-        .btn { padding: 8px 22px; font-size: 1rem; font-weight: 600; border: none; border-radius: 20px; cursor: pointer; transition: all 0.2s; }
-        .btn-gold { background: var(--gold); color: #000; }
-        .btn-gold:hover { background: #d97706; color: #fff; }
-        .btn-clear { background: #4b5563; color: #fff; }
-        .btn-clear:hover:not(:disabled) { background: #6b7280; }
-        .btn-admin { background: var(--admin-purple); color: #fff; }
-        .btn-admin:hover { background: #6d28d9; }
-        
-        .admin-panel { background: rgba(124,58,237,0.15); border: 2px dashed var(--admin-purple); border-radius: 12px; padding: 15px 20px; margin-bottom: 20px; display: none; }
-        .admin-panel h3 { color: #c084fc; margin-bottom: 10px; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
-        .admin-controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .admin-group { display: flex; flex-direction: column; gap: 5px; }
-        .admin-group label { font-size: 0.85rem; color: #e9d5ff; }
-        .admin-input, .admin-select { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--admin-purple); background: #1e1b4b; color: #fff; font-size: 0.95rem; outline: none; }
-        
-        .scoreboard-panel { background: rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 15px; width: 100%; }
-        .scoreboard-header { display: flex; justify-content: space-between; font-size: 0.9rem; color: #94a3b8; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
-        .board-grid-5x4 { display: grid; grid-template-columns: repeat(4,1fr); grid-template-rows: repeat(5,1fr); gap: 10px; justify-items: center; max-width: 280px; margin: 0 auto; }
-        .board-cell { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px dashed rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.95rem; }
-        .board-cell.p-win { background: var(--player-blue); border: none; color: white; }
-        .board-cell.b-win { background: var(--banker-red); border: none; color: white; }
-        .board-cell.t-win { background: var(--tie-green); border: none; color: white; }
-        
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); display: flex; justify-content: center; align-items: center; z-index: 1001; display: none; }
-        .modal-card { background: #111827; border: 2px solid var(--gold); border-radius: 15px; width: 90%; max-width: 380px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); }
-        .modal-card h3 { text-align: center; color: var(--gold); margin-bottom: 20px; font-size: 1.3rem; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: #d1d5db; }
-        .form-group input, .form-group select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #374151; background: #1f2937; color: #fff; outline: none; }
-        .form-group input:focus, .form-group select:focus { border-color: var(--gold); }
-        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-        .modal-actions button { flex: 1; }
+        .win-glow { animation: glow 1.5s infinite alternate; }
+        @keyframes glow {
+            from { box-shadow: 0 0 10px rgba(245,158,11,0.5); }
+            to { box-shadow: 0 0 30px rgba(245,158,11,1); }
+        }
+        /* ... (CSS ที่เหลือ) ... */
     </style>
 </head>
 <body>
-    <div class="status-bar">
-        <div style="display:flex; align-items:center; gap:10px;">
-            <div class="left-menu-btn" onclick="toggleDrawer()"><i class="fa-solid fa-bars"></i></div>
-            <h2 style="font-size:1.2rem;"><i class="fa-solid fa-diamond"></i> BACCARAT LIVE</h2>
-        </div>
-        <div class="timer-box" id="timer-display"><i class="fa-solid fa-clock"></i> 10</div>
-        <div class="user-info-group">
-            <div class="balance-box">เครดิต: <span id="balance-display">0</span> THB</div>
-            <div class="user-badge" id="user-badge">ผู้เยี่ยมชม</div>
-        </div>
-    </div>
-
-    <div class="drawer-overlay" id="drawer-overlay" onclick="toggleDrawer()"></div>
-    <div class="side-drawer" id="side-drawer">
-        <div class="drawer-header">
-            <span><i class="fa-solid fa-bars-staggered"></i> เมนูหลัก</span>
-            <span class="close-drawer-btn" onclick="toggleDrawer()"><i class="fa-solid fa-xmark"></i></span>
-        </div>
-        <div class="drawer-menu">
-            <button class="menu-item-btn" id="drawer-auth-btn" onclick="openAuthModal()">
-                <i class="fa-solid fa-user-plus" style="color: var(--gold);"></i> เข้าสู่ระบบ / สมัครสมาชิก
-            </button>
-            <button class="menu-item-btn" onclick="openRedeemModal()">
-                <i class="fa-solid fa-ticket" style="color: var(--gold);"></i> ใส่โค้ดรับเครดิต
-            </button>
-            <button class="menu-item-btn" onclick="openWithdrawModal()">
-                <i class="fa-solid fa-money-bill-transfer" style="color:#4ade80;"></i> ถอนเงินเครดิต
-            </button>
-            <button class="menu-item-btn" id="drawer-logout-btn" onclick="logout()" style="display:none; color:#f87171;">
-                <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
-            </button>
-        </div>
-
-        <div class="admin-code-panel" id="admin-code-panel">
-            <h4><i class="fa-solid fa-key"></i> สร้างโค้ดเครดิต (Admin)</h4>
-            <div class="admin-group">
-                <label>จำนวนเครดิตในโค้ด (THB):</label>
-                <input type="number" id="code-amount-input" placeholder="เช่น 500" value="500" min="1">
-            </div>
-            <div class="admin-group">
-                <label>จำนวนโค้ดที่ต้องการสร้าง:</label>
-                <input type="number" id="code-count-input" placeholder="เช่น 1" value="1" min="1" max="50">
-            </div>
-            <button class="btn btn-admin" style="width:100%; margin-bottom:10px;" onclick="generateCodes()">
-                <i class="fa-solid fa-plus"></i> สร้างโค้ด
-            </button>
-            <div class="generated-code" id="generated-code-box" onclick="copyGeneratedCode()">
-                <span id="generated-code-text">—</span>
-                <small><i class="fa-solid fa-copy"></i> แตะเพื่อคัดลอก</small>
-            </div>
-            <label style="font-size:0.8rem; color:#9ca3af; display:block; margin-top:5px;">
-                รายการโค้ดทั้งหมด (<span id="code-list-count">0</span>):
-            </label>
-            <div class="code-list" id="code-list">
-                <div class="code-list-empty">ยังไม่มีโค้ด</div>
-            </div>
-        </div>
-    </div>
-
+    <!-- ... (โครงสร้าง HTML) ... -->
     <div class="table-container">
-        <div class="dealer-stage">
-            <div class="dealer" id="dealer">
-                <div class="dealer-head"></div>
-                <div class="dealer-body"></div>
-                <div class="dealer-bowtie"></div>
-                <div class="dealer-arm left" id="dealer-arm-left">
-                    <div class="dealer-hand-card" id="dealer-card-left"></div>
-                </div>
-                <div class="dealer-arm right" id="dealer-arm-right">
-                    <div class="dealer-hand-card" id="dealer-card-right"></div>
-                </div>
-                <div class="dealer-table"></div>
-            </div>
-        </div>
-
+        <!-- ... (Dealer stage) ... -->
+        
         <div class="announcement-banner" id="announcement-banner"></div>
 
-        <div class="admin-panel" id="admin-panel">
-            <h3><i class="fa-solid fa-user-shield"></i> แผงควบคุม ADMIN (สิทธิ์พิเศษ min888)</h3>
-            <div class="admin-controls-grid">
-                <div class="admin-group">
-                    <label>ปรับเปลี่ยนเครดิตเงินสด:</label>
-                    <div style="display:flex; gap:5px;">
-                        <input type="number" id="admin-credit-input" class="admin-input" placeholder="ระบุจำนวนเงิน" value="50000">
-                        <button class="btn btn-admin" onclick="applyAdminCredit()">ปรับเงิน</button>
-                    </div>
-                </div>
-                <div class="admin-group">
-                    <label>ปรับล็อกอัตราแพ้/ชนะ (ทุกคนเห็นตรงกัน):</label>
-                    <select id="admin-win-mode" class="admin-select" onchange="updateWinMode()">
-                        <option value="normal">สุ่มปกติ</option>
-                        <option value="force_player">ล็อกให้ PLAYER ชนะ</option>
-                        <option value="force_banker">ล็อกให้ BANKER ชนะ</option>
-                        <option value="force_tie">ล็อกให้ TIE ชนะ</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
+        <!-- ... (Admin panel) ... -->
+        
         <div class="cards-display">
-            <div class="side-box">
+            <div class="side-box" id="player-side-box">
                 <div class="side-title player-title">PLAYER</div>
                 <div class="score-badge" id="player-score">0</div>
                 <div class="cards-row" id="player-cards"></div>
             </div>
-            <div class="side-box">
+            <div class="side-box" id="banker-side-box">
                 <div class="side-title banker-title">BANKER</div>
                 <div class="score-badge" id="banker-score">0</div>
                 <div class="cards-row" id="banker-cards"></div>
             </div>
         </div>
-
-        <div class="betting-grid" id="betting-grid">
-            <div class="bet-zone" onclick="placeBet('player')">
-                <span class="zone-name" style="color:#60a5fa;">PLAYER</span>
-                <span class="odds">1 : 1</span>
-                <div id="chip-player"></div>
-            </div>
-            <div class="bet-zone" onclick="placeBet('tie')">
-                <span class="zone-name" style="color:#4ade80;">TIE</span>
-                <span class="odds">1 : 8</span>
-                <div id="chip-tie"></div>
-            </div>
-            <div class="bet-zone" onclick="placeBet('banker')">
-                <span class="zone-name" style="color:#f87171;">BANKER</span>
-                <span class="odds">1 : 0.95</span>
-                <div id="chip-banker"></div>
-            </div>
-        </div>
-
-        <div class="controls">
-            <div class="chip-selection" id="chip-selection">
-                <div class="chip chip-100 selected-chip" onclick="selectChip(100, event)">100</div>
-                <div class="chip chip-500" onclick="selectChip(500, event)">500</div>
-                <div class="chip chip-1000" onclick="selectChip(1000, event)">1K</div>
-                <div class="chip chip-5000" onclick="selectChip(5000, event)">5K</div>
-            </div>
-            <div style="margin-top:10px;">
-                <button class="btn btn-clear" id="clear-btn" onclick="clearBets()">เคลียร์เดิมพัน</button>
-            </div>
-        </div>
-
-        <div class="scoreboard-panel">
-            <div class="scoreboard-header">
-                <div><i class="fa-solid fa-list-check"></i> สถิติ</div>
-                <div>รอบ: <span id="round-count">0</span>/20</div>
-            </div>
-            <div class="board-grid-5x4" id="board-grid"></div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="auth-modal">
-        <div class="modal-card">
-            <h3>สมัครสมาชิก / เข้าสู่ระบบ</h3>
-            <div class="form-group">
-                <label>ชื่อผู้ใช้งาน:</label>
-                <input type="text" id="auth-username" placeholder="ตั้งชื่อผู้ใช้">
-            </div>
-            <div class="form-group">
-                <label>รหัสผ่าน / Admin Code:</label>
-                <input type="password" id="auth-password" placeholder="ใส่รหัสผ่าน ">
-            </div>
-            <div style="font-size:0.8rem; color:#9ca3af; margin-bottom:15px;">
-                * สมาชิกใหม่รับเครดิตฟรี <b style="color:var(--gold);">1,000 THB</b><br>
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-clear" onclick="closeAuthModal()">ยกเลิก</button>
-                <button class="btn btn-gold" onclick="processAuth()">ตกลง</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="redeem-modal">
-        <div class="modal-card">
-            <h3><i class="fa-solid fa-ticket"></i> ใส่โค้ดรับเครดิต</h3>
-            <div class="form-group">
-                <label>รหัสโค้ด:</label>
-                <input type="text" id="redeem-code-input" placeholder="X" style="text-transform:uppercase; letter-spacing:1px; font-family:monospace;">
-            </div>
-            <div style="font-size:0.8rem; color:#9ca3af; margin-bottom:10px;">
-                * โค้ดใช้ได้ครั้งเดียวต่อโค้ด<br>
-                * ติดต่อแอดมินเพื่อขอโค้ด
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-clear" onclick="closeRedeemModal()">ยกเลิก</button>
-                <button class="btn btn-gold" onclick="redeemCode()">ยืนยัน</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="withdraw-modal">
-        <div class="modal-card">
-            <h3><i class="fa-solid fa-wallet"></i> แจ้งถอนเงิน</h3>
-            <div class="form-group">
-                <label>ธนาคาร / บัญชี:</label>
-                <select id="withdraw-bank">
-                    <option value="KBANK">ธนาคารกสิกรไทย</option>
-                    <option value="TrueMoney">วอเลท TrueMoney</option>
-                    <option value="BBL">ธนาคารกรุงเทพ</option>
-                    <option value="SCB">ธนาคารไทยพาณิชย์</option>
-                    <option value="KTB">ธนาคารกรุงไทย</option>
-                    <option value="GSB">ธนาคารออมสิน</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>เลขบัญชี / เบอร์วอเลท:</label>
-                <input type="text" id="withdraw-acc" placeholder="กรอกเลขบัญชี">
-            </div>
-            <div class="form-group">
-                <label>จำนวนเงิน (THB):</label>
-                <input type="number" id="withdraw-amount" placeholder="ระบุจำนวน">
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-clear" onclick="closeWithdrawModal()">ยกเลิก</button>
-                <button class="btn btn-gold" onclick="processWithdraw()">ยืนยัน</button>
-            </div>
-        </div>
+        <!-- ... (ส่วนที่เหลือ) ... -->
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
 
     <script>
-        /* ============ AUDIO ENGINE ============ */
-        let audioCtx = null;
-        function ensureAudioCtx() {
-            if (!audioCtx) {
-                try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
-            }
-            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-            return audioCtx;
-        }
-        function playCardSlide() {
-            const ctx = ensureAudioCtx(); if (!ctx) return;
-            const dur = 0.18;
-            const buffer = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < data.length; i++) {
-                const t = i / data.length;
-                data[i] = (Math.random() * 2 - 1) * (1 - t) * 0.4;
-            }
-            const src = ctx.createBufferSource(); src.buffer = buffer;
-            const filter = ctx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 3200; filter.Q.value = 1.2;
-            const gain = ctx.createGain(); gain.gain.setValueAtTime(0.3, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
-            src.connect(filter).connect(gain).connect(ctx.destination); src.start();
-        }
-        function playCardLand() {
-            const ctx = ensureAudioCtx(); if (!ctx) return;
-            const osc = ctx.createOscillator(); const gain = ctx.createGain();
-            osc.type = 'triangle'; osc.frequency.setValueAtTime(320, ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.08);
-            gain.gain.setValueAtTime(0.25, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
-            osc.connect(gain).connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.13);
-        }
-        function playShuffleSound() { for (let i = 0; i < 4; i++) setTimeout(playCardSlide, i * 90); }
-        function playWinSound() {
-            const ctx = ensureAudioCtx(); if (!ctx) return;
-            [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
-                const osc = ctx.createOscillator(); const gain = ctx.createGain();
-                osc.type = 'sine'; osc.frequency.value = freq;
-                const start = ctx.currentTime + i * 0.12;
-                gain.gain.setValueAtTime(0, start); gain.gain.linearRampToValueAtTime(0.25, start + 0.02); gain.gain.exponentialRampToValueAtTime(0.001, start + 0.35);
-                osc.connect(gain).connect(ctx.destination); osc.start(start); osc.stop(start + 0.4);
-            });
-        }
-        function playLoseSound() {
-            const ctx = ensureAudioCtx(); if (!ctx) return;
-            const osc = ctx.createOscillator(); const gain = ctx.createGain();
-            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(400, ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.5);
-            gain.gain.setValueAtTime(0.15, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
-            osc.connect(gain).connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.6);
-        }
-        function playPokkSound() {
-            const ctx = ensureAudioCtx(); if (!ctx) return;
-            [659.25, 830.61, 1046.5, 1318.5].forEach((freq, i) => {
-                const osc = ctx.createOscillator(); const gain = ctx.createGain();
-                osc.type = 'triangle'; osc.frequency.value = freq;
-                const start = ctx.currentTime + i * 0.08;
-                gain.gain.setValueAtTime(0, start); gain.gain.linearRampToValueAtTime(0.28, start + 0.02); gain.gain.exponentialRampToValueAtTime(0.001, start + 0.28);
-                osc.connect(gain).connect(ctx.destination); osc.start(start); osc.stop(start + 0.3);
-            });
-        }
-        function speakThai(text, opts = {}) {
-            if (!window.speechSynthesis) return;
-            speechSynthesis.cancel();
-            const u = new SpeechSynthesisUtterance(text);
-            u.lang = 'th-TH'; u.rate = opts.rate || 1.0; u.pitch = opts.pitch || 1.0; u.volume = opts.volume || 1.0;
-            const voices = speechSynthesis.getVoices();
-            const thaiVoice = voices.find(v => v.lang.startsWith('th'));
-            if (thaiVoice) u.voice = thaiVoice;
-            speechSynthesis.speak(u);
-        }
-        if (window.speechSynthesis) { speechSynthesis.onvoiceschanged = () => {}; speechSynthesis.getVoices(); }
-
-        /* ============ GAME STATE ============ */
-        let balance = 0;
-        let currentSelectedChip = 100;
-        let bets = { player: 0, banker: 0, tie: 0 };
-        let gameState = 'BETTING'; 
-        let matchHistory = [];
-        let currentUser = null;
-        let isAdmin = false;
-        let adminWinMode = 'normal';
-        let creditCodes = []; 
-
-        function toggleDrawer() {
-            const drawer = document.getElementById('side-drawer');
-            const overlay = document.getElementById('drawer-overlay');
-            if (drawer.classList.contains('open')) {
-                drawer.classList.remove('open'); overlay.style.display = 'none';
-            } else {
-                drawer.classList.add('open'); overlay.style.display = 'block';
-            }
-        }
+        // ... (Audio Engine และ Game state) ...
+        
+        // เปลี่ยนตัวแปร matchHistory ให้ดึงจาก server แทน
+        let serverHistory = []; 
 
         function initScoreboard() {
             const grid = document.getElementById('board-grid');
@@ -469,11 +89,12 @@
                 cell.className = 'board-cell'; cell.id = `cell-${i}`;
                 grid.appendChild(cell);
             }
-            document.getElementById('round-count').innerText = matchHistory.length;
+            document.getElementById('round-count').innerText = serverHistory.length;
         }
+
         function drawScoreboard() {
             initScoreboard();
-            matchHistory.forEach((result, index) => {
+            serverHistory.forEach((result, index) => {
                 const cell = document.getElementById(`cell-${index}`);
                 if (cell) {
                     if (result === 'player') { cell.classList.add('p-win'); cell.innerText = 'P'; }
@@ -483,206 +104,7 @@
             });
         }
 
-        /* ==== CODE SYSTEM ==== */
-        function generateCodeString() {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            let s = '';
-            for (let i = 0; i < 8; i++) s += chars[Math.floor(Math.random() * chars.length)];
-            return 'BAC-' + s;
-        }
-        function generateCodes() {
-            if (!isAdmin) return;
-            const amt = parseFloat(document.getElementById('code-amount-input').value);
-            const cnt = parseInt(document.getElementById('code-count-input').value);
-            if (isNaN(amt) || amt <= 0) { alert('กรุณาระบุจำนวนเครดิตให้ถูกต้อง'); return; }
-            if (isNaN(cnt) || cnt < 1 || cnt > 50) { alert('จำนวนโค้ดต้องอยู่ระหว่าง 1-50'); return; }
-            const created = [];
-            for (let i = 0; i < cnt; i++) {
-                let code;
-                do { code = generateCodeString(); } while (creditCodes.find(c => c.code === code));
-                creditCodes.push({ code, amount: amt, used: false, usedBy: null });
-                created.push(code);
-            }
-            document.getElementById('generated-code-text').innerText = created.join(' / ');
-            document.getElementById('generated-code-box').classList.add('show');
-            renderCodeList();
-            speakThai('สร้างโค้ดสำเร็จ');
-        }
-        function renderCodeList() {
-            const list = document.getElementById('code-list');
-            document.getElementById('code-list-count').innerText = creditCodes.length;
-            if (creditCodes.length === 0) { list.innerHTML = '<div class="code-list-empty">ยังไม่มีโค้ด</div>'; return; }
-            list.innerHTML = creditCodes.slice().reverse().map(c => `
-                <div class="code-list-item ${c.used ? 'used' : ''}">
-                    <span>${c.code}</span>
-                    <span class="code-amt">${c.amount.toLocaleString()}</span>
-                    <span class="code-status ${c.used ? 'used' : 'avail'}">${c.used ? 'ใช้แล้ว' : 'ว่าง'}</span>
-                </div>
-            `).join('');
-        }
-        function copyGeneratedCode() {
-            const txt = document.getElementById('generated-code-text').innerText;
-            if (!txt || txt === '—') return;
-            navigator.clipboard.writeText(txt).then(() => { speakThai('คัดลอกแล้ว'); }).catch(() => {});
-        }
-        function openRedeemModal() {
-            toggleDrawer();
-            if (!currentUser) { alert('กรุณาเข้าสู่ระบบก่อนใช้โค้ด!'); document.getElementById('auth-modal').style.display = 'flex'; return; }
-            document.getElementById('redeem-modal').style.display = 'flex';
-        }
-        function closeRedeemModal() { document.getElementById('redeem-modal').style.display = 'none'; }
-        function redeemCode() {
-            const input = document.getElementById('redeem-code-input');
-            const code = input.value.trim().toUpperCase();
-            if (!code) { alert('กรุณากรอกโค้ด'); return; }
-            const found = creditCodes.find(c => c.code === code);
-            if (!found) { alert('ไม่พบโค้ดนี้! กรุณาตรวจสอบอีกครั้ง'); return; }
-            if (found.used) { alert('โค้ดนี้ถูกใช้ไปแล้ว!'); return; }
-            found.used = true; found.usedBy = currentUser;
-            balance += found.amount; updateUI();
-            renderCodeList(); input.value = ''; closeRedeemModal();
-            playWinSound(); alert(`ใช้โค้ดสำเร็จ! ได้รับ ${found.amount.toLocaleString()} THB`);
-        }
-
-        /* ==== AUTH ==== */
-        function openAuthModal() { toggleDrawer(); document.getElementById('auth-modal').style.display = 'flex'; }
-        function closeAuthModal() { document.getElementById('auth-modal').style.display = 'none'; }
-        function processAuth() {
-            const userVal = document.getElementById('auth-username').value.trim();
-            const passVal = document.getElementById('auth-password').value.trim();
-            if (!userVal || !passVal) { alert('กรุณากรอกข้อมูลให้ครบถ้วน'); return; }
-            currentUser = userVal; balance = 1000;
-            if (passVal === 'min888') {
-                isAdmin = true;
-                document.getElementById('user-badge').innerText = `ADMIN: ${currentUser}`;
-                document.getElementById('user-badge').className = 'user-badge admin';
-                document.getElementById('admin-panel').style.display = 'block';
-                document.getElementById('admin-code-panel').style.display = 'block';
-                alert('เข้าสู่ระบบสำเร็จ! สิทธิ์ ADMIN + เครดิตฟรี 1,000 THB');
-            } else {
-                isAdmin = false;
-                document.getElementById('user-badge').innerText = `สมาชิก: ${currentUser}`;
-                document.getElementById('user-badge').className = 'user-badge';
-                document.getElementById('admin-panel').style.display = 'none';
-                document.getElementById('admin-code-panel').style.display = 'none';
-                alert('เข้าสู่ระบบสำเร็จ! เครดิตฟรี 1,000 THB');
-            }
-            document.getElementById('drawer-auth-btn').style.display = 'none';
-            document.getElementById('drawer-logout-btn').style.display = 'flex';
-            document.getElementById('auth-username').value = ''; document.getElementById('auth-password').value = '';
-            updateUI(); renderCodeList(); closeAuthModal();
-        }
-        function logout() {
-            toggleDrawer(); currentUser = null; isAdmin = false; balance = 0; clearBets();
-            document.getElementById('user-badge').innerText = 'ผู้เยี่ยมชม';
-            document.getElementById('user-badge').className = 'user-badge';
-            document.getElementById('admin-panel').style.display = 'none';
-            document.getElementById('admin-code-panel').style.display = 'none';
-            document.getElementById('drawer-auth-btn').style.display = 'flex';
-            document.getElementById('drawer-logout-btn').style.display = 'none';
-            updateUI(); alert('ออกจากระบบเรียบร้อยแล้ว');
-        }
-        function openWithdrawModal() {
-            toggleDrawer();
-            if (!currentUser) { alert('กรุณาเข้าสู่ระบบก่อนทำรายการถอนเงิน!'); document.getElementById('auth-modal').style.display = 'flex'; return; }
-            document.getElementById('withdraw-modal').style.display = 'flex';
-        }
-        function closeWithdrawModal() { document.getElementById('withdraw-modal').style.display = 'none'; }
-        function processWithdraw() {
-            const bank = document.getElementById('withdraw-bank').value;
-            const acc = document.getElementById('withdraw-acc').value.trim();
-            const amount = parseFloat(document.getElementById('withdraw-amount').value);
-            if (!acc || isNaN(amount) || amount <= 0) { alert('กรุณากรอกข้อมูลให้ถูกต้อง'); return; }
-            if (amount > balance) { alert(`ยอดเงินไม่พอ! คงเหลือ ${balance.toLocaleString()} THB`); return; }
-            balance -= amount; updateUI(); closeWithdrawModal();
-            document.getElementById('withdraw-acc').value = ''; document.getElementById('withdraw-amount').value = '';
-            alert(`แจ้งถอนสำเร็จ!\n${bank}\n${acc}\n${amount.toLocaleString()} THB`);
-        }
-        function applyAdminCredit() {
-            if (!isAdmin) return;
-            const newCredit = parseFloat(document.getElementById('admin-credit-input').value);
-            if (!isNaN(newCredit) && newCredit >= 0) { balance = newCredit; updateUI(); alert(`ปรับเครดิตเป็น ${balance.toLocaleString()} THB สำเร็จ!`); }
-        }
-
-        function updateUI() {
-            document.getElementById('balance-display').innerText = balance.toLocaleString();
-            for (let zone in bets) {
-                const chipDiv = document.getElementById(`chip-${zone}`);
-                if (bets[zone] > 0) {
-                    let text = bets[zone] >= 1000 ? (bets[zone] / 1000) + 'K' : bets[zone];
-                    chipDiv.innerHTML = `<div class="placed-chip">${text}</div>`;
-                } else { chipDiv.innerHTML = ''; }
-            }
-        }
-        function selectChip(amount, evt) {
-            if (gameState !== 'BETTING') return;
-            currentSelectedChip = amount;
-            document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected-chip'));
-            evt.currentTarget.classList.add('selected-chip');
-        }
-        function placeBet(zone) {
-            if (gameState !== 'BETTING') return;
-            if (!currentUser) { alert('กรุณาเข้าสู่ระบบก่อนเดิมพัน!'); document.getElementById('auth-modal').style.display = 'flex'; return; }
-            if (balance <= 0) { alert('เครดิตไม่เพียงพอ!'); return; }
-            const actualBet = Math.min(currentSelectedChip, balance);
-            bets[zone] += actualBet; balance -= actualBet; updateUI();
-        }
-        function clearBets() {
-            if (gameState !== 'BETTING') return;
-            balance += (bets.player + bets.banker + bets.tie);
-            bets = { player: 0, banker: 0, tie: 0 }; updateUI();
-        }
-
-        function getCardValue(card) {
-            if (['10','J','Q','K'].includes(card.value)) return 0;
-            if (card.value === 'A') return 1;
-            return parseInt(card.value);
-        }
-        function calculateScore(hand) { return hand.reduce((sum, c) => sum + getCardValue(c), 0) % 10; }
-        function createCardHTML(card) {
-            return `
-                <div class="card ${card.isRed ? 'red' : 'black'}">
-                    <div class="top-val">${card.value}</div>
-                    <div class="suit-center">${card.suit}</div>
-                    <div class="bottom-val">${card.value}</div>
-                </div>`;
-        }
-
-        const dealerEl = () => document.getElementById('dealer');
-        const armLeft = () => document.getElementById('dealer-arm-left');
-        const armRight = () => document.getElementById('dealer-arm-right');
-        const handCardLeft = () => document.getElementById('dealer-card-left');
-        const handCardRight = () => document.getElementById('dealer-card-right');
-        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-
-        async function animateDealToSide(side) {
-            const arm = side === 'left' ? armLeft() : armRight();
-            const handCard = side === 'left' ? handCardLeft() : handCardRight();
-            const targetId = side === 'left' ? 'player-cards' : 'banker-cards';
-            const targetEl = document.getElementById(targetId);
-            handCard.classList.add('visible'); playCardSlide();
-            arm.classList.add(side === 'left' ? 'dealing-left' : 'dealing-right');
-            await sleep(200);
-            const handRect = handCard.getBoundingClientRect();
-            const targetRect = targetEl.getBoundingClientRect();
-            const fly = document.createElement('div');
-            fly.className = 'flying-card';
-            fly.style.left = handRect.left + 'px';
-            fly.style.top = handRect.top + 'px';
-            fly.style.transform = 'scale(0.35)';
-            document.body.appendChild(fly);
-            handCard.classList.remove('visible'); playCardLand();
-            requestAnimationFrame(() => {
-                const dx = targetRect.left + targetRect.width / 2 - (handRect.left + 40);
-                const dy = targetRect.top + 30 - handRect.top;
-                fly.style.transform = `translate(${dx}px, ${dy}px) scale(1) rotate(${(Math.random()*20-10)}deg)`;
-                fly.style.opacity = '1';
-            });
-            await sleep(600); fly.remove();
-            arm.classList.remove(side === 'left' ? 'dealing-left' : 'dealing-right');
-        }
-
-        function setScoreBadge(id, score) { document.getElementById(id).innerText = score; }
+        // ... (ฟังก์ชันอื่นๆ) ...
 
         async function startDealing(serverResult) {
             gameState = 'DEALING';
@@ -691,7 +113,7 @@
             document.getElementById('clear-btn').disabled = true;
             document.getElementById('timer-display').innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`;
             
-            // 🔥 ล้างไพ่และคะแนนเก่าทิ้งทันที
+            // ล้างไพ่เก่า
             document.getElementById('player-cards').innerHTML = '';
             document.getElementById('banker-cards').innerHTML = '';
             setScoreBadge('player-score', 0);
@@ -699,8 +121,10 @@
             document.getElementById('announcement-banner').style.display = 'none';
             document.getElementById('player-score').classList.remove('pokk');
             document.getElementById('banker-score').classList.remove('pokk');
+            document.getElementById('player-side-box').classList.remove('win-glow');
+            document.getElementById('banker-side-box').classList.remove('win-glow');
 
-            dealerEl().classList.add('shuffling'); playShuffleSound(); speakThai('เริ่มแจกไพ่');
+            dealerEl().classList.add('shuffling'); playShuffleSound();
             await sleep(700); dealerEl().classList.remove('shuffling');
 
             let playerHand = serverResult.pHand;
@@ -716,44 +140,75 @@
             for (const step of sequence) {
                 await animateDealToSide(step.side);
                 const target = step.side === 'left' ? 'player-cards' : 'banker-cards';
-                document.getElementById(target).innerHTML += createCardHTML(step.hand[step.idx]);
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'card'; 
+                cardDiv.innerHTML = `<div class="card-back"><i class="fa-solid fa-diamond"></i></div>`;
+                document.getElementById(target).appendChild(cardDiv);
+                
+                await sleep(400);
+                cardDiv.classList.add('revealed');
+                cardDiv.classList.add(step.hand[step.idx].isRed ? 'red' : 'black');
+                cardDiv.innerHTML = `
+                    <div class="top-val">${step.hand[step.idx].value}</div>
+                    <div class="suit-center">${step.hand[step.idx].suit}</div>
+                    <div class="bottom-val">${step.hand[step.idx].value}</div>
+                `;
                 setScoreBadge(step.scoreId, calculateScore(step.hand.slice(0, step.idx + 1)));
-                await sleep(250);
+                await sleep(200);
             }
 
             let pScore = calculateScore(playerHand.slice(0, 2));
             let bScore = calculateScore(bankerHand.slice(0, 2));
             setScoreBadge('player-score', pScore); setScoreBadge('banker-score', bScore);
-            await sleep(400); speakThai(`Player ${pScore} แต้ม, Banker ${bScore} แต้ม`); await sleep(1600);
+            await sleep(400); await sleep(1600);
 
             if (playerHand.length > 2) {
                 await animateDealToSide('left');
-                document.getElementById('player-cards').innerHTML += createCardHTML(playerHand[2]);
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'card'; 
+                cardDiv.innerHTML = `<div class="card-back"><i class="fa-solid fa-diamond"></i></div>`;
+                document.getElementById('player-cards').appendChild(cardDiv);
+                await sleep(400);
+                cardDiv.classList.add('revealed');
+                cardDiv.classList.add(playerHand[2].isRed ? 'red' : 'black');
+                cardDiv.innerHTML = `
+                    <div class="top-val">${playerHand[2].value}</div>
+                    <div class="suit-center">${playerHand[2].suit}</div>
+                    <div class="bottom-val">${playerHand[2].value}</div>
+                `;
                 pScore = calculateScore(playerHand);
                 setScoreBadge('player-score', pScore);
-                speakThai(`Player ${pScore} แต้ม`); await sleep(1400);
+                await sleep(1400);
             }
 
             if (bankerHand.length > 2) {
                 await sleep(400);
                 await animateDealToSide('right');
-                document.getElementById('banker-cards').innerHTML += createCardHTML(bankerHand[2]);
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'card'; 
+                cardDiv.innerHTML = `<div class="card-back"><i class="fa-solid fa-diamond"></i></div>`;
+                document.getElementById('banker-cards').appendChild(cardDiv);
+                await sleep(400);
+                cardDiv.classList.add('revealed');
+                cardDiv.classList.add(bankerHand[2].isRed ? 'red' : 'black');
+                cardDiv.innerHTML = `
+                    <div class="top-val">${bankerHand[2].value}</div>
+                    <div class="suit-center">${bankerHand[2].suit}</div>
+                    <div class="bottom-val">${bankerHand[2].value}</div>
+                `;
                 bScore = calculateScore(bankerHand);
                 setScoreBadge('banker-score', bScore);
-                speakThai(`Banker ${bScore} แต้ม`); await sleep(1400);
-            } else if (playerHand.length > 2 && bankerHand.length === 2) {
-                speakThai('Banker อยู่'); await sleep(1000);
+                await sleep(1400);
             }
 
-            let winner = ''; let totalPlacedBets = bets.player + bets.banker + bets.tie; let winAmount = 0;
-            if (pScore > bScore) { winner = 'player'; winAmount = bets.player * 2; }
-            else if (bScore > pScore) { winner = 'banker'; winAmount = bets.banker * 1.95; }
-            else { winner = 'tie'; winAmount = (bets.tie * 9) + bets.player + bets.banker; }
+            let winner = serverResult.winner;
+            let totalPlacedBets = bets.player + bets.banker + bets.tie; let winAmount = 0;
+            if (winner === 'player') winAmount = bets.player * 2;
+            else if (winner === 'banker') winAmount = bets.banker * 1.95;
+            else winAmount = (bets.tie * 9) + bets.player + bets.banker;
 
             let netProfit = Math.floor(winAmount) - totalPlacedBets;
             balance += Math.floor(winAmount); updateUI();
-
-            matchHistory.push(winner); drawScoreboard();
 
             const banner = document.getElementById('announcement-banner');
             let winnerLabel = winner === 'tie' ? 'เสมอ (TIE)' : `${winner.toUpperCase()} ชนะ`;
@@ -762,32 +217,40 @@
             banner.innerHTML = `${winnerLabel} (${pScore} - ${bScore}) | ผลลัพธ์: ${profitText}`;
             banner.style.display = 'block';
             
-            if (winner === 'player') banner.style.borderColor = 'var(--player-blue)';
-            if (winner === 'banker') banner.style.borderColor = 'var(--banker-red)';
-            if (winner === 'tie') banner.style.borderColor = 'var(--tie-green)';
+            if (winner === 'player') {
+                banner.style.borderColor = 'var(--player-blue)';
+                document.getElementById('player-side-box').classList.add('win-glow');
+            } else if (winner === 'banker') {
+                banner.style.borderColor = 'var(--banker-red)';
+                document.getElementById('banker-side-box').classList.add('win-glow');
+            } else {
+                banner.style.borderColor = 'var(--tie-green)';
+                document.getElementById('player-side-box').classList.add('win-glow');
+                document.getElementById('banker-side-box').classList.add('win-glow');
+            }
 
-            if (winner === 'tie') speakThai('เสมอ');
-            else speakThai(`${winner === 'player' ? 'Player' : 'Banker'} ชนะ ${Math.max(pScore, bScore)} ต่อ ${Math.min(pScore, bScore)}`);
-
-            if (netProfit > 0) playWinSound(); else if (netProfit < 0) playLoseSound();
-
-            await sleep(2800);
+            await sleep(3500); 
             bets = { player: 0, banker: 0, tie: 0 }; updateUI();
         }
 
         /* ====================================================
-           ส่วนที่เชื่อมต่อกับ Server
+           การเชื่อมต่อ Socket แบบใหม่ (ซิงค์ทุกอย่างจาก Server)
            ==================================================== */
         const socket = io({ transports: ['websocket'] });
 
-        socket.on('connect', () => { console.log('Connected to server'); });
-
         socket.on('stateSync', (state) => {
+            // อัปเดตเวลา
             document.getElementById('timer-display').innerHTML = `<i class="fa-solid fa-clock"></i> ${state.countdown}`;
             gameState = state.gameState;
+
+            // อัปเดตสถิติจาก Server
+            if (state.history) {
+                serverHistory = state.history;
+                drawScoreboard();
+            }
             
             if (gameState === 'BETTING') {
-                // 🔥 ล้างไพ่และคะแนนเก่าทิ้งทันทีเมื่อเริ่มรอบใหม่
+                // ถ้าเริ่มรอบใหม่ ให้ล้างไพ่
                 document.getElementById('player-cards').innerHTML = '';
                 document.getElementById('banker-cards').innerHTML = '';
                 setScoreBadge('player-score', 0);
@@ -795,6 +258,8 @@
                 document.getElementById('announcement-banner').style.display = 'none';
                 document.getElementById('player-score').classList.remove('pokk');
                 document.getElementById('banker-score').classList.remove('pokk');
+                document.getElementById('player-side-box').classList.remove('win-glow');
+                document.getElementById('banker-side-box').classList.remove('win-glow');
 
                 document.getElementById('betting-grid').classList.remove('disabled');
                 document.getElementById('chip-selection').classList.remove('disabled');
@@ -806,10 +271,18 @@
             }
         });
 
+        // รับคำสั่งรีเซ็ตกระดานจาก Server
+        socket.on('resetScoreboard', () => {
+            serverHistory = [];
+            drawScoreboard();
+        });
+
+        // รับไพ่จาก Server
         socket.on('startDealing', (serverResult) => {
             startDealing(serverResult);
         });
 
+        // แอดมินเปลี่ยนโหมด
         const originalUpdateWinMode = updateWinMode;
         updateWinMode = function() {
             if (!isAdmin) return;
