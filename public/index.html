@@ -116,8 +116,6 @@
         .btn { padding: 8px 22px; font-size: 1rem; font-weight: 600; border: none; border-radius: 20px; cursor: pointer; transition: all 0.2s; }
         .btn-gold { background: var(--gold); color: #000; }
         .btn-gold:hover { background: #d97706; color: #fff; }
-        .btn-red { background: #dc2626; color: #fff; }
-        .btn-red:hover { background: #b91c1c; }
         .btn-clear { background: #4b5563; color: #fff; }
         .btn-clear:hover:not(:disabled) { background: #6b7280; }
         .btn-admin { background: var(--admin-purple); color: #fff; }
@@ -246,15 +244,6 @@
                         <option value="force_tie">ล็อกให้ TIE ชนะ</option>
                     </select>
                 </div>
-                <!-- ปุ่มล็อกระบบ -->
-                <div class="admin-group" style="grid-column: span 2; flex-direction: row; gap: 10px; margin-top: 10px;">
-                    <button class="btn btn-red" style="flex: 1;" onclick="adminLockServer(true)">
-                        <i class="fa-solid fa-lock"></i> ล็อกทั้งเซิร์ฟเวอร์
-                    </button>
-                    <button class="btn btn-gold" style="flex: 1;" onclick="adminLockServer(false)">
-                        <i class="fa-solid fa-unlock"></i> ปลดล็อก
-                    </button>
-                </div>
             </div>
         </div>
 
@@ -378,7 +367,6 @@
         </div>
     </div>
 
-    <!-- โหลด Socket.IO (แบบ Relative Path ไม่ต้องใส่ URL) -->
     <script src="/socket.io/socket.io.js"></script>
 
     <script>
@@ -456,9 +444,7 @@
         let balance = 0;
         let currentSelectedChip = 100;
         let bets = { player: 0, banker: 0, tie: 0 };
-        let suits = ['♠', '♥', '♦', '♣'];
-        let values = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
-        let gameState = 'BETTING'; // BETTING | DEALING
+        let gameState = 'BETTING'; 
         let matchHistory = [];
         let currentUser = null;
         let isAdmin = false;
@@ -698,7 +684,6 @@
 
         function setScoreBadge(id, score) { document.getElementById(id).innerText = score; }
 
-        // รับผลไพ่จาก Server
         async function startDealing(serverResult) {
             gameState = 'DEALING';
             document.getElementById('betting-grid').classList.add('disabled');
@@ -720,6 +705,7 @@
             document.getElementById('banker-cards').innerHTML = '';
             setScoreBadge('player-score', 0); setScoreBadge('banker-score', 0);
 
+            // แจกไพ่ 2 ใบแรก
             const sequence = [
                 { side: 'left', hand: playerHand, idx: 0, scoreId: 'player-score' },
                 { side: 'right', hand: bankerHand, idx: 0, scoreId: 'banker-score' },
@@ -735,11 +721,32 @@
                 await sleep(250);
             }
 
-            let pScore = calculateScore(playerHand);
-            let bScore = calculateScore(bankerHand);
+            let pScore = calculateScore(playerHand.slice(0, 2));
+            let bScore = calculateScore(bankerHand.slice(0, 2));
             setScoreBadge('player-score', pScore); setScoreBadge('banker-score', bScore);
             await sleep(400); speakThai(`Player ${pScore} แต้ม, Banker ${bScore} แต้ม`); await sleep(1600);
 
+            // ตรวจสอบว่ามีไพ่ใบที่ 3 ไหม จากที่ Server คำนวณมาแล้ว
+            if (playerHand.length > 2) {
+                await animateDealToSide('left');
+                document.getElementById('player-cards').innerHTML += createCardHTML(playerHand[2]);
+                pScore = calculateScore(playerHand);
+                setScoreBadge('player-score', pScore);
+                speakThai(`Player ${pScore} แต้ม`); await sleep(1400);
+            }
+
+            if (bankerHand.length > 2) {
+                await sleep(400);
+                await animateDealToSide('right');
+                document.getElementById('banker-cards').innerHTML += createCardHTML(bankerHand[2]);
+                bScore = calculateScore(bankerHand);
+                setScoreBadge('banker-score', bScore);
+                speakThai(`Banker ${bScore} แต้ม`); await sleep(1400);
+            } else if (playerHand.length > 2 && bankerHand.length === 2) {
+                speakThai('Banker อยู่'); await sleep(1000);
+            }
+
+            // สรุปผล
             let winner = ''; let totalPlacedBets = bets.player + bets.banker + bets.tie; let winAmount = 0;
             if (pScore > bScore) { winner = 'player'; winAmount = bets.player * 2; }
             else if (bScore > pScore) { winner = 'banker'; winAmount = bets.banker * 1.95; }
@@ -771,35 +778,24 @@
         }
 
         /* ====================================================
-           ส่วนที่เชื่อมต่อกับ Server (Render)
+           ส่วนที่เชื่อมต่อกับ Server
            ==================================================== */
-        // ไม่ต้องใส่ URL เพราะรันบน Server เดียวกัน
         const socket = io({ transports: ['websocket'] });
 
-        socket.on('connect', () => {
-            console.log('Connected to server');
-        });
+        socket.on('connect', () => { console.log('Connected to server'); });
 
         socket.on('stateSync', (state) => {
             document.getElementById('timer-display').innerHTML = `<i class="fa-solid fa-clock"></i> ${state.countdown}`;
             gameState = state.gameState;
             
-            if (state.locked) {
-                document.getElementById('announcement-banner').style.display = 'block';
-                document.getElementById('announcement-banner').innerHTML = '🔒 ระบบถูกล็อกโดยแอดมิน';
+            if (gameState === 'BETTING') {
+                document.getElementById('betting-grid').classList.remove('disabled');
+                document.getElementById('chip-selection').classList.remove('disabled');
+                document.getElementById('clear-btn').disabled = false;
+            } else {
                 document.getElementById('betting-grid').classList.add('disabled');
                 document.getElementById('chip-selection').classList.add('disabled');
                 document.getElementById('clear-btn').disabled = true;
-            } else {
-                if (gameState === 'BETTING') {
-                    document.getElementById('betting-grid').classList.remove('disabled');
-                    document.getElementById('chip-selection').classList.remove('disabled');
-                    document.getElementById('clear-btn').disabled = false;
-                } else {
-                    document.getElementById('betting-grid').classList.add('disabled');
-                    document.getElementById('chip-selection').classList.add('disabled');
-                    document.getElementById('clear-btn').disabled = true;
-                }
             }
         });
 
@@ -807,12 +803,7 @@
             startDealing(serverResult);
         });
 
-        function adminLockServer(isLocked) {
-            if (!isAdmin) return;
-            socket.emit('adminAction', { type: 'LOCK', status: isLocked });
-            alert(isLocked ? 'ล็อกระบบทั้งเซิร์ฟเวอร์แล้ว' : 'ปลดล็อกระบบแล้ว');
-        }
-
+        // แก้ไขฟังก์ชันอัปเดตโหมดของแอดมิน (ตอนนี้ส่งไปให้ Server จัดการไพ่แล้ว)
         const originalUpdateWinMode = updateWinMode;
         updateWinMode = function() {
             if (!isAdmin) return;
