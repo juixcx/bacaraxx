@@ -65,6 +65,21 @@
         .announcement-banner { width: 100%; background: rgba(0,0,0,0.85); border: 2px solid var(--gold); border-radius: 10px; padding: 12px; text-align: center; font-size: 1.3rem; font-weight: bold; margin-bottom: 15px; display: none; animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         
+        /* --- Floating Win/Loss Text --- */
+        .floating-text {
+            position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 4rem; font-weight: bold; z-index: 2000; pointer-events: none;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.8); animation: floatUp 2.5s ease-out forwards;
+        }
+        .floating-text.win { color: #4ade80; }
+        .floating-text.lose { color: #f87171; }
+        @keyframes floatUp {
+            0% { opacity: 0; transform: translate(-50%, -20%) scale(0.5); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            80% { opacity: 1; transform: translate(-50%, -80%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -120%) scale(0.8); }
+        }
+
         /* --- Dealer --- */
         .dealer-stage { position: relative; height: 180px; display: flex; justify-content: center; align-items: flex-end; margin-bottom: 10px; pointer-events: none; }
         .dealer { position: relative; width: 140px; height: 160px; transition: transform 0.3s ease; }
@@ -121,14 +136,21 @@
         }
         
         /* --- Betting --- */
-        .betting-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .bet-zone { background: linear-gradient(135deg,#166534,#14532d); border: 3px solid var(--table-border); border-radius: 12px; padding: 25px 10px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; user-select: none; }
+        .betting-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 10px; }
+        .bet-zone { background: linear-gradient(135deg,#166534,#14532d); border: 3px solid var(--table-border); border-radius: 12px; padding: 15px 10px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; user-select: none; }
         .bet-zone:hover:not(.disabled) { transform: scale(1.02); box-shadow: 0 0 15px rgba(245,158,11,0.4); }
         .betting-grid.disabled .bet-zone { cursor: not-allowed; opacity: 0.75; }
-        .bet-zone .zone-name { font-size: 1.5rem; font-weight: 600; display: block; }
-        .bet-zone .odds { font-size: 0.9rem; opacity: 0.8; color: var(--gold); }
+        .bet-zone .zone-name { font-size: 1.3rem; font-weight: 600; display: block; }
+        .bet-zone .odds { font-size: 0.8rem; opacity: 0.8; color: var(--gold); }
         .placed-chip { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: #e11d48; color: white; width: 45px; height: 45px; border-radius: 50%; border: 3px dashed #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem; box-shadow: 0 4px 6px rgba(0,0,0,0.3); z-index: 2; }
-        
+
+        /* --- Side Bets --- */
+        .side-bets-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .side-bet-zone { background: #1f2937; border: 2px solid #4b5563; border-radius: 8px; padding: 8px; text-align: center; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; position: relative;}
+        .side-bet-zone:hover:not(.disabled) { border-color: var(--gold); background: #374151; }
+        .side-bets-grid.disabled .side-bet-zone { cursor: not-allowed; opacity: 0.6; }
+        .side-bet-zone .odds { font-size: 0.75rem; color: var(--gold); display: block; }
+
         /* --- Controls --- */
         .controls { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 25px; }
         .chip-selection { display: flex; gap: 15px; }
@@ -171,99 +193,21 @@
             width: 100%;
             box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
         }
-
-        /* --- Bead Plate (ตารางซ้าย) --- */
-        .bead-plate {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            grid-auto-rows: 35px;
-            gap: 2px;
-            background: #fff;
-            border: 1px solid #000;
-            padding: 4px;
-            min-width: 210px;
-            flex-shrink: 0;
-        }
-        .bead-cell {
-            display: flex; justify-content: center; align-items: center;
-            border: 1px solid #eee;
-            font-size: 0;
-            position: relative;
-        }
-        .bead-circle {
-            width: 28px; height: 28px;
-            border-radius: 50%;
-            display: flex; justify-content: center; align-items: center;
-            font-weight: bold; font-size: 0.85rem; color: #fff;
-        }
+        .bead-plate { display: grid; grid-template-columns: repeat(6, 1fr); grid-auto-rows: 35px; gap: 2px; background: #fff; border: 1px solid #000; padding: 4px; min-width: 210px; flex-shrink: 0; }
+        .bead-cell { display: flex; justify-content: center; align-items: center; border: 1px solid #eee; font-size: 0; position: relative; }
+        .bead-circle { width: 28px; height: 28px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.85rem; color: #fff; }
         .bead-circle.p-win { background: var(--player-blue); }
         .bead-circle.b-win { background: var(--banker-red); }
         .bead-circle.t-win { background: var(--tie-green); }
-
-        /* --- Big Road (ตารางขวา) --- */
-        .big-road-container {
-            flex-grow: 1;
-            overflow-x: auto;
-            overflow-y: hidden;
-            background: #fff;
-            border: 1px solid #000;
-            position: relative;
-            min-width: 400px;
-            scroll-behavior: smooth; /* เลื่อนนุ่มนวล */
-        }
-        .big-road {
-            display: grid;
-            grid-template-columns: repeat(40, 32px);
-            grid-template-rows: repeat(6, 32px);
-            gap: 0;
-            padding: 0;
-        }
-        .road-cell {
-            width: 32px; height: 32px;
-            border: 1px solid #e0e0e0;
-            display: flex; justify-content: center; align-items: center;
-            position: relative;
-            background: #fff;
-            box-sizing: border-box;
-        }
-        
-        /* สไตล์ของจุดใน Big Road */
-        .road-marker {
-            width: 26px; height: 26px;
-            border-radius: 50%;
-            display: flex; justify-content: center; align-items: center;
-            font-weight: bold; font-size: 0.7rem;
-            position: absolute;
-            box-sizing: border-box;
-            z-index: 2;
-        }
-        
-        /* Player / Banker ตัวที่ 1 (วงกลมโปร่ง) */
-        .road-marker.p-win {
-            border: 2px solid var(--player-blue);
-            color: var(--player-blue);
-            background: #fff;
-        }
-        .road-marker.b-win {
-            border: 2px solid var(--banker-red);
-            color: var(--banker-red);
-            background: #fff;
-        }
-
-        /* สตรีค 2 ตัวขึ้นไป (วงกลมทึบสี) */
+        .big-road-container { flex-grow: 1; overflow-x: auto; overflow-y: hidden; background: #fff; border: 1px solid #000; position: relative; min-width: 400px; scroll-behavior: smooth; }
+        .big-road { display: grid; grid-template-columns: repeat(40, 32px); grid-template-rows: repeat(6, 32px); gap: 0; padding: 0; }
+        .road-cell { width: 32px; height: 32px; border: 1px solid #e0e0e0; display: flex; justify-content: center; align-items: center; position: relative; background: #fff; box-sizing: border-box; }
+        .road-marker { width: 26px; height: 26px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.7rem; position: absolute; box-sizing: border-box; z-index: 2; }
+        .road-marker.p-win { border: 2px solid var(--player-blue); color: var(--player-blue); background: #fff; }
+        .road-marker.b-win { border: 2px solid var(--banker-red); color: var(--banker-red); background: #fff; }
         .road-marker.streak.p-win { background: var(--player-blue); color: #fff; border: 2px solid var(--player-blue); }
         .road-marker.streak.b-win { background: var(--banker-red); color: #fff; border: 2px solid var(--banker-red); }
-
-        /* ขีดเสมอ (Tie) ทับในช่องเดิม */
-        .tie-line {
-            position: absolute;
-            width: 32px; height: 4px;
-            background: #16a34a;
-            transform: rotate(-45deg);
-            border-radius: 2px;
-            z-index: 5;
-            box-shadow: 0 0 2px rgba(0,0,0,0.3);
-        }
+        .tie-line { position: absolute; width: 32px; height: 4px; background: #16a34a; transform: rotate(-45deg); border-radius: 2px; z-index: 5; box-shadow: 0 0 2px rgba(0,0,0,0.3); }
 
         /* --- Modals --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); display: flex; justify-content: center; align-items: center; z-index: 1001; display: none; }
@@ -390,6 +334,7 @@
             </div>
         </div>
 
+        <!-- Main Bets -->
         <div class="betting-grid" id="betting-grid">
             <div class="bet-zone" onclick="placeBet('player')">
                 <span class="zone-name" style="color:#60a5fa;">PLAYER</span>
@@ -405,6 +350,25 @@
                 <span class="zone-name" style="color:#f87171;">BANKER</span>
                 <span class="odds">1 : 0.95</span>
                 <div id="chip-banker"></div>
+            </div>
+        </div>
+
+        <!-- Side Bets -->
+        <div class="side-bets-grid" id="side-bets-grid">
+            <div class="side-bet-zone" onclick="placeSideBet('p_pair')">
+                <span style="color:#60a5fa; font-weight:bold;">PLAYER PAIR</span>
+                <span class="odds">จ่าย 1:11</span>
+                <div id="chip-p_pair"></div>
+            </div>
+            <div class="side-bet-zone" onclick="placeSideBet('perfect_pair')">
+                <span style="color:var(--gold); font-weight:bold;">PERFECT PAIR</span>
+                <span class="odds">จ่าย 1:25</span>
+                <div id="chip-perfect_pair"></div>
+            </div>
+            <div class="side-bet-zone" onclick="placeSideBet('b_pair')">
+                <span style="color:#f87171; font-weight:bold;">BANKER PAIR</span>
+                <span class="odds">จ่าย 1:11</span>
+                <div id="chip-b_pair"></div>
             </div>
         </div>
 
@@ -429,10 +393,7 @@
                 <div>รอบ: <span id="round-count">0</span> / 50</div>
             </div>
             <div class="casino-scoreboard">
-                <!-- Bead Plate (ตารางซ้าย) -->
                 <div class="bead-plate" id="bead-plate"></div>
-                
-                <!-- Big Road (ตารางขวา) -->
                 <div class="big-road-container" id="big-road-container">
                     <div class="big-road" id="big-road"></div>
                 </div>
@@ -559,16 +520,6 @@
             gain.gain.setValueAtTime(0.15, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
             osc.connect(gain).connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.6);
         }
-        function playPokkSound() {
-            const ctx = ensureAudioCtx(); if (!ctx) return;
-            [659.25, 830.61, 1046.5, 1318.5].forEach((freq, i) => {
-                const osc = ctx.createOscillator(); const gain = ctx.createGain();
-                osc.type = 'triangle'; osc.frequency.value = freq;
-                const start = ctx.currentTime + i * 0.08;
-                gain.gain.setValueAtTime(0, start); gain.gain.linearRampToValueAtTime(0.28, start + 0.02); gain.gain.exponentialRampToValueAtTime(0.001, start + 0.28);
-                osc.connect(gain).connect(ctx.destination); osc.start(start); osc.stop(start + 0.3);
-            });
-        }
 
         /* ============ SPEECH ENGINE ============ */
         function speakThai(text, opts = {}) {
@@ -586,16 +537,16 @@
         /* ============ GAME STATE ============ */
         let balance = 0;
         let currentSelectedChip = 100;
-        let bets = { player: 0, banker: 0, tie: 0 };
+        // เพิ่ม Side Bets ใน State
+        let bets = { player: 0, banker: 0, tie: 0, p_pair: 0, b_pair: 0, perfect_pair: 0 };
         let gameState = 'BETTING'; 
-        let serverHistory = []; // ดึงจาก Server
+        let serverHistory = []; 
         let currentUser = null;
         let isAdmin = false;
         let adminWinMode = 'normal';
         let creditCodes = []; 
-        
-        // เก็บสถานะตารางเพื่อไม่ให้กระพริบ
         let renderedHistoryCount = 0; 
+        let lastAnnouncedSecond = -1;
 
         function toggleDrawer() {
             const drawer = document.getElementById('side-drawer');
@@ -608,13 +559,10 @@
         }
 
         /* ==========================================
-           ระบบวาดตารางสถิติแบบคาสิโน (แบบไม่อัปเดตซ้ำ)
+           ระบบวาดตารางสถิติแบบคาสิโน
            ========================================== */
         function drawCasinoScoreboard() {
-            // อัปเดตตัวเลขจำนวนรอบบนหน้าจอ
             document.getElementById('round-count').innerText = serverHistory.length;
-
-            // 1. อัปเดต Bead Plate (ตารางซ้าย)
             const beadPlate = document.getElementById('bead-plate');
             
             if (serverHistory.length < renderedHistoryCount) {
@@ -622,7 +570,6 @@
                 document.getElementById('big-road').innerHTML = '';
                 renderedHistoryCount = 0;
             }
-
             if (serverHistory.length <= renderedHistoryCount) return;
 
             const recentHistory = serverHistory.slice(-24);
@@ -644,72 +591,50 @@
                 }
             }
 
-            // 2. อัปเดต Big Road (ตารางขวา)
             const bigRoad = document.getElementById('big-road');
-            
-            const cols = 40;
-            const rows = 6;
+            const cols = 40; const rows = 6;
             const grid = Array.from({ length: rows }, () => Array(cols).fill(null));
             const streakCounters = Array.from({ length: rows }, () => Array(cols).fill(0));
-            
-            let currentCol = 0;
-            let currentRow = 0;
-            let lastResult = null;
-            let lastIndex = -1; // เก็บตำแหน่งล่าสุด
+            let currentCol = 0; let currentRow = 0; let lastResult = null; let lastIndex = -1;
 
             serverHistory.forEach((result, index) => {
                 if (result === 'tie') {
-                    // ถ้าเป็น Tie ให้ขีดทับช่องล่าสุด
                     if (lastIndex >= 0) {
-                        const r = Math.floor(lastIndex / cols);
-                        const c = lastIndex % cols;
-                        grid[r][c] = 'tie-line'; // ใช้ 'tie-line' แทนเพื่อวาดขีด
+                        const r = Math.floor(lastIndex / cols); const c = lastIndex % cols;
+                        grid[r][c] = 'tie-line'; 
                     }
                     return;
                 }
-
                 if (index === 0) {
-                    grid[currentRow][currentCol] = result;
-                    streakCounters[currentRow][currentCol] = 1;
-                    lastResult = result;
-                    lastIndex = currentRow * cols + currentCol;
-                    currentRow++;
+                    grid[currentRow][currentCol] = result; streakCounters[currentRow][currentCol] = 1;
+                    lastResult = result; lastIndex = currentRow * cols + currentCol; currentRow++;
                 } else {
                     if (result === lastResult) {
                         if (currentRow < rows) {
                             grid[currentRow][currentCol] = result;
                             streakCounters[currentRow][currentCol] = streakCounters[currentRow - 1][currentCol] + 1;
-                            lastIndex = currentRow * cols + currentCol;
-                            currentRow++;
+                            lastIndex = currentRow * cols + currentCol; currentRow++;
                         } else {
-                            currentCol++;
-                            currentRow = 0;
+                            currentCol++; currentRow = 0;
                             if (currentCol >= cols) currentCol = cols - 1;
-                            grid[currentRow][currentCol] = result;
-                            streakCounters[currentRow][currentCol] = 1;
-                            lastIndex = currentRow * cols + currentCol;
-                            currentRow++;
+                            grid[currentRow][currentCol] = result; streakCounters[currentRow][currentCol] = 1;
+                            lastIndex = currentRow * cols + currentCol; currentRow++;
                         }
                     } else {
-                        currentCol++;
-                        currentRow = 0;
+                        currentCol++; currentRow = 0;
                         if (currentCol >= cols) currentCol = cols - 1;
-                        grid[currentRow][currentCol] = result;
-                        streakCounters[currentRow][currentCol] = 1;
-                        lastIndex = currentRow * cols + currentCol;
-                        currentRow++;
+                        grid[currentRow][currentCol] = result; streakCounters[currentRow][currentCol] = 1;
+                        lastIndex = currentRow * cols + currentCol; currentRow++;
                         lastResult = result;
                     }
                 }
             });
 
-            // ล้างตารางก่อนวาดใหม่เพื่อไม่ให้ซ้ำซ้อน
             bigRoad.innerHTML = '';
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
                     const cell = document.createElement('div');
                     cell.className = 'road-cell';
-                    
                     const val = grid[r][c];
                     if (val === 'tie-line') {
                         const line = document.createElement('div');
@@ -723,14 +648,11 @@
                         marker.innerText = val === 'player' ? 'P' : 'B';
                         cell.appendChild(marker);
                     }
-                    
                     bigRoad.appendChild(cell);
                 }
             }
-
             renderedHistoryCount = serverHistory.length;
 
-            // เลื่อนเฉพาะเมื่อมีของใหม่
             setTimeout(() => {
                 const container = document.getElementById('big-road-container');
                 if (lastIndex >= 0) {
@@ -738,7 +660,6 @@
                     if (targetCell) {
                         const containerWidth = container.clientWidth;
                         const cellRightEdge = targetCell.offsetLeft + targetCell.offsetWidth;
-                        
                         if (cellRightEdge > container.scrollLeft + containerWidth) {
                             container.scrollLeft = cellRightEdge - containerWidth + 20;
                         }
@@ -872,29 +793,63 @@
             document.getElementById('balance-display').innerText = balance.toLocaleString();
             for (let zone in bets) {
                 const chipDiv = document.getElementById(`chip-${zone}`);
-                if (bets[zone] > 0) {
-                    let text = bets[zone] >= 1000 ? (bets[zone] / 1000) + 'K' : bets[zone];
-                    chipDiv.innerHTML = `<div class="placed-chip">${text}</div>`;
-                } else { chipDiv.innerHTML = ''; }
+                if (chipDiv) {
+                    if (bets[zone] > 0) {
+                        let text = bets[zone] >= 1000 ? (bets[zone] / 1000) + 'K' : bets[zone];
+                        chipDiv.innerHTML = `<div class="placed-chip" style="width:30px;height:30px;font-size:0.7rem;">${text}</div>`;
+                    } else { chipDiv.innerHTML = ''; }
+                }
             }
         }
+        
         function selectChip(amount, evt) {
             if (gameState !== 'BETTING') return;
             currentSelectedChip = amount;
             document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected-chip'));
             evt.currentTarget.classList.add('selected-chip');
         }
+        
+        // ฟังก์ชันตรวจสอบการลง 2 ฝั่ง
         function placeBet(zone) {
             if (gameState !== 'BETTING') return;
             if (!currentUser) { alert('กรุณาเข้าสู่ระบบก่อนเดิมพัน!'); document.getElementById('auth-modal').style.display = 'flex'; return; }
             if (balance <= 0) { alert('เครดิตไม่เพียงพอ!'); return; }
+
+            // ลอจิก: ไม่ให้ลง 2 ฝั่งหลักพร้อมกัน
+            if (zone === 'player' && (bets.banker > 0 || bets.tie > 0)) { alert('ไม่สามารถลง Player พร้อมกับ Banker/Tie ได้ครับ กรุณาเคลียร์เดิมพันก่อน'); return; }
+            if (zone === 'banker' && (bets.player > 0 || bets.tie > 0)) { alert('ไม่สามารถลง Banker พร้อมกับ Player/Tie ได้ครับ กรุณาเคลียร์เดิมพันก่อน'); return; }
+            if (zone === 'tie' && (bets.player > 0 || bets.banker > 0)) { alert('ไม่สามารถลง Tie พร้อมกับ Player/Banker ได้ครับ กรุณาเคลียร์เดิมพันก่อน'); return; }
+
             const actualBet = Math.min(currentSelectedChip, balance);
             bets[zone] += actualBet; balance -= actualBet; updateUI();
         }
+
+        // ฟังก์ชันลง Side Bets
+        function placeSideBet(zone) {
+            if (gameState !== 'BETTING') return;
+            if (!currentUser) { alert('กรุณาเข้าสู่ระบบก่อนเดิมพัน!'); document.getElementById('auth-modal').style.display = 'flex'; return; }
+            if (balance <= 0) { alert('เครดิตไม่เพียงพอ!'); return; }
+
+            const actualBet = Math.min(currentSelectedChip, balance);
+            bets[zone] += actualBet; balance -= actualBet; updateUI();
+        }
+
         function clearBets() {
             if (gameState !== 'BETTING') return;
-            balance += (bets.player + bets.banker + bets.tie);
-            bets = { player: 0, banker: 0, tie: 0 }; updateUI();
+            let totalRefund = 0;
+            for (let key in bets) totalRefund += bets[key];
+            balance += totalRefund;
+            bets = { player: 0, banker: 0, tie: 0, p_pair: 0, b_pair: 0, perfect_pair: 0 }; 
+            updateUI();
+        }
+
+        // ฟังก์ชันแสดงตัวเลขลอยตอนชนะ/แพ้
+        function showFloatingText(text, isWin) {
+            const el = document.createElement('div');
+            el.className = `floating-text ${isWin ? 'win' : 'lose'}`;
+            el.innerText = text;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 2500);
         }
 
         function getCardValue(card) {
@@ -948,11 +903,11 @@
         async function startDealing(serverResult) {
             gameState = 'DEALING';
             document.getElementById('betting-grid').classList.add('disabled');
+            document.getElementById('side-bets-grid').classList.add('disabled');
             document.getElementById('chip-selection').classList.add('disabled');
             document.getElementById('clear-btn').disabled = true;
             document.getElementById('timer-display').innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`;
             
-            // ล้างไพ่
             document.getElementById('player-cards').innerHTML = '';
             document.getElementById('banker-cards').innerHTML = '';
             setScoreBadge('player-score', 0);
@@ -1043,20 +998,42 @@
             }
 
             let winner = serverResult.winner;
-            let totalPlacedBets = bets.player + bets.banker + bets.tie; let winAmount = 0;
-            if (winner === 'player') winAmount = bets.player * 2;
-            else if (winner === 'banker') winAmount = bets.banker * 1.95;
-            else winAmount = (bets.tie * 9) + bets.player + bets.banker;
+            let totalPlacedBets = Object.values(bets).reduce((a,b)=>a+b, 0); 
+            let winAmount = 0;
+
+            // --- คำนวณเงินรางวัลหลัก ---
+            if (winner === 'player') winAmount += bets.player * 2;
+            else if (winner === 'banker') winAmount += bets.banker * 1.95;
+            else winAmount += (bets.tie * 9) + bets.player + bets.banker;
+
+            // --- คำนวณเงินรางวัล Side Bets ---
+            let pPairWin = false, bPairWin = false, perfectPairWin = false;
+            if (playerHand.length >= 2 && playerHand[0].value === playerHand[1].value) pPairWin = true;
+            if (bankerHand.length >= 2 && bankerHand[0].value === bankerHand[1].value) bPairWin = true;
+            
+            // Perfect Pair (คู่ดอกเดียวกัน)
+            if (pPairWin && playerHand[0].suit === playerHand[1].suit) perfectPairWin = true;
+            if (bPairWin && bankerHand[0].suit === bankerHand[1].suit) perfectPairWin = true;
+
+            if (pPairWin) winAmount += bets.p_pair * 12;
+            if (bPairWin) winAmount += bets.b_pair * 12;
+            if (perfectPairWin) winAmount += bets.perfect_pair * 26;
 
             let netProfit = Math.floor(winAmount) - totalPlacedBets;
             balance += Math.floor(winAmount); updateUI();
 
             const banner = document.getElementById('announcement-banner');
             let winnerLabel = winner === 'tie' ? 'เสมอ (TIE)' : `${winner.toUpperCase()} ชนะ`;
-            let profitText = netProfit >= 0 ? `<span style="color:#4ade80;">+${netProfit.toLocaleString()} THB</span>` : `<span style="color:#f87171;">${netProfit.toLocaleString()} THB</span>`;
+            let profitText = netProfit > 0 ? `<span style="color:#4ade80;">+${netProfit.toLocaleString()} THB</span>` : (netProfit < 0 ? `<span style="color:#f87171;">${netProfit.toLocaleString()} THB</span>` : `<span>0 THB</span>`);
             
             banner.innerHTML = `${winnerLabel} (${pScore} - ${bScore}) | ผลลัพธ์: ${profitText}`;
             banner.style.display = 'block';
+
+            // แสดงเอฟเฟกต์ลอย
+            if (totalPlacedBets > 0) {
+                if (netProfit > 0) showFloatingText(`+${netProfit.toLocaleString()}`, true);
+                else if (netProfit < 0) showFloatingText(`${netProfit.toLocaleString()}`, false);
+            }
             
             if (winner === 'player') {
                 banner.style.borderColor = 'var(--player-blue)';
@@ -1076,7 +1053,7 @@
             if (netProfit > 0) playWinSound(); else if (netProfit < 0) playLoseSound();
 
             await sleep(3500); 
-            bets = { player: 0, banker: 0, tie: 0 }; updateUI();
+            bets = { player: 0, banker: 0, tie: 0, p_pair: 0, b_pair: 0, perfect_pair: 0 }; updateUI();
             document.getElementById('player-side-box').classList.remove('win-glow');
             document.getElementById('banker-side-box').classList.remove('win-glow');
         }
@@ -1092,7 +1069,7 @@
 
             if (state.history) {
                 serverHistory = state.history;
-                drawCasinoScoreboard(); // วาดตารางแบบใหม่
+                drawCasinoScoreboard(); 
             }
             
             if (gameState === 'BETTING') {
@@ -1109,10 +1086,22 @@
                 }
 
                 document.getElementById('betting-grid').classList.remove('disabled');
+                document.getElementById('side-bets-grid').classList.remove('disabled');
                 document.getElementById('chip-selection').classList.remove('disabled');
                 document.getElementById('clear-btn').disabled = false;
+
+                // เสียงพากย์ตอนเปิดรับเดิมพัน
+                if (state.countdown === 10 && lastAnnouncedSecond !== 10) {
+                    speakThai('เชิญลูกค้าทำการวางเดิมพันครับ');
+                    lastAnnouncedSecond = 10;
+                } else if (state.countdown === 3 && lastAnnouncedSecond !== 3) {
+                    speakThai('ปิดรับเดิมพัน 3, 2, 1');
+                    lastAnnouncedSecond = 3;
+                }
+
             } else {
                 document.getElementById('betting-grid').classList.add('disabled');
+                document.getElementById('side-bets-grid').classList.add('disabled');
                 document.getElementById('chip-selection').classList.add('disabled');
                 document.getElementById('clear-btn').disabled = true;
             }
@@ -1130,7 +1119,6 @@
             startDealing(serverResult);
         });
 
-        const originalUpdateWinMode = updateWinMode;
         updateWinMode = function() {
             if (!isAdmin) return;
             adminWinMode = document.getElementById('admin-win-mode').value;
@@ -1139,7 +1127,7 @@
 
         updateUI();
         renderCodeList();
-        drawCasinoScoreboard(); // เริ่มวาดตารางครั้งแรก
+        drawCasinoScoreboard();
     </script>
 </body>
 </html>
