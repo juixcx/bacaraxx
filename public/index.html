@@ -180,6 +180,7 @@
     </style>
 </head>
 <body>
+    <!-- (โครงสร้าง HTML ทั้งหมดเหมือนเดิมเป๊ะๆ) -->
     <div class="status-bar">
         <div style="display:flex; align-items:center; gap:10px;">
             <div class="left-menu-btn" onclick="toggleDrawer()"><i class="fa-solid fa-bars"></i></div>
@@ -460,6 +461,8 @@
                 osc.connect(gain).connect(ctx.destination); osc.start(start); osc.stop(start + 0.3);
             });
         }
+
+        /* ============ SPEECH ENGINE ============ */
         function speakThai(text, opts = {}) {
             if (!window.speechSynthesis) return;
             speechSynthesis.cancel();
