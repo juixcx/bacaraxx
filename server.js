@@ -36,7 +36,7 @@ const drawCard = () => {
 const getVal = (card) => ['10','J','Q','K'].includes(card.value) ? 0 : card.value === 'A' ? 1 : parseInt(card.value);
 const calcScore = (hand) => hand.reduce((sum, c) => sum + getVal(c), 0) % 10;
 
-// ฟังก์ชันคำนวณเกม Baccarat แบบสมบูรณ์ (มีจั่วใบ 3)
+// ฟังก์ชันคำนวณเกม Baccarat
 function generateGameResult() {
   let pHand = [drawCard(), drawCard()];
   let bHand = [drawCard(), drawCard()];
@@ -44,13 +44,38 @@ function generateGameResult() {
   let pScore = calcScore(pHand);
   let bScore = calcScore(bHand);
 
-  // กฎการจั่วไพ่ใบที่ 3
+  // ---------------- ระบบบังคับผลแพ้ชนะ (แก้ใหม่) ----------------
+  if (globalState.adminWinMode !== 'normal') {
+    if (globalState.adminWinMode === 'force_player') {
+      // บังคับให้ Player ชนะชัวร์ๆ ด้วยไพ่ 8 แต้ม
+      pHand = [{value:'9', suit:'♠', isRed:false}, {value:'9', suit:'♥', isRed:true}]; 
+      // Banker ได้แค่ 0 แต้ม
+      bHand = [{value:'10', suit:'♦', isRed:true}, {value:'10', suit:'♣', isRed:false}]; 
+      return { pHand, bHand }; // จบเลย ไม่ต้องจั่วใบ 3
+    } 
+    
+    if (globalState.adminWinMode === 'force_banker') {
+      // Player ได้แค่ 0 แต้ม
+      pHand = [{value:'10', suit:'♠', isRed:false}, {value:'10', suit:'♥', isRed:true}]; 
+      // บังคับให้ Banker ชนะชัวร์ๆ ด้วยไพ่ 8 แต้ม
+      bHand = [{value:'9', suit:'♦', isRed:true}, {value:'9', suit:'♣', isRed:false}]; 
+      return { pHand, bHand }; // จบเลย ไม่ต้องจั่วใบ 3
+    } 
+    
+    if (globalState.adminWinMode === 'force_tie') {
+      // บังคับเสมอ (0 แต้มทั้งคู่)
+      pHand = [{value:'5', suit:'♠', isRed:false}, {value:'5', suit:'♥', isRed:true}]; 
+      bHand = [{value:'10', suit:'♦', isRed:true}, {value:'10', suit:'♣', isRed:false}]; 
+      return { pHand, bHand }; // จบเลย ไม่ต้องจั่วใบ 3
+    }
+  }
+  // -----------------------------------------------------------
+
+  // ถ้าเป็นโหมดสุ่มปกติ (normal) จะทำงานตามกฎ Baccarat ปกติ
   let pDrewThird = false;
   let pThirdVal = null;
 
-  // ถ้าไพ่ 2 ใบแรกแต้มน้อยกว่า 8 (ไม่ใช่ป๊อก)
   if (pScore < 8 && bScore < 8) {
-    // Player จั่วถ้าแต้ม 0-5
     if (pScore <= 5) {
       const thirdP = drawCard();
       pHand.push(thirdP);
@@ -59,7 +84,6 @@ function generateGameResult() {
       pDrewThird = true;
     }
 
-    // Banker จั่วตามกฎ
     let bShouldDraw = false;
     if (!pDrewThird) {
       if (bScore <= 5) bShouldDraw = true;
@@ -74,21 +98,6 @@ function generateGameResult() {
     if (bShouldDraw) {
       bHand.push(drawCard());
       bScore = calcScore(bHand);
-    }
-  }
-  
-  // แอดมินบังคับผล (ถ้ามี)
-  if (globalState.adminWinMode !== 'normal') {
-    // ถ้าล็อกผลไว้ ให้ทับไพ่ชุดเดิมด้วยชุดที่การันตีผล
-    if (globalState.adminWinMode === 'force_player') {
-      pHand = [{value:'9', suit:'♠', isRed:false}, {value:'9', suit:'♥', isRed:true}]; 
-      bHand = [{value:'10', suit:'♦', isRed:true}, {value:'5', suit:'♣', isRed:false}]; 
-    } else if (globalState.adminWinMode === 'force_banker') {
-      pHand = [{value:'10', suit:'♦', isRed:true}, {value:'4', suit:'♣', isRed:false}]; 
-      bHand = [{value:'9', suit:'♠', isRed:false}, {value:'9', suit:'♥', isRed:true}]; 
-    } else if (globalState.adminWinMode === 'force_tie') {
-      pHand = [{value:'5', suit:'♠', isRed:false}, {value:'5', suit:'♥', isRed:true}]; 
-      bHand = [{value:'10', suit:'♦', isRed:true}, {value:'10', suit:'♣', isRed:false}]; 
     }
   }
 
@@ -114,7 +123,6 @@ function startRound() {
       const result = generateGameResult();
       io.emit('startDealing', result);
       
-      // หน่วงเวลา 15 วินาทีให้แอนิเมชันจบ (เพราะมีจั่วใบ 3 แล้วอาจจะนานขึ้น)
       setTimeout(() => {
         startRound();
       }, 15000); 
