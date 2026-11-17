@@ -158,14 +158,36 @@
         .admin-group label { font-size: 0.85rem; color: #e9d5ff; }
         .admin-input, .admin-select { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--admin-purple); background: #1e1b4b; color: #fff; font-size: 0.95rem; outline: none; }
         
-        /* --- Scoreboard --- */
-        .scoreboard-panel { background: rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 15px; width: 100%; }
+        /* --- Scoreboard (Long Tape) --- */
+        .scoreboard-panel { background: rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 15px; width: 100%; overflow: hidden; }
         .scoreboard-header { display: flex; justify-content: space-between; font-size: 0.9rem; color: #94a3b8; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
-        .board-grid-5x4 { display: grid; grid-template-columns: repeat(4,1fr); grid-template-rows: repeat(5,1fr); gap: 10px; justify-items: center; max-width: 280px; margin: 0 auto; }
-        .board-cell { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px dashed rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.95rem; }
-        .board-cell.p-win { background: var(--player-blue); border: none; color: white; }
-        .board-cell.b-win { background: var(--banker-red); border: none; color: white; }
-        .board-cell.t-win { background: var(--tie-green); border: none; color: white; }
+        
+        /* ตารางยาวแบบเลื่อนได้ */
+        .history-tape {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--gold) rgba(255,255,255,0.1);
+        }
+        .history-tape::-webkit-scrollbar { height: 8px; }
+        .history-tape::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        .history-tape::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 4px; }
+        
+        .tape-cell {
+            flex: 0 0 auto;
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+            border: 1px dashed rgba(255,255,255,0.2);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 0.9rem;
+            color: #6b7280;
+        }
+        .tape-cell.p-win { background: var(--player-blue); border: none; color: white; }
+        .tape-cell.b-win { background: var(--banker-red); border: none; color: white; }
+        .tape-cell.t-win { background: var(--tie-green); border: none; color: white; }
         
         /* --- Modals --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); display: flex; justify-content: center; align-items: center; z-index: 1001; display: none; }
@@ -180,7 +202,6 @@
     </style>
 </head>
 <body>
-    <!-- (โครงสร้าง HTML ทั้งหมดเหมือนเดิมเป๊ะๆ) -->
     <div class="status-bar">
         <div style="display:flex; align-items:center; gap:10px;">
             <div class="left-menu-btn" onclick="toggleDrawer()"><i class="fa-solid fa-bars"></i></div>
@@ -323,12 +344,15 @@
             </div>
         </div>
 
+        <!-- ส่วนที่แก้ไข: กระดานสถิติแบบ Long Tape -->
         <div class="scoreboard-panel">
             <div class="scoreboard-header">
-                <div><i class="fa-solid fa-list-check"></i> สถิติ</div>
-                <div>รอบ: <span id="round-count">0</span>/20</div>
+                <div><i class="fa-solid fa-list-check"></i> สถิติ (50 ตา)</div>
+                <div>รอบ: <span id="round-count">0</span>/50</div>
             </div>
-            <div class="board-grid-5x4" id="board-grid"></div>
+            <div class="history-tape" id="history-tape">
+                <!-- เซลล์จะถูกสร้างด้วย JavaScript -->
+            </div>
         </div>
     </div>
 
@@ -496,19 +520,22 @@
             }
         }
 
+        // ปรับปรุงฟังก์ชันสร้างกระดานแบบ Long Tape
         function initScoreboard() {
-            const grid = document.getElementById('board-grid');
-            grid.innerHTML = '';
-            for (let i = 0; i < 20; i++) {
+            const tape = document.getElementById('history-tape');
+            tape.innerHTML = '';
+            // สร้าง 50 ช่องรอไว้
+            for (let i = 0; i < 50; i++) {
                 const cell = document.createElement('div');
-                cell.className = 'board-cell'; cell.id = `cell-${i}`;
-                grid.appendChild(cell);
+                cell.className = 'tape-cell'; 
+                cell.id = `cell-${i}`;
+                tape.appendChild(cell);
             }
             document.getElementById('round-count').innerText = serverHistory.length;
         }
         
         function drawScoreboard() {
-            initScoreboard();
+            initScoreboard(); // สร้างช่องเปล่าก่อน
             serverHistory.forEach((result, index) => {
                 const cell = document.getElementById(`cell-${index}`);
                 if (cell) {
@@ -517,6 +544,10 @@
                     if (result === 'tie') { cell.classList.add('t-win'); cell.innerText = 'T'; }
                 }
             });
+            
+            // เลื่อนสกроллไปที่ช่องล่าสุด (ขวาสุด)
+            const tape = document.getElementById('history-tape');
+            tape.scrollLeft = tape.scrollWidth;
         }
 
         /* ==== CODE SYSTEM ==== */
@@ -869,7 +900,7 @@
             }
             
             if (gameState === 'BETTING') {
-                // 🔥 ล้างไพ่ทันทีเมื่อเริ่มรอบใหม่ (ถ้ายังไม่ได้ล้าง)
+                // 🔥 ล้างไพ่ทันทีเมื่อเริ่มรอบใหม่
                 if(document.getElementById('player-cards').innerHTML !== '') {
                      document.getElementById('player-cards').innerHTML = '';
                      document.getElementById('banker-cards').innerHTML = '';
