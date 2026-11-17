@@ -17,22 +17,18 @@ app.get('/', (req, res) => {
 let globalState = {
   gameState: 'BETTING',
   countdown: 10,
-  adminWinMode: 'normal',
+  adminWinMode: 'normal', // normal | force_player | force_banker | force_tie
 };
 
 let timerInterval = null;
 
 const suits = ['♠', '♥', '♦', '♣'];
-const values = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 
-const drawCard = (forceVal = null) => {
+// ฟังก์ชันสร้างไพ่จากค่าที่กำหนด
+const createCard = (valStr) => {
   const suit = suits[Math.floor(Math.random() * suits.length)];
-  let val = forceVal;
-  if (!val) {
-    val = values[Math.floor(Math.random() * values.length)];
-  }
   return {
-    value: val,
+    value: valStr,
     suit: suit,
     isRed: ['♥','♦'].includes(suit)
   };
@@ -41,88 +37,106 @@ const drawCard = (forceVal = null) => {
 const getVal = (card) => ['10','J','Q','K'].includes(card.value) ? 0 : card.value === 'A' ? 1 : parseInt(card.value);
 const calcScore = (hand) => hand.reduce((sum, c) => sum + getVal(c), 0) % 10;
 
-function generateGameResult() {
-  let pHand = [drawCard(), drawCard()];
-  let bHand = [drawCard(), drawCard()];
-  
-  let pScore = calcScore(pHand);
-  let bScore = calcScore(bHand);
+// ฟังก์ชันสร้างชุดไพ่ให้ได้แต้มที่ต้องการ (0-9)
+function createHandWithScore(targetScore, isThirdCard = false) {
+  if (targetScore > 9) targetScore = 9;
+  if (targetScore < 0) targetScore = 0;
 
-  // ==========================================
-  // ระบบบังคับผล (แก้ใหม่ให้ตรงตามเงื่อนไขเป๊ะๆ)
-  // ==========================================
-  if (globalState.adminWinMode !== 'normal') {
-    let targetWin = globalState.adminWinMode === 'force_player' ? 'player' : (globalState.adminWinMode === 'force_banker' ? 'banker' : 'tie');
+  let hand = [];
+  let currentScore = 0;
 
-    if (targetWin === 'player') {
-        // 1. ฝั่ง Player (ต้องชนะ) 2 ใบแรกต้องมีแต้ม > 5 (เช่น 6, 7, 8, 9)
-        pScore = 6 + Math.floor(Math.random() * 4); // สุ่ม 6-9
-        if (pScore > 9) pScore = 9;
-        
-        // 2. ฝั่ง Banker (ต้องแพ้) ต้องมีแต้มน้อยกว่า Player
-        bScore = Math.floor(Math.random() * pScore); // สุ่ม 0 ถึง (pScore-1)
+  // สุ่มหน้าไพ่ใบแรก (พยายามให้แต้มไม่เกิน targetScore)
+  let v1 = Math.floor(Math.random() * (targetScore + 1));
+  hand.push(createCard(v1 === 0 ? '10' : v1.toString()));
+  currentScore = v1;
 
-        // 3. ถ้า Player ไม่ได้ป๊อก (ไม่ถึง 8-9) ให้เปิดไพ่ใบที่ 3 หลังให้ได้แต้มหนักๆ
-        if (pScore < 8) {
-            // จัดไพ่ใบ 3 ให้ Player เพื่อให้รวมแล้วได้ 8 หรือ 9
-            let needPoints = (8 - pScore) > 0 ? (8 - pScore) : (9 - pScore);
-            let cardVal = needPoints > 9 ? 0 : needPoints;
-            if (cardVal === 0) cardVal = '10';
-            pHand[2] = drawCard(cardVal.toString());
-        }
-        
-        // สร้างหน้าไพ่ให้ตรงกับแต้มที่กำหนด (Player)
-        // (เพื่อไม่ให้หน้าไพ่กับแต้มไม่ตรงกัน)
-        pHand[0] = drawCard((pScore > 5 ? '6' : '5')); // โยนหน้าไพ่ให้ดูมีแต้ม
-        pHand[1] = drawCard((pScore % 2 === 0 ? '2' : '3'));
-        // (ในโหมดบังคับ ผลลัพธ์จะไม่ได้ดูจากหน้าไพ่จริง แต่ดูจาก pScore ที่เราตั้งไว้)
-
-    } 
-    else if (targetWin === 'banker') {
-        // 1. ฝั่ง Banker (ต้องชนะ) 2 ใบแรกต้องมีแต้ม > 5 (6-9)
-        bScore = 6 + Math.floor(Math.random() * 4);
-        if (bScore > 9) bScore = 9;
-
-        // 2. ฝั่ง Player (ต้องแพ้) ต้องมีแต้มน้อยกว่า Banker
-        pScore = Math.floor(Math.random() * bScore);
-
-        // 3. ถ้า Banker ไม่ได้ป๊อก ให้เปิดไพ่ใบที่ 3 ให้ได้แต้มหนักๆ
-        if (bScore < 8) {
-            let needPoints = (8 - bScore) > 0 ? (8 - bScore) : (9 - bScore);
-            let cardVal = needPoints > 9 ? 0 : needPoints;
-            if (cardVal === 0) cardVal = '10';
-            bHand[2] = drawCard(cardVal.toString());
-        }
-
-        // สร้างหน้าไพ่ Banker
-        bHand[0] = drawCard((bScore > 5 ? '6' : '5'));
-        bHand[1] = drawCard((bScore % 2 === 0 ? '2' : '3'));
-    } 
-    else if (targetWin === 'tie') {
-        // บังคับเสมอ ให้ทั้งคู่ได้แต้มเท่ากัน (0-9)
-        let tieScore = Math.floor(Math.random() * 10);
-        pScore = tieScore;
-        bScore = tieScore;
-
-        // สร้างหน้าไพ่ให้แต้มเท่ากัน
-        pHand[0] = drawCard((tieScore > 5 ? '5' : '1'));
-        pHand[1] = drawCard((tieScore > 5 ? '2' : '0')); // สมมติ
-        bHand[0] = pHand[0]; 
-        bHand[1] = pHand[1];
-    }
-
-    // ส่งข้อมูลกลับ (หน้าไพ่ที่ส่งไป อาจจะไม่ตรงกับ pScore ในโหมดบังคับ แต่หน้าเว็บจะโชว์ตามที่เราส่งไป)
-    // เพื่อให้หน้าเว็บโชว์แต้มตรงกับที่เราเซ็ตไว้ ต้องคำนวณหน้าไพ่ให้ตรงเป๊ะ
-    // แต่เพื่อความง่ายและรวดเร็ว ผมจะปล่อยให้หน้าเว็บคำนวณแต้มจากหน้าไพ่ที่ส่งไปเลย
-    // (จริงๆ ในโหมดบังคับ เราไม่ต้องส่ง pHand/bHand กลับไป แต่ส่งแค่ผลลัพธ์ไปให้หน้าเว็บโชว์ก็พอ)
-    
-    return { pHand, bHand, forceWin: targetWin };
+  // ถ้า targetScore เป็น 0 และสุ่มใบแรกได้ 0 ให้จบเลย
+  if (targetScore === 0 && v1 === 0) {
+    hand.push(createCard('10')); 
+    return hand;
   }
 
+  // ใบที่สอง ให้เติมให้เต็ม targetScore
+  let v2 = targetScore - currentScore;
+  if (v2 < 0) v2 = 0;
+  hand.push(createCard(v2 === 0 ? '10' : v2.toString()));
+  
+  return hand;
+}
+
+function generateGameResult() {
+  let pHand, bHand;
+  let pScore, bScore;
+
   // ==========================================
-  // โหมดปกติ (Normal)
+  // โหมดแอดมินบังคับผล
   // ==========================================
-  return { pHand, bHand, forceWin: null };
+  if (globalState.adminWinMode === 'force_player') {
+    // ล็อกให้ Player ชนะ (ให้ได้ 8 หรือ 9 แต้ม, Banker ได้ 0-7 แต้ม)
+    pScore = Math.random() < 0.5 ? 8 : 9;
+    bScore = Math.floor(Math.random() * 8); // 0-7
+
+    pHand = createHandWithScore(pScore);
+    bHand = createHandWithScore(bScore);
+
+  } else if (globalState.adminWinMode === 'force_banker') {
+    // ล็อกให้ Banker ชนะ
+    bScore = Math.random() < 0.5 ? 8 : 9;
+    pScore = Math.floor(Math.random() * 8); // 0-7
+
+    pHand = createHandWithScore(pScore);
+    bHand = createHandWithScore(bScore);
+
+  } else if (globalState.adminWinMode === 'force_tie') {
+    // ล็อกให้เสมอ
+    pScore = Math.floor(Math.random() * 10); // 0-9
+    bScore = pScore;
+
+    pHand = createHandWithScore(pScore);
+    bHand = createHandWithScore(bScore);
+
+  } else {
+    // ==========================================
+    // โหมดสุ่มปกติ (Normal)
+    // ==========================================
+    pHand = [createCard(Math.floor(Math.random()*10).toString()), createCard(Math.floor(Math.random()*10).toString())];
+    bHand = [createCard(Math.floor(Math.random()*10).toString()), createCard(Math.floor(Math.random()*10).toString())];
+    
+    pScore = calcScore(pHand);
+    bScore = calcScore(bHand);
+
+    // กฎการจั่วไพ่ใบที่ 3 (แบบเป๊ะๆ)
+    let pDrewThird = false;
+    let pThirdVal = null;
+
+    if (pScore < 8 && bScore < 8) {
+      if (pScore <= 5) {
+        const thirdP = createCard(Math.floor(Math.random()*10).toString());
+        pHand.push(thirdP);
+        pThirdVal = getVal(thirdP);
+        pScore = calcScore(pHand);
+        pDrewThird = true;
+      }
+
+      let bShouldDraw = false;
+      if (!pDrewThird) {
+        if (bScore <= 5) bShouldDraw = true;
+      } else {
+        if (bScore <= 2) bShouldDraw = true;
+        else if (bScore === 3) bShouldDraw = (pThirdVal !== 8);
+        else if (bScore === 4) bShouldDraw = (pThirdVal >= 2 && pThirdVal <= 7);
+        else if (bScore === 5) bShouldDraw = (pThirdVal >= 4 && pThirdVal <= 7);
+        else if (bScore === 6) bShouldDraw = (pThirdVal === 6 || pThirdVal === 7);
+      }
+
+      if (bShouldDraw) {
+        bHand.push(createCard(Math.floor(Math.random()*10).toString()));
+        bScore = calcScore(bHand);
+      }
+    }
+  }
+
+  return { pHand, bHand };
 }
 
 function startRound() {
