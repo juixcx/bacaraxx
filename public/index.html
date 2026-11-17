@@ -691,6 +691,11 @@
             document.getElementById('clear-btn').disabled = true;
             document.getElementById('timer-display').innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`;
             
+            // 🔥 ล้างไพ่และคะแนนเก่าทิ้งทันที
+            document.getElementById('player-cards').innerHTML = '';
+            document.getElementById('banker-cards').innerHTML = '';
+            setScoreBadge('player-score', 0);
+            setScoreBadge('banker-score', 0);
             document.getElementById('announcement-banner').style.display = 'none';
             document.getElementById('player-score').classList.remove('pokk');
             document.getElementById('banker-score').classList.remove('pokk');
@@ -701,11 +706,6 @@
             let playerHand = serverResult.pHand;
             let bankerHand = serverResult.bHand;
 
-            document.getElementById('player-cards').innerHTML = '';
-            document.getElementById('banker-cards').innerHTML = '';
-            setScoreBadge('player-score', 0); setScoreBadge('banker-score', 0);
-
-            // แจกไพ่ 2 ใบแรก
             const sequence = [
                 { side: 'left', hand: playerHand, idx: 0, scoreId: 'player-score' },
                 { side: 'right', hand: bankerHand, idx: 0, scoreId: 'banker-score' },
@@ -726,7 +726,6 @@
             setScoreBadge('player-score', pScore); setScoreBadge('banker-score', bScore);
             await sleep(400); speakThai(`Player ${pScore} แต้ม, Banker ${bScore} แต้ม`); await sleep(1600);
 
-            // ตรวจสอบว่ามีไพ่ใบที่ 3 ไหม จากที่ Server คำนวณมาแล้ว
             if (playerHand.length > 2) {
                 await animateDealToSide('left');
                 document.getElementById('player-cards').innerHTML += createCardHTML(playerHand[2]);
@@ -746,7 +745,6 @@
                 speakThai('Banker อยู่'); await sleep(1000);
             }
 
-            // สรุปผล
             let winner = ''; let totalPlacedBets = bets.player + bets.banker + bets.tie; let winAmount = 0;
             if (pScore > bScore) { winner = 'player'; winAmount = bets.player * 2; }
             else if (bScore > pScore) { winner = 'banker'; winAmount = bets.banker * 1.95; }
@@ -789,6 +787,15 @@
             gameState = state.gameState;
             
             if (gameState === 'BETTING') {
+                // 🔥 ล้างไพ่และคะแนนเก่าทิ้งทันทีเมื่อเริ่มรอบใหม่
+                document.getElementById('player-cards').innerHTML = '';
+                document.getElementById('banker-cards').innerHTML = '';
+                setScoreBadge('player-score', 0);
+                setScoreBadge('banker-score', 0);
+                document.getElementById('announcement-banner').style.display = 'none';
+                document.getElementById('player-score').classList.remove('pokk');
+                document.getElementById('banker-score').classList.remove('pokk');
+
                 document.getElementById('betting-grid').classList.remove('disabled');
                 document.getElementById('chip-selection').classList.remove('disabled');
                 document.getElementById('clear-btn').disabled = false;
@@ -803,7 +810,6 @@
             startDealing(serverResult);
         });
 
-        // แก้ไขฟังก์ชันอัปเดตโหมดของแอดมิน (ตอนนี้ส่งไปให้ Server จัดการไพ่แล้ว)
         const originalUpdateWinMode = updateWinMode;
         updateWinMode = function() {
             if (!isAdmin) return;
