@@ -254,20 +254,14 @@
         .road-marker.streak.p-win { background: var(--player-blue); color: #fff; border: 2px solid var(--player-blue); }
         .road-marker.streak.b-win { background: var(--banker-red); color: #fff; border: 2px solid var(--banker-red); }
 
-        /* ช่อง Tie (ขีดทแยงเขียว) */
-        .road-marker.t-win {
-            background: transparent !important;
-            border: none !important;
-            position: relative;
-            z-index: 1;
-        }
-        .road-marker.t-win::before {
-            content: '';
+        /* ขีดเสมอ (Tie) ทับในช่องเดิม */
+        .tie-line {
             position: absolute;
-            width: 30px; height: 4px;
+            width: 32px; height: 4px;
             background: #16a34a;
             transform: rotate(-45deg);
             border-radius: 2px;
+            z-index: 5;
             box-shadow: 0 0 2px rgba(0,0,0,0.3);
         }
 
@@ -661,18 +655,31 @@
             let currentCol = 0;
             let currentRow = 0;
             let lastResult = null;
+            let lastIndex = -1; // เก็บตำแหน่งล่าสุด
 
             serverHistory.forEach((result, index) => {
+                if (result === 'tie') {
+                    // ถ้าเป็น Tie ให้ขีดทับช่องล่าสุด
+                    if (lastIndex >= 0) {
+                        const r = Math.floor(lastIndex / cols);
+                        const c = lastIndex % cols;
+                        grid[r][c] = 'tie-line'; // ใช้ 'tie-line' แทนเพื่อวาดขีด
+                    }
+                    return;
+                }
+
                 if (index === 0) {
                     grid[currentRow][currentCol] = result;
                     streakCounters[currentRow][currentCol] = 1;
                     lastResult = result;
+                    lastIndex = currentRow * cols + currentCol;
                     currentRow++;
                 } else {
                     if (result === lastResult) {
                         if (currentRow < rows) {
                             grid[currentRow][currentCol] = result;
                             streakCounters[currentRow][currentCol] = streakCounters[currentRow - 1][currentCol] + 1;
+                            lastIndex = currentRow * cols + currentCol;
                             currentRow++;
                         } else {
                             currentCol++;
@@ -680,6 +687,7 @@
                             if (currentCol >= cols) currentCol = cols - 1;
                             grid[currentRow][currentCol] = result;
                             streakCounters[currentRow][currentCol] = 1;
+                            lastIndex = currentRow * cols + currentCol;
                             currentRow++;
                         }
                     } else {
@@ -688,39 +696,35 @@
                         if (currentCol >= cols) currentCol = cols - 1;
                         grid[currentRow][currentCol] = result;
                         streakCounters[currentRow][currentCol] = 1;
+                        lastIndex = currentRow * cols + currentCol;
                         currentRow++;
                         lastResult = result;
                     }
                 }
             });
 
+            // ล้างตารางก่อนวาดใหม่เพื่อไม่ให้ซ้ำซ้อน
+            bigRoad.innerHTML = '';
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
-                    const cellIndex = r * cols + c;
-                    let cell = bigRoad.children[cellIndex];
+                    const cell = document.createElement('div');
+                    cell.className = 'road-cell';
                     
-                    if (!cell) {
-                        cell = document.createElement('div');
-                        cell.className = 'road-cell';
-                        bigRoad.appendChild(cell);
-                    }
-
-                    if (grid[r][c] && cell.innerHTML === '') {
+                    const val = grid[r][c];
+                    if (val === 'tie-line') {
+                        const line = document.createElement('div');
+                        line.className = 'tie-line';
+                        cell.appendChild(line);
+                    } else if (val) {
                         const marker = document.createElement('div');
-                        const winner = grid[r][c];
                         const streak = streakCounters[r][c];
-                        
-                        // ถ้าสตรีค 2 ขึ้นไป ให้ทึบ
-                        let isStreak = streak >= 2;
-                        
-                        marker.className = `road-marker ${winner === 'player' ? 'p-win' : winner === 'banker' ? 'b-win' : 't-win'} ${isStreak ? 'streak' : ''}`;
-                        
-                        if (winner !== 'tie') {
-                            marker.innerText = winner === 'player' ? 'P' : 'B';
-                        }
-                        
+                        const isStreak = streak >= 2;
+                        marker.className = `road-marker ${val === 'player' ? 'p-win' : 'b-win'} ${isStreak ? 'streak' : ''}`;
+                        marker.innerText = val === 'player' ? 'P' : 'B';
                         cell.appendChild(marker);
                     }
+                    
+                    bigRoad.appendChild(cell);
                 }
             }
 
@@ -729,14 +733,12 @@
             // เลื่อนเฉพาะเมื่อมีของใหม่
             setTimeout(() => {
                 const container = document.getElementById('big-road-container');
-                const lastCellIndex = serverHistory.length - 1;
-                if (lastCellIndex >= 0) {
-                    const lastCell = bigRoad.children[lastCellIndex];
-                    if (lastCell) {
+                if (lastIndex >= 0) {
+                    const targetCell = bigRoad.children[lastIndex];
+                    if (targetCell) {
                         const containerWidth = container.clientWidth;
-                        const cellRightEdge = lastCell.offsetLeft + lastCell.offsetWidth;
+                        const cellRightEdge = targetCell.offsetLeft + targetCell.offsetWidth;
                         
-                        // เลื่อนแค่พอดีกับช่อง ไม่วิ่งไปไกลสุด
                         if (cellRightEdge > container.scrollLeft + containerWidth) {
                             container.scrollLeft = cellRightEdge - containerWidth + 20;
                         }
