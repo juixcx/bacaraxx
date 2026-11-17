@@ -12,12 +12,13 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// ---------------- สถานะกลางของเซิร์ฟเวอร์ ----------------
 let globalState = {
   gameState: 'BETTING',
   countdown: 10,
   adminWinMode: 'normal',
-  history: [],       // เก็บสถิติ 20 ตา
-  lastResult: null,  // เก็บไพ่ตาล่าสุด
+  history: [],       // เก็บสถิติ 50 ตา
+  lastResult: null,  
 };
 
 let timerInterval = null;
@@ -107,17 +108,17 @@ function generateGameResult() {
 }
 
 function startRound() {
-  // ตรวจสอบครบ 20 ตา หรือยัง
-  if (globalState.history.length >= 20) {
-    console.log('ครบ 20 ตา! รีเซ็ตสถิติใหม่');
+  // ครบ 50 ตา ค่อยรีเซ็ต
+  if (globalState.history.length >= 50) {
+    console.log('ครบ 50 ตา! รีเซ็ตสถิติใหม่');
     globalState.history = []; 
     globalState.lastResult = null;
-    io.emit('resetScoreboard'); // ส่งสัญญาณบอกให้หน้าเว็บล้างสถิติ
+    io.emit('resetScoreboard'); 
   }
 
   globalState.gameState = 'BETTING';
   globalState.countdown = 10;
-  globalState.lastResult = null; // ล้างไพ่ตาล่าสุดเมื่อเริ่มรอบใหม่
+  globalState.lastResult = null; 
   io.emit('stateSync', globalState);
 
   if (timerInterval) clearInterval(timerInterval);
@@ -133,7 +134,6 @@ function startRound() {
       
       const result = generateGameResult();
       
-      // คำนวณผู้ชนะเพื่อเก็บลงประวัติ
       let winner = '';
       if (result.pScore > result.bScore) winner = 'player';
       else if (result.bScore > result.pScore) winner = 'banker';
@@ -141,7 +141,6 @@ function startRound() {
       
       result.winner = winner;
       
-      // อัปเดต lastResult และ History
       globalState.lastResult = result;
       globalState.history.push(winner);
       
@@ -155,10 +154,8 @@ function startRound() {
 }
 
 io.on('connection', (socket) => {
-  // ส่งข้อมูลสถานะล่าสุดให้คนที่เพิ่งเข้าหรือรีเฟรช (จะเห็นไพ่และเวลาตรงกัน)
   socket.emit('stateSync', globalState);
   
-  // ถ้ามีไพ่ค้างอยู่ (เช่น เพิ่งเข้าตอนแจกไพ่) ให้แสดงไพ่ตาล่าสุดทันที
   if (globalState.gameState === 'DEALING' && globalState.lastResult) {
       socket.emit('startDealing', globalState.lastResult);
   }
