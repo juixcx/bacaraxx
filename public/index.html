@@ -195,21 +195,21 @@
             border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
             font-weight: bold; font-size: 0.85rem; color: #fff;
-            animation: popIn 0.3s ease-out;
         }
         .bead-circle.p-win { background: var(--player-blue); }
         .bead-circle.b-win { background: var(--banker-red); }
         .bead-circle.t-win { background: var(--tie-green); }
-        @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
 
         /* --- Big Road (ตารางขวา) --- */
         .big-road-container {
             flex-grow: 1;
             overflow-x: auto;
+            overflow-y: hidden;
             background: #fff;
             border: 1px solid #000;
             position: relative;
             min-width: 400px;
+            scroll-behavior: smooth; /* เลื่อนนุ่มนวล */
         }
         .big-road {
             display: grid;
@@ -232,54 +232,29 @@
             width: 26px; height: 26px;
             border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
-            font-weight: bold; font-size: 0.7rem; color: #fff;
+            font-weight: bold; font-size: 0.7rem;
             position: absolute;
             box-sizing: border-box;
-            background: #fff;
+            z-index: 2;
         }
         
-        /* Player (วงกลมขอบน้ำเงิน) */
+        /* Player / Banker ตัวที่ 1 (วงกลมโปร่ง) */
         .road-marker.p-win {
             border: 2px solid var(--player-blue);
             color: var(--player-blue);
+            background: #fff;
         }
-        .road-marker.p-win.streak-1 {
-            background: var(--player-blue);
-            color: #fff;
-        }
-        
-        /* Banker (วงกลมขอบแดง) */
         .road-marker.b-win {
             border: 2px solid var(--banker-red);
             color: var(--banker-red);
-        }
-        .road-marker.b-win.streak-1 {
-            background: var(--banker-red);
-            color: #fff;
+            background: #fff;
         }
 
-        /* สตรีค 2 ตัว (แท่งทึบ) */
-        .road-marker.streak-2.p-win { background: var(--player-blue); border: none; width: 32px; height: 32px; border-radius: 0; z-index: 2; margin-top: -1px; margin-left: -1px; }
-        .road-marker.streak-2.b-win { background: var(--banker-red); border: none; width: 32px; height: 32px; border-radius: 0; z-index: 2; margin-top: -1px; margin-left: -1px; }
-        
-        /* สตรีค 3 ตัวขึ้นไป (แท่งยาวทึบ) */
-        .road-marker.streak-3.p-win { background: var(--player-blue); border: none; width: 32px; height: 32px; border-radius: 0; z-index: 2; margin-top: -1px; margin-left: -1px; }
-        .road-marker.streak-3.b-win { background: var(--banker-red); border: none; width: 32px; height: 32px; border-radius: 0; z-index: 2; margin-top: -1px; margin-left: -1px; }
-        
-        /* ลูกศรลงท้ายสตรีค (เพื่อให้เหมือนในภาพ) */
-        .road-marker.streak-3::after {
-            content: '';
-            position: absolute;
-            bottom: -8px; left: 50%;
-            transform: translateX(-50%);
-            border-left: 6px solid transparent;
-            border-right: 6px solid transparent;
-            border-top: 8px solid currentColor;
-        }
-        .road-marker.streak-3.p-win::after { border-top-color: var(--player-blue); }
-        .road-marker.streak-3.b-win::after { border-top-color: var(--banker-red); }
+        /* สตรีค 2 ตัวขึ้นไป (วงกลมทึบสี) */
+        .road-marker.streak.p-win { background: var(--player-blue); color: #fff; border: 2px solid var(--player-blue); }
+        .road-marker.streak.b-win { background: var(--banker-red); color: #fff; border: 2px solid var(--banker-red); }
 
-        /* ช่อง Tie (ขีดทแยง) */
+        /* ช่อง Tie (ขีดทแยงเขียว) */
         .road-marker.t-win {
             background: transparent !important;
             border: none !important;
@@ -290,7 +265,7 @@
             content: '';
             position: absolute;
             width: 30px; height: 4px;
-            background: #16a34a; /* สีเขียว */
+            background: #16a34a;
             transform: rotate(-45deg);
             border-radius: 2px;
             box-shadow: 0 0 2px rgba(0,0,0,0.3);
@@ -464,7 +439,7 @@
                 <div class="bead-plate" id="bead-plate"></div>
                 
                 <!-- Big Road (ตารางขวา) -->
-                <div class="big-road-container">
+                <div class="big-road-container" id="big-road-container">
                     <div class="big-road" id="big-road"></div>
                 </div>
             </div>
@@ -645,17 +620,14 @@
             // 1. อัปเดต Bead Plate (ตารางซ้าย)
             const beadPlate = document.getElementById('bead-plate');
             
-            // ถ้ามีการรีเซ็ต (history สั้นลง) ให้ล้างของเก่าทิ้ง
             if (serverHistory.length < renderedHistoryCount) {
                 beadPlate.innerHTML = '';
                 document.getElementById('big-road').innerHTML = '';
                 renderedHistoryCount = 0;
             }
 
-            // ถ้าจำนวนข้อมูลไม่เพิ่มขึ้น ไม่ต้องวาดใหม่ (แก้ปัญหากระพริบ)
             if (serverHistory.length <= renderedHistoryCount) return;
 
-            // วาด Bead Plate เฉพาะช่องที่เพิ่มใหม่
             const recentHistory = serverHistory.slice(-24);
             const startIndex = renderedHistoryCount > 24 ? renderedHistoryCount - 24 : 0;
             
@@ -666,8 +638,6 @@
                     cell.className = 'bead-cell';
                     beadPlate.appendChild(cell);
                 }
-                
-                // ถ้าช่องนี้ยังว่าง ให้วาดลูกบอล
                 if (cell.innerHTML === '') {
                     const result = recentHistory[i];
                     const circle = document.createElement('div');
@@ -680,11 +650,10 @@
             // 2. อัปเดต Big Road (ตารางขวา)
             const bigRoad = document.getElementById('big-road');
             
-            // คำนวณ Grid 40 คอลัมน์ x 6 แถว
             const cols = 40;
             const rows = 6;
             const grid = Array.from({ length: rows }, () => Array(cols).fill(null));
-            const streakCounters = Array.from({ length: rows }, () => Array(cols).fill(0)); // นับสตรีคแต่ละช่อง
+            const streakCounters = Array.from({ length: rows }, () => Array(cols).fill(0));
             
             let currentCol = 0;
             let currentRow = 0;
@@ -698,13 +667,11 @@
                     currentRow++;
                 } else {
                     if (result === lastResult) {
-                        // ถ้าซ้ำ (สตรีค) ให้ลงไปแถวถัดไป
                         if (currentRow < rows) {
                             grid[currentRow][currentCol] = result;
                             streakCounters[currentRow][currentCol] = streakCounters[currentRow - 1][currentCol] + 1;
                             currentRow++;
                         } else {
-                            // ถ้าเต็มแถวแล้ว (6 ตัว) ให้ขยับไปคอลัมน์ถัดไป
                             currentCol++;
                             currentRow = 0;
                             if (currentCol >= cols) currentCol = cols - 1;
@@ -713,7 +680,6 @@
                             currentRow++;
                         }
                     } else {
-                        // ถ้าเปลี่ยนฝั่ง ให้ขยับไปคอลัมน์ใหม่
                         currentCol++;
                         currentRow = 0;
                         if (currentCol >= cols) currentCol = cols - 1;
@@ -725,7 +691,6 @@
                 }
             });
 
-            // อัปเดตเฉพาะช่องที่มีข้อมูลใหม่
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
                     const cellIndex = r * cols + c;
@@ -737,24 +702,17 @@
                         bigRoad.appendChild(cell);
                     }
 
-                    // ถ้าช่องนี้มีข้อมูล และยังไม่ได้วาด
                     if (grid[r][c] && cell.innerHTML === '') {
                         const marker = document.createElement('div');
                         const winner = grid[r][c];
                         const streak = streakCounters[r][c];
                         
-                        // กำหนดคลาสตามจำนวนสตรีค
-                        let streakClass = '';
-                        if (winner !== 'tie') {
-                            if (streak === 2) streakClass = 'streak-2';
-                            else if (streak >= 3) streakClass = 'streak-3';
-                        }
-
-                        marker.className = `road-marker ${winner === 'player' ? 'p-win' : winner === 'banker' ? 'b-win' : 't-win'} ${streakClass}`;
+                        // ถ้าสตรีค 2 ขึ้นไป ให้ทึบ (แต่ตัวที่ 2 จะทึบแค่ครึ่งเดียวตามภาพ)
+                        let isStreak = streak >= 2;
                         
-                        // ถ้าเป็น Tie ไม่ต้องใส่ตัวอักษร ให้ CSS วาดขีดเขียวแทน
+                        marker.className = `road-marker ${winner === 'player' ? 'p-win' : winner === 'banker' ? 'b-win' : 't-win'} ${isStreak ? 'streak' : ''}`;
+                        
                         if (winner !== 'tie') {
-                            // ใส่ตัวอักษร P หรือ B ไว้ด้านใน
                             marker.innerText = winner === 'player' ? 'P' : 'B';
                         }
                         
@@ -763,13 +721,24 @@
                 }
             }
 
-            // อัปเดตสถานะการวาด
             renderedHistoryCount = serverHistory.length;
 
-            // เลื่อน Big Road ไปทางขวาล่าสุด
+            // เลื่อนเฉพาะเมื่อมีของใหม่
             setTimeout(() => {
-                const container = document.querySelector('.big-road-container');
-                container.scrollLeft = container.scrollWidth;
+                const container = document.getElementById('big-road-container');
+                const lastCellIndex = serverHistory.length - 1;
+                if (lastCellIndex >= 0) {
+                    const lastCell = bigRoad.children[lastCellIndex];
+                    if (lastCell) {
+                        const containerWidth = container.clientWidth;
+                        const cellRightEdge = lastCell.offsetLeft + lastCell.offsetWidth;
+                        
+                        // เลื่อนแค่พอดีกับช่อง ไม่วิ่งไปไกลสุด
+                        if (cellRightEdge > container.scrollLeft + containerWidth) {
+                            container.scrollLeft = cellRightEdge - containerWidth + 20;
+                        }
+                    }
+                }
             }, 100);
         }
 
@@ -1116,14 +1085,12 @@
             document.getElementById('timer-display').innerHTML = `<i class="fa-solid fa-clock"></i> ${state.countdown}`;
             gameState = state.gameState;
 
-            // อัปเดตสถิติจาก Server ทุกครั้ง
             if (state.history) {
                 serverHistory = state.history;
-                drawCasinoScoreboard(); // วาดตารางแบบใหม่
+                drawCasinoScoreboard(); 
             }
             
             if (gameState === 'BETTING') {
-                // 🔥 ล้างไพ่ทันทีเมื่อเริ่มรอบใหม่
                 if(document.getElementById('player-cards').innerHTML !== '') {
                      document.getElementById('player-cards').innerHTML = '';
                      document.getElementById('banker-cards').innerHTML = '';
@@ -1167,7 +1134,7 @@
 
         updateUI();
         renderCodeList();
-        drawCasinoScoreboard(); // เริ่มวาดตารางครั้งแรก
+        drawCasinoScoreboard(); 
     </script>
 </body>
 </html>
