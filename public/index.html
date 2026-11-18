@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Baccarat Live Auto Demo - Admin System</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,35 +16,35 @@
             --banker-red: #dc2626;
             --tie-green: #16a34a;
             --admin-purple: #7c3aed;
+            --card-w: 44px;
+            --card-h: 64px;
+            --road-cell: 24px;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Prompt', sans-serif; }
-        html { -webkit-text-size-adjust: 100%; }
+        html, body { height: 100%; -webkit-text-size-adjust: 100%; }
         body {
-            background-color: var(--primary-bg); color: #fff; min-height: 100vh;
-            display: flex; flex-direction: column; align-items: center;
-            overflow-x: hidden; overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            touch-action: pan-y;
+            background-color: var(--primary-bg); color: #fff;
+            height: 100vh; height: 100dvh;
+            display: flex; flex-direction: column;
+            overflow: hidden;
             width: 100%;
         }
 
-        .status-bar { width: 100%; background: rgba(0,0,0,0.6); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); position: relative; z-index: 10; }
-        .left-menu-btn { font-size: 1.5rem; color: var(--gold); cursor: pointer; padding: 5px 10px; border-radius: 5px; transition: background 0.2s; }
-        .left-menu-btn:hover { background: rgba(255,255,255,0.1); }
-        .user-info-group { display: flex; align-items: center; gap: 15px; }
-        .timer-box { font-size: 1.3rem; font-weight: 600; color: var(--gold); background: rgba(0,0,0,0.4); padding: 5px 15px; border-radius: 20px; border: 1px solid var(--gold); min-width: 80px; text-align: center; }
-        .balance-box { font-size: 1.1rem; font-weight: 600; color: #fff; }
+        .status-bar { width: 100%; background: rgba(0,0,0,0.6); padding: 4px 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--gold); flex-shrink: 0; }
+        .left-menu-btn { font-size: 1.1rem; color: var(--gold); cursor: pointer; padding: 2px 6px; border-radius: 5px; }
+        .user-info-group { display: flex; align-items: center; gap: 8px; }
+        .timer-box { font-size: 0.85rem; font-weight: 600; color: var(--gold); background: rgba(0,0,0,0.4); padding: 2px 10px; border-radius: 20px; border: 1px solid var(--gold); min-width: 55px; text-align: center; }
+        .balance-box { font-size: 0.8rem; font-weight: 600; color: #fff; }
         .balance-box span { color: var(--gold); }
-        .user-badge { background: #374151; padding: 4px 12px; border-radius: 15px; font-size: 0.85rem; }
+        .user-badge { background: #374151; padding: 2px 8px; border-radius: 15px; font-size: 0.7rem; }
         .user-badge.admin { background: var(--admin-purple); color: #fff; font-weight: bold; }
 
-        .side-drawer { position: fixed; top: 0; left: -340px; width: 320px; height: 100%; background: #111827; border-right: 2px solid var(--gold); box-shadow: 5px 0 15px rgba(0,0,0,0.5); z-index: 1000; transition: left 0.3s ease-in-out; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
+        .side-drawer { position: fixed; top: 0; left: -340px; width: 320px; height: 100%; background: #111827; border-right: 2px solid var(--gold); z-index: 1000; transition: left 0.3s ease-in-out; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
         .side-drawer.open { left: 0; }
         .drawer-header { display: flex; justify-content: space-between; align-items: center; font-size: 1.2rem; color: var(--gold); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 20px; }
         .close-drawer-btn { font-size: 1.5rem; cursor: pointer; color: #9ca3af; }
         .drawer-menu { display: flex; flex-direction: column; gap: 15px; }
-        .menu-item-btn { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: #1f2937; color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background 0.2s; }
-        .menu-item-btn:hover { background: #374151; border-color: var(--gold); }
+        .menu-item-btn { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: #1f2937; color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; }
         .drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; display: none; }
 
         .admin-code-panel, .admin-user-panel { margin-top: 20px; border-top: 2px dashed var(--admin-purple); padding-top: 15px; display: none; }
@@ -53,31 +53,41 @@
         .admin-group label { font-size: 0.8rem; color: #e9d5ff; }
         .admin-code-panel input, .admin-code-panel select, .admin-user-panel input { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--admin-purple); background: #1e1b4b; color: #fff; font-size: 0.9rem; outline: none; }
 
-        .table-container { width: 100%; max-width: 1000px; margin: 20px auto; padding: 0 20px; position: relative; }
+        /* ⭐ MAIN WRAPPER — ใช้ flex เพื่อให้พอดีจอ */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 4px 6px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            gap: 4px;
+        }
 
-        .dealer-stage { position: relative; height: 180px; display: flex; justify-content: center; align-items: flex-end; margin-bottom: 10px; pointer-events: none; }
-        .dealer { position: relative; width: 140px; height: 160px; transition: transform 0.3s ease; }
+        .dealer-stage { position: relative; height: 80px; display: flex; justify-content: center; align-items: flex-end; pointer-events: none; flex-shrink: 0; }
+        .dealer { position: relative; width: 80px; height: 80px; }
         .dealer.shuffling { animation: shuffle 0.6s ease-in-out; }
         @keyframes shuffle { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(-4deg) translateY(-4px); } 75% { transform: rotate(4deg) translateY(-4px); } }
-        .dealer-head { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg,#fcd9b8,#e0a878); border: 2px solid #000; }
-        .dealer-body { position: absolute; top: 44px; left: 50%; transform: translateX(-50%); width: 84px; height: 90px; background: linear-gradient(180deg,#1e293b,#0f172a); border-radius: 40px 40px 10px 10px; border: 2px solid var(--gold); }
-        .dealer-bowtie { position: absolute; top: 58px; left: 50%; transform: translateX(-50%); width: 22px; height: 10px; background: var(--banker-red); clip-path: polygon(0 0, 50% 50%, 0 100%, 100% 100%, 50% 50%, 100% 0); }
-        .dealer-arm { position: absolute; width: 18px; height: 60px; background: linear-gradient(180deg,#1e293b,#0f172a); border-radius: 10px; border: 2px solid var(--gold); transform-origin: top center; transition: transform 0.35s cubic-bezier(.34,1.56,.64,1); top: 50px; }
-        .dealer-arm.left { left: -6px; }
-        .dealer-arm.right { right: -6px; }
+        .dealer-head { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg,#fcd9b8,#e0a878); border: 1px solid #000; }
+        .dealer-body { position: absolute; top: 24px; left: 50%; transform: translateX(-50%); width: 46px; height: 46px; background: linear-gradient(180deg,#1e293b,#0f172a); border-radius: 24px 24px 6px 6px; border: 1px solid var(--gold); }
+        .dealer-bowtie { position: absolute; top: 32px; left: 50%; transform: translateX(-50%); width: 14px; height: 6px; background: var(--banker-red); clip-path: polygon(0 0, 50% 50%, 0 100%, 100% 100%, 50% 50%, 100% 0); }
+        .dealer-arm { position: absolute; width: 10px; height: 32px; background: linear-gradient(180deg,#1e293b,#0f172a); border-radius: 6px; border: 1px solid var(--gold); transform-origin: top center; transition: transform 0.35s cubic-bezier(.34,1.56,.64,1); top: 28px; }
+        .dealer-arm.left { left: -3px; }
+        .dealer-arm.right { right: -3px; }
         .dealer-arm.dealing-left { transform: rotate(80deg) translateY(-10px); }
         .dealer-arm.dealing-right { transform: rotate(-80deg) translateY(-10px); }
-        .dealer-hand-card { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 14px; height: 20px; background: #fff; border-radius: 2px; border: 1px solid #000; opacity: 0; transition: opacity 0.2s; }
+        .dealer-hand-card { position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); width: 8px; height: 12px; background: #fff; border-radius: 1px; border: 1px solid #000; opacity: 0; transition: opacity 0.2s; }
         .dealer-hand-card.visible { opacity: 1; }
-        .dealer-table { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; height: 6px; background: var(--gold); border-radius: 4px; box-shadow: 0 0 20px rgba(245,158,11,0.4); }
-        .flying-card { position: fixed; width: 80px; height: 115px; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.6); z-index: 500; pointer-events: none; transition: transform 0.6s cubic-bezier(.4,0,.2,1), opacity 0.6s; }
+        .dealer-table { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; height: 3px; background: var(--gold); border-radius: 4px; }
+        .flying-card { position: fixed; width: var(--card-w); height: var(--card-h); background: white; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.6); z-index: 500; pointer-events: none; transition: transform 0.6s cubic-bezier(.4,0,.2,1), opacity 0.6s; }
 
-        .announcement-banner { width: 100%; background: rgba(0,0,0,0.85); border: 2px solid var(--gold); border-radius: 10px; padding: 12px; text-align: center; font-size: 1.3rem; font-weight: bold; margin-bottom: 15px; display: none; animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .announcement-banner { width: 100%; background: rgba(0,0,0,0.85); border: 1px solid var(--gold); border-radius: 6px; padding: 4px; text-align: center; font-size: 0.9rem; font-weight: bold; display: none; flex-shrink: 0; }
 
         .floating-text {
             position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 4rem; font-weight: bold; z-index: 2000; pointer-events: none;
+            font-size: 2.5rem; font-weight: bold; z-index: 2000; pointer-events: none;
             text-shadow: 2px 2px 10px rgba(0,0,0,0.8); animation: floatUp 2.5s ease-out forwards;
         }
         .floating-text.win { color: #4ade80; }
@@ -89,80 +99,81 @@
             100% { opacity: 0; transform: translate(-50%, -120%) scale(0.8); }
         }
 
-        .progress-container { width: 100%; height: 6px; background: #374151; border-radius: 4px; margin-bottom: 15px; overflow: hidden; }
+        .progress-container { width: 100%; height: 3px; background: #374151; border-radius: 4px; overflow: hidden; flex-shrink: 0; }
         #time-progress { height: 100%; width: 100%; background: var(--gold); transition: width 1s linear; }
 
-        .cards-display { display: flex; justify-content: space-around; background: rgba(0,0,0,0.3); border-radius: 15px; padding: 20px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); }
-        .side-box { text-align: center; width: 45%; transition: all 0.3s; border-radius: 10px; padding: 10px; }
-        .side-title { font-size: 1.4rem; font-weight: 600; margin-bottom: 10px; text-transform: uppercase; }
+        .admin-panel { background: rgba(124,58,237,0.15); border: 1px dashed var(--admin-purple); border-radius: 8px; padding: 6px 8px; display: none; flex-shrink: 0; }
+        .admin-panel h3 { color: #c084fc; margin-bottom: 4px; font-size: 0.75rem; display: flex; align-items: center; gap: 6px; }
+        .admin-controls-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; }
+        .admin-group { display: flex; flex-direction: column; gap: 2px; }
+        .admin-group label { font-size: 0.65rem; color: #e9d5ff; }
+        .admin-input, .admin-select { padding: 3px 6px; border-radius: 4px; border: 1px solid var(--admin-purple); background: #1e1b4b; color: #fff; font-size: 0.7rem; outline: none; width: 100%; }
+
+        .cards-display { display: flex; justify-content: space-around; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 4px; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; gap: 6px; }
+        .side-box { text-align: center; flex: 1; border-radius: 6px; padding: 2px; }
+        .side-title { font-size: 0.85rem; font-weight: 600; margin-bottom: 2px; }
         .player-title { color: #60a5fa; }
         .banker-title { color: #f87171; }
-        .score-badge { display: inline-block; background: #fff; color: #000; padding: 2px 12px; border-radius: 20px; font-weight: bold; margin-bottom: 15px; min-width: 40px; transition: all 0.3s; }
-        .score-badge.pokk { background: var(--gold); color: #000; animation: pokkPulse 1s infinite; }
+        .score-badge { display: inline-block; background: #fff; color: #000; padding: 0 8px; border-radius: 10px; font-weight: bold; margin-bottom: 2px; min-width: 24px; font-size: 0.85rem; transition: all 0.3s; }
+        .score-badge.pokk { background: var(--gold); color: #000; }
         .score-badge.live-pop { animation: scorePop 0.4s ease-out; }
         @keyframes scorePop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
-        @keyframes pokkPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.8); } 50% { box-shadow: 0 0 0 8px rgba(245,158,11,0); } }
-        .cards-row { display: flex; justify-content: center; gap: 10px; min-height: 120px; }
+        .cards-row { display: flex; justify-content: center; gap: 3px; min-height: var(--card-h); }
 
-        .card { width: 80px; height: 115px; background: white; color: black; border-radius: 8px; padding: 6px 8px; display: flex; flex-direction: column; justify-content: space-between; font-weight: bold; font-size: 1.2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.5); position: relative; animation: dealCard 0.4s ease-out forwards; }
+        .card { width: var(--card-w); height: var(--card-h); background: white; color: black; border-radius: 5px; padding: 2px 3px; display: flex; flex-direction: column; justify-content: space-between; font-weight: bold; font-size: 0.7rem; box-shadow: 0 2px 6px rgba(0,0,0,0.5); position: relative; animation: dealCard 0.4s ease-out forwards; }
         .card.red { color: var(--banker-red); }
         .card.black { color: #000; }
-        .card.special { background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid var(--gold); color: #b45309; text-align: center; }
-        .card.special .top-val, .card.special .bottom-val { font-size: 0.8rem; line-height: 1; }
-        .card.special .suit-center { font-size: 1.5rem; }
-        .card .suit-center { font-size: 2rem; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); line-height: 1; }
+        .card.special { background: linear-gradient(135deg, #fef3c7, #fde68a); border: 1px solid var(--gold); color: #b45309; text-align: center; }
+        .card.special .top-val, .card.special .bottom-val { font-size: 0.55rem; line-height: 1; }
+        .card.special .suit-center { font-size: 1rem; }
+        .card .suit-center { font-size: 1.2rem; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); line-height: 1; }
         .card .top-val { text-align: left; align-self: flex-start; }
         .card .bottom-val { align-self: flex-end; transform: rotate(180deg); }
         @keyframes dealCard { from { transform: scale(0.5) rotate(-15deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
 
         .card-back {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: repeating-linear-gradient(45deg, #b91c1c, #b91c1c 10px, #7f1d1d 10px, #7f1d1d 20px);
-            border-radius: 8px; z-index: 10; border: 2px solid #fff;
+            background: repeating-linear-gradient(45deg, #b91c1c, #b91c1c 6px, #7f1d1d 6px, #7f1d1d 12px);
+            border-radius: 5px; z-index: 10; border: 1px solid #fff;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            transition: opacity 0.3s;
         }
-        .card-back i { color: rgba(255,255,255,0.3); font-size: 3rem; }
+        .card-back i { color: rgba(255,255,255,0.3); font-size: 1.5rem; }
         .card.revealed .card-back { opacity: 0; pointer-events: none; }
 
         .win-glow { animation: glow 1.5s infinite alternate; }
         @keyframes glow {
-            from { box-shadow: 0 0 10px rgba(245,158,11,0.5); }
-            to { box-shadow: 0 0 30px rgba(245,158,11,1); }
+            from { box-shadow: 0 0 5px rgba(245,158,11,0.5); }
+            to { box-shadow: 0 0 15px rgba(245,158,11,1); }
         }
 
-        .betting-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 10px; }
-        .bet-zone { background: linear-gradient(135deg,#166534,#14532d); border: 3px solid var(--table-border); border-radius: 12px; padding: 15px 10px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; user-select: none; }
-        .bet-zone:hover:not(.disabled) { transform: scale(1.02); box-shadow: 0 0 15px rgba(245,158,11,0.4); }
+        .betting-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; flex-shrink: 0; }
+        .bet-zone { background: linear-gradient(135deg,#166534,#14532d); border: 1.5px solid var(--table-border); border-radius: 6px; padding: 4px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; user-select: none; }
+        .bet-zone:hover:not(.disabled) { box-shadow: 0 0 10px rgba(245,158,11,0.4); }
         .betting-grid.disabled .bet-zone { cursor: not-allowed; opacity: 0.75; }
-        .bet-zone .zone-name { font-size: 1.3rem; font-weight: 600; display: block; }
-        .bet-zone .odds { font-size: 0.8rem; opacity: 0.8; color: var(--gold); }
-        .placed-chip { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: #e11d48; color: white; width: 45px; height: 45px; border-radius: 50%; border: 3px dashed #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem; box-shadow: 0 4px 6px rgba(0,0,0,0.3); z-index: 2; }
+        .bet-zone .zone-name { font-size: 0.8rem; font-weight: 600; display: block; }
+        .bet-zone .odds { font-size: 0.6rem; opacity: 0.8; color: var(--gold); }
+        .placed-chip { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: #e11d48; color: white; width: 24px; height: 24px; border-radius: 50%; border: 2px dashed #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.55rem; }
 
-        .side-bets-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-        .side-bet-zone { background: #1f2937; border: 2px solid #4b5563; border-radius: 8px; padding: 8px; text-align: center; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; position: relative; }
-        .side-bet-zone:hover:not(.disabled) { border-color: var(--gold); background: #374151; }
+        .side-bets-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; flex-shrink: 0; }
+        .side-bet-zone { background: #1f2937; border: 1px solid #4b5563; border-radius: 4px; padding: 3px; text-align: center; cursor: pointer; font-size: 0.6rem; position: relative; }
         .side-bets-grid.disabled .side-bet-zone { cursor: not-allowed; opacity: 0.6; }
-        .side-bet-zone .odds { font-size: 0.75rem; color: var(--gold); display: block; }
+        .side-bet-zone .odds { font-size: 0.55rem; color: var(--gold); display: block; }
 
-        .controls { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 25px; width: 100%; }
-        .chip-container { display: flex; align-items: center; justify-content: center; gap: 15px; width: 100%; flex-wrap: wrap; }
-        .chip-selection { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; transition: all 0.3s; }
+        .controls { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .chip-container { display: flex; align-items: center; gap: 6px; flex: 1; justify-content: center; }
+        .chip-selection { display: flex; gap: 4px; flex-wrap: nowrap; justify-content: center; }
         .chip-selection.disabled { pointer-events: none; opacity: 0.5; }
 
         .chip {
-            width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 1rem; cursor: pointer; position: relative;
-            border: 4px dashed rgba(255,255,255,0.8);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 0 10px rgba(0,0,0,0.3);
+            width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 0.65rem; cursor: pointer; position: relative;
+            border: 2px dashed rgba(255,255,255,0.8);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
             transition: transform 0.2s;
             background-color: #fff;
             color: #000;
         }
-        .chip:hover { transform: translateY(-5px); }
-        .chip.selected-chip { transform: translateY(-8px) scale(1.1); border-color: #fff; box-shadow: 0 0 15px #fff; }
-
+        .chip.selected-chip { transform: translateY(-4px) scale(1.08); border-color: #fff; box-shadow: 0 0 8px #fff; }
         .chip-20 { background: #fbbf24; color: #000; }
         .chip-50 { background: #65a30d; color: #fff; }
         .chip-100 { background: #0d9488; color: #fff; }
@@ -171,132 +182,112 @@
         .chip-5000 { background: #ea580c; color: #fff; }
         .chip-10000 { background: #1e293b; color: #fff; }
 
-        .settings-btn {
-            width: 45px; height: 45px; border-radius: 50%; background: #374151; border: 2px solid var(--gold);
-            display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.2rem; color: var(--gold);
-            transition: all 0.2s;
-        }
-        .settings-btn:hover { background: var(--gold); color: #000; }
+        .settings-btn { width: 28px; height: 28px; border-radius: 50%; background: #374151; border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.8rem; color: var(--gold); flex-shrink: 0; }
 
-        .btn { padding: 8px 22px; font-size: 1rem; font-weight: 600; border: none; border-radius: 20px; cursor: pointer; transition: all 0.2s; }
+        .btn { padding: 3px 10px; font-size: 0.7rem; font-weight: 600; border: none; border-radius: 12px; cursor: pointer; }
         .btn-gold { background: var(--gold); color: #000; }
-        .btn-gold:hover { background: #d97706; color: #fff; }
         .btn-clear { background: #4b5563; color: #fff; }
-        .btn-clear:hover:not(:disabled) { background: #6b7280; }
         .btn-admin { background: var(--admin-purple); color: #fff; }
-        .btn-admin:hover { background: #6d28d9; }
 
         .chip-settings-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; display: none; justify-content: center; align-items: center; }
         .chip-settings-content { background: #111827; border: 2px solid var(--gold); border-radius: 15px; padding: 20px; width: 90%; max-width: 400px; }
-        .chip-settings-content h3 { text-align: center; color: var(--gold); margin-bottom: 15px; }
+        .chip-settings-content h3 { text-align: center; color: var(--gold); margin-bottom: 15px; font-size: 1rem; }
         .chip-options-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-        .chip-option { padding: 10px; border-radius: 8px; background: #374151; text-align: center; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
-        .chip-option:hover { background: #4b5563; }
-        .chip-option.selected { border-color: var(--gold); background: #1f2937; box-shadow: 0 0 10px rgba(245,158,11,0.3); }
+        .chip-option { padding: 8px; border-radius: 8px; background: #374151; text-align: center; cursor: pointer; border: 2px solid transparent; font-size: 0.85rem; }
+        .chip-option.selected { border-color: var(--gold); background: #1f2937; }
 
-        .admin-panel { background: rgba(124,58,237,0.15); border: 2px dashed var(--admin-purple); border-radius: 12px; padding: 15px 20px; margin-bottom: 20px; display: none; }
-        .admin-panel h3 { color: #c084fc; margin-bottom: 10px; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
-        .admin-controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .admin-group { display: flex; flex-direction: column; gap: 5px; }
-        .admin-group label { font-size: 0.85rem; color: #e9d5ff; }
-        .admin-input, .admin-select { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--admin-purple); background: #1e1b4b; color: #fff; font-size: 0.95rem; outline: none; }
-
-        .casino-scoreboard { background: #f8f9fa; border-radius: 10px; padding: 10px; display: flex; gap: 10px; overflow: hidden; width: 100%; box-shadow: inset 0 0 10px rgba(0,0,0,0.2); }
-        .bead-plate { display: grid; grid-template-columns: repeat(6, 1fr); grid-auto-rows: 35px; gap: 2px; background: #fff; border: 1px solid #000; padding: 4px; min-width: 210px; flex-shrink: 0; }
-        .bead-cell { display: flex; justify-content: center; align-items: center; border: 1px solid #eee; font-size: 0; position: relative; }
-        .bead-circle { width: 28px; height: 28px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.85rem; color: #fff; }
+        /* ⭐ SCOREBOARD — ตารางขวาล็อกไม่ให้ผู้เล่นเลื่อน */
+        .scoreboard-panel { flex-shrink: 0; }
+        .scoreboard-header { color:#fff; display:flex; justify-content:space-between; font-size: 0.65rem; margin-bottom: 2px; }
+        .casino-scoreboard { background: #f8f9fa; border-radius: 6px; padding: 3px; display: flex; gap: 4px; overflow: hidden; width: 100%; }
+        .bead-plate { display: grid; grid-template-columns: repeat(6, 1fr); grid-auto-rows: var(--road-cell); gap: 1px; background: #fff; border: 1px solid #000; padding: 2px; min-width: 96px; flex-shrink: 0; }
+        .bead-cell { display: flex; justify-content: center; align-items: center; border: 1px solid #eee; font-size: 0; }
+        .bead-circle { width: 19px; height: 19px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.55rem; color: #fff; }
         .bead-circle.p-win { background: var(--player-blue); }
         .bead-circle.b-win { background: var(--banker-red); }
         .bead-circle.t-win { background: var(--tie-green); }
 
+        /* ⭐ BIG ROAD — ล็อก overflow ไม่ให้เลื่อน, ให้ JS auto-scroll ทีละ 4 ช่อง */
         .big-road-container {
-            flex-grow: 1; overflow-x: auto; overflow-y: hidden;
-            background: #fff; border: 1px solid #000; position: relative;
-            min-width: 0; scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch;
-            touch-action: pan-x pan-y;
+            flex-grow: 1;
+            overflow: hidden;               /* ⭐ ห้ามผู้เล่นเลื่อน */
+            background: #fff; border: 1px solid #000;
+            position: relative;
+            min-width: 0;
+            pointer-events: none;           /* ⭐ ไม่ให้ scroll */
+            touch-action: none;
         }
-        .big-road { display: grid; grid-template-columns: repeat(60, 32px); grid-template-rows: repeat(6, 32px); gap: 0; padding: 0; width: max-content; }
-        .road-cell { width: 32px; height: 32px; border: 1px solid #e0e0e0; display: flex; justify-content: center; align-items: center; position: relative; background: #fff; box-sizing: border-box; }
-        .road-marker { width: 26px; height: 26px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.7rem; position: absolute; box-sizing: border-box; z-index: 2; }
-        .road-marker.p-win { border: 2px solid var(--player-blue); color: var(--player-blue); background: #fff; }
-        .road-marker.b-win { border: 2px solid var(--banker-red); color: var(--banker-red); background: #fff; }
-        .road-marker.streak.p-win { background: var(--player-blue); color: #fff; border: 2px solid var(--player-blue); }
-        .road-marker.streak.b-win { background: var(--banker-red); color: #fff; border: 2px solid var(--banker-red); }
-        .road-marker.tie-win { background: var(--tie-green); color: #fff; border: 2px solid var(--tie-green); }
+        .big-road {
+            display: grid;
+            grid-template-columns: repeat(60, var(--road-cell));
+            grid-template-rows: repeat(6, var(--road-cell));
+            gap: 0;
+            width: max-content;
+            transition: transform 0.6s cubic-bezier(.4,0,.2,1); /* ⭐ ขยับเนียน */
+            will-change: transform;
+        }
+        .road-cell { width: var(--road-cell); height: var(--road-cell); border: 1px solid #e0e0e0; display: flex; justify-content: center; align-items: center; position: relative; background: #fff; }
+        .road-marker { width: calc(var(--road-cell) - 4px); height: calc(var(--road-cell) - 4px); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.5rem; position: absolute; }
+        .road-marker.p-win { border: 1.5px solid var(--player-blue); color: var(--player-blue); background: #fff; }
+        .road-marker.b-win { border: 1.5px solid var(--banker-red); color: var(--banker-red); background: #fff; }
+        .road-marker.streak.p-win { background: var(--player-blue); color: #fff; border: 1.5px solid var(--player-blue); }
+        .road-marker.streak.b-win { background: var(--banker-red); color: #fff; border: 1.5px solid var(--banker-red); }
+        .road-marker.tie-win { background: var(--tie-green); color: #fff; border: 1.5px solid var(--tie-green); }
 
-        .trend-analysis { display: flex; gap: 10px; margin-top: 10px; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 10px; width: 100%; justify-content: space-around; border: 1px solid rgba(255,255,255,0.1); }
+        .trend-analysis { display: flex; gap: 4px; margin-top: 3px; background: rgba(0,0,0,0.4); padding: 3px; border-radius: 6px; width: 100%; justify-content: space-around; flex-shrink: 0; }
         .trend-item { text-align: center; }
-        .trend-label { font-size: 0.8rem; color: #9ca3af; margin-bottom: 5px; }
-        .trend-value { font-size: 1.1rem; font-weight: bold; }
+        .trend-label { font-size: 0.55rem; color: #9ca3af; }
+        .trend-value { font-size: 0.75rem; font-weight: bold; }
         .trend-value.p { color: var(--player-blue); }
         .trend-value.b { color: var(--banker-red); }
         .trend-value.t { color: var(--tie-green); }
         .trend-value.max-streak { color: var(--gold); }
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); display: none; justify-content: center; align-items: center; z-index: 1001; }
-        .modal-card { background: #111827; border: 2px solid var(--gold); border-radius: 15px; width: 90%; max-width: 380px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); }
-        .modal-card h3 { text-align: center; color: var(--gold); margin-bottom: 20px; font-size: 1.3rem; }
+        .modal-card { background: #111827; border: 2px solid var(--gold); border-radius: 15px; width: 90%; max-width: 380px; padding: 25px; }
+        .modal-card h3 { text-align: center; color: var(--gold); margin-bottom: 20px; font-size: 1.1rem; }
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: #d1d5db; }
-        .form-group input, .form-group select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #374151; background: #1f2937; color: #fff; outline: none; }
-        .form-group input:focus, .form-group select:focus { border-color: var(--gold); }
+        .form-group label { display: block; margin-bottom: 5px; font-size: 0.85rem; color: #d1d5db; }
+        .form-group input, .form-group select { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #374151; background: #1f2937; color: #fff; outline: none; font-size: 0.85rem; }
         .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
         .modal-actions button { flex: 1; }
 
-        @media (max-width: 500px) {
-            .status-bar { padding: 8px 10px; flex-wrap: wrap; gap: 5px; }
-            .status-bar h2 { font-size: 0.95rem !important; }
-            .timer-box { font-size: 1rem; min-width: 60px; padding: 4px 8px; }
-            .balance-box { font-size: 0.85rem; }
-            .user-badge { font-size: 0.7rem; padding: 3px 8px; }
-            .table-container { padding: 0 8px; margin: 10px auto; }
-            .dealer-stage { height: 130px; }
-            .dealer { width: 100px; height: 120px; }
-            .dealer-head { width: 34px; height: 34px; }
-            .dealer-body { width: 62px; height: 66px; top: 33px; }
-            .dealer-bowtie { top: 42px; width: 16px; height: 8px; }
-            .dealer-arm { width: 14px; height: 44px; top: 38px; }
-            .cards-display { padding: 10px 5px; }
-            .side-title { font-size: 1rem; }
-            .card { width: 55px; height: 80px; font-size: 0.9rem; padding: 4px; }
-            .card .suit-center { font-size: 1.3rem; }
-            .cards-row { gap: 5px; min-height: 85px; }
-            .betting-grid { gap: 8px; }
-            .bet-zone { padding: 10px 5px; border-width: 2px; }
-            .bet-zone .zone-name { font-size: 0.95rem; }
-            .bet-zone .odds { font-size: 0.65rem; }
-            .placed-chip { width: 30px !important; height: 30px !important; font-size: 0.65rem !important; }
-            .side-bets-grid { gap: 5px; }
-            .side-bet-zone { padding: 6px 3px; font-size: 0.7rem; }
-            .side-bet-zone .odds { font-size: 0.6rem; }
-            .chip { width: 42px; height: 42px; font-size: 0.8rem; }
-            .chip-container { gap: 8px; }
-            .chip-selection { gap: 6px; }
-            .settings-btn { width: 38px; height: 38px; font-size: 1rem; }
-            .admin-controls-grid { grid-template-columns: 1fr; }
-            .bead-plate { min-width: 140px; grid-auto-rows: 26px; }
-            .bead-circle { width: 22px; height: 22px; font-size: 0.7rem; }
-            .big-road-container { min-width: 0; }
-            .road-cell { width: 26px; height: 26px; }
-            .road-marker { width: 22px; height: 22px; font-size: 0.6rem; }
-            .trend-label { font-size: 0.65rem; }
-            .trend-value { font-size: 0.9rem; }
-            .admin-panel { padding: 10px; }
-            .admin-panel h3 { font-size: 0.9rem; }
-            .side-drawer { width: 290px; left: -290px; }
+        /* ⭐ Media queries สำหรับจอเล็กมาก */
+        @media (max-height: 700px) {
+            :root { --card-w: 36px; --card-h: 52px; --road-cell: 20px; }
+            .dealer-stage { height: 60px; }
+            .dealer { width: 60px; height: 60px; }
+            .dealer-head { width: 20px; height: 20px; }
+            .dealer-body { width: 34px; height: 34px; top: 18px; }
+            .dealer-bowtie { top: 25px; width: 10px; height: 5px; }
+            .dealer-arm { width: 8px; height: 24px; top: 22px; }
+            .chip { width: 26px; height: 26px; font-size: 0.55rem; }
+            .bet-zone .zone-name { font-size: 0.7rem; }
+        }
+        @media (max-height: 600px) {
+            :root { --card-w: 30px; --card-h: 44px; --road-cell: 18px; }
+            .dealer-stage { height: 45px; }
+            .dealer { width: 45px; height: 45px; }
+            .dealer-head { width: 16px; height: 16px; }
+            .dealer-body { width: 26px; height: 26px; top: 14px; }
+            .dealer-bowtie { top: 19px; width: 8px; height: 4px; }
+            .dealer-arm { width: 6px; height: 18px; top: 17px; }
+            .chip { width: 22px; height: 22px; font-size: 0.5rem; }
+            .side-title { font-size: 0.7rem; }
+            .trend-label { font-size: 0.5rem; }
+            .trend-value { font-size: 0.65rem; }
         }
     </style>
 </head>
 <body>
     <div class="status-bar">
-        <div style="display:flex; align-items:center; gap:10px;">
+        <div style="display:flex; align-items:center; gap:6px;">
             <div class="left-menu-btn" onclick="toggleDrawer()"><i class="fa-solid fa-bars"></i></div>
-            <h2 style="font-size:1.2rem;"><i class="fa-solid fa-diamond"></i> BACCARAT LIVE</h2>
+            <h2 style="font-size:0.85rem;"><i class="fa-solid fa-diamond"></i> BACCARAT LIVE</h2>
         </div>
         <div class="timer-box" id="timer-display"><i class="fa-solid fa-clock"></i> 10</div>
         <div class="user-info-group">
-            <div class="balance-box">เครดิต: <span id="balance-display">0</span> THB</div>
+            <div class="balance-box">เครดิต: <span id="balance-display">0</span></div>
             <div class="user-badge" id="user-badge">ผู้เยี่ยมชม</div>
         </div>
     </div>
@@ -332,34 +323,29 @@
                 <label>จำนวนโค้ดที่ต้องการสร้าง:</label>
                 <input type="number" id="code-count-input" placeholder="เช่น 1" value="1" min="1" max="50">
             </div>
-            <button class="btn btn-admin" style="width:100%; margin-bottom:10px;" onclick="generateCodes()">
+            <button class="btn btn-admin" style="width:100%; margin-bottom:10px; padding:8px;" onclick="generateCodes()">
                 <i class="fa-solid fa-plus"></i> สร้างโค้ด
             </button>
-            <label style="font-size:0.8rem; color:#9ca3af; display:block; margin-top:5px;">
-                รายการโค้ดทั้งหมด (<span id="code-list-count">0</span>):
-            </label>
-            <div class="code-list" id="code-list" style="max-height:150px; overflow-y:auto; margin-top:8px; border-radius:8px; background:rgba(0,0,0,0.3);">
-                <div class="code-list-empty" style="padding:10px; text-align:center; font-size:0.8rem; color:#6b7280;">ยังไม่มีโค้ด</div>
-            </div>
         </div>
 
         <div class="admin-user-panel" id="admin-user-panel">
             <h4><i class="fa-solid fa-users-gear"></i> ปรับเครดิตผู้เล่น</h4>
             <div class="admin-group">
-                <label>ชื่อผู้เล่น (เช่น ba_eu37):</label>
+                <label>ชื่อผู้เล่น:</label>
                 <input type="text" id="admin-target-user" placeholder="ระบุชื่อผู้ใช้">
             </div>
             <div class="admin-group">
-                <label>จำนวนเครดิตที่ต้องการเพิ่ม (ใส่ - เพื่อลด):</label>
+                <label>จำนวนเครดิต (+/-):</label>
                 <input type="number" id="admin-credit-amount" placeholder="เช่น 500 หรือ -200" value="1000">
             </div>
-            <button class="btn btn-admin" style="width:100%;" onclick="adminAdjustCredit()">
+            <button class="btn btn-admin" style="width:100%; padding:8px;" onclick="adminAdjustCredit()">
                 <i class="fa-solid fa-sack-dollar"></i> ปรับเครดิตให้ผู้เล่น
             </button>
         </div>
     </div>
 
-    <div class="table-container">
+    <!-- ⭐ MAIN WRAPPER -->
+    <div class="main-wrapper">
         <div class="dealer-stage">
             <div class="dealer" id="dealer">
                 <div class="dealer-head"></div>
@@ -382,38 +368,36 @@
         </div>
 
         <div class="admin-panel" id="admin-panel">
-            <h3><i class="fa-solid fa-user-shield"></i> แผงควบคุม ADMIN (สิทธิ์พิเศษ min888)</h3>
+            <h3><i class="fa-solid fa-user-shield"></i> ADMIN PANEL (min888)</h3>
             <div class="admin-controls-grid">
                 <div class="admin-group">
-                    <label>ปรับเปลี่ยนเครดิตเงินสด:</label>
-                    <div style="display:flex; gap:5px;">
-                        <input type="number" id="admin-credit-input" class="admin-input" placeholder="ระบุจำนวนเงิน" value="50000">
-                        <button class="btn btn-admin" onclick="applyAdminCredit()">ปรับเงิน</button>
+                    <label>เครดิต:</label>
+                    <div style="display:flex; gap:3px;">
+                        <input type="number" id="admin-credit-input" class="admin-input" value="50000">
+                        <button class="btn btn-admin" onclick="applyAdminCredit()" style="padding:2px 6px; font-size:0.6rem;">ตกลง</button>
                     </div>
                 </div>
                 <div class="admin-group">
-                    <label>ล็อกผลแพ้/ชนะ (ทุกคนเห็นตรงกัน):</label>
+                    <label>ล็อกผล:</label>
                     <select id="admin-win-mode" class="admin-select" onchange="updateWinMode()">
                         <option value="normal">สุ่มปกติ</option>
-                        <option value="force_player">ล็อกให้ PLAYER ชนะ</option>
-                        <option value="force_banker">ล็อกให้ BANKER ชนะ</option>
-                        <option value="force_tie">ล็อกให้ TIE ชนะ</option>
-                        <option value="force_wok">🔮 ล็อกไพ่วอก (ใบที่ 3)</option>
-                        <option value="force_fuang">🔮 ล็อกไพ่เฟือง (ใบที่ 3)</option>
+                        <option value="force_player">PLAYER ชนะ</option>
+                        <option value="force_banker">BANKER ชนะ</option>
+                        <option value="force_tie">TIE</option>
+                        <option value="force_wok">🔮 ไพ่วอก (ใบ3)</option>
+                        <option value="force_fuang">🔮 ไพ่เฟือง (ใบ3)</option>
                     </select>
                 </div>
                 <div class="admin-group" id="special-side-group" style="display:none;">
-                    <label>เลือกฝั่งที่จะได้ไพ่พิเศษ (ใบที่ 3):</label>
+                    <label>ฝั่งไพ่พิเศษ:</label>
                     <select id="admin-special-side" class="admin-select" onchange="updateWinMode()">
-                        <option value="player">ให้ไพ่พิเศษมาฝั่ง PLAYER</option>
-                        <option value="banker">ให้ไพ่พิเศษมาฝั่ง BANKER</option>
+                        <option value="player">PLAYER</option>
+                        <option value="banker">BANKER</option>
                     </select>
                 </div>
                 <div class="admin-group">
-                    <label>สถานะปัจจุบัน:</label>
-                    <div id="admin-status-display" style="padding:8px 12px; background:#1e1b4b; border:1px solid var(--admin-purple); border-radius:8px; font-size:0.85rem; color:#c084fc;">
-                        โหมด: ปกติ
-                    </div>
+                    <label>สถานะ:</label>
+                    <div id="admin-status-display" style="padding:3px 6px; background:#1e1b4b; border:1px solid var(--admin-purple); border-radius:4px; font-size:0.6rem; color:#c084fc; text-align:center;">ปกติ</div>
                 </div>
             </div>
         </div>
@@ -452,17 +436,17 @@
         <div class="side-bets-grid" id="side-bets-grid">
             <div class="side-bet-zone" onclick="placeSideBet('p_pair')">
                 <span style="color:#60a5fa; font-weight:bold;">PLAYER PAIR</span>
-                <span class="odds">จ่าย 1:11</span>
+                <span class="odds">1:11</span>
                 <div id="chip-p_pair"></div>
             </div>
             <div class="side-bet-zone" onclick="placeSideBet('perfect_pair')">
                 <span style="color:var(--gold); font-weight:bold;">PERFECT PAIR</span>
-                <span class="odds">จ่าย 1:25</span>
+                <span class="odds">1:25</span>
                 <div id="chip-perfect_pair"></div>
             </div>
             <div class="side-bet-zone" onclick="placeSideBet('b_pair')">
                 <span style="color:#f87171; font-weight:bold;">BANKER PAIR</span>
-                <span class="odds">จ่าย 1:11</span>
+                <span class="odds">1:11</span>
                 <div id="chip-b_pair"></div>
             </div>
         </div>
@@ -473,25 +457,23 @@
                 <div class="settings-btn" onclick="openChipSettings()" title="จัดการชิป">
                     <i class="fa-solid fa-gear"></i>
                 </div>
-            </div>
-            <div style="margin-top:10px;">
-                <button class="btn btn-clear" id="clear-btn" onclick="clearBets()">เคลียร์เดิมพัน</button>
+                <button class="btn btn-clear" id="clear-btn" onclick="clearBets()">เคลียร์</button>
             </div>
         </div>
 
         <div class="chip-settings-modal" id="chip-settings-modal">
             <div class="chip-settings-content">
-                <h3><i class="fa-solid fa-sliders"></i> ตั้งค่าชิปที่แสดง (สูงสุด 5 อัน)</h3>
+                <h3><i class="fa-solid fa-sliders"></i> ตั้งค่าชิป (สูงสุด 5 อัน)</h3>
                 <div class="chip-options-grid" id="chip-options-grid"></div>
                 <div class="modal-actions">
-                    <button class="btn btn-gold" style="width:100%;" onclick="saveChipSettings()">บันทึกการตั้งค่า</button>
+                    <button class="btn btn-gold" style="width:100%; padding:8px;" onclick="saveChipSettings()">บันทึก</button>
                 </div>
             </div>
         </div>
 
-        <div class="scoreboard-panel" style="background:transparent; border:none; padding:0;">
-            <div class="scoreboard-header" style="color:#fff; margin-bottom:5px; display:flex; justify-content:space-between;">
-                <div><i class="fa-solid fa-list-check"></i> สถิติคาสิโน</div>
+        <div class="scoreboard-panel">
+            <div class="scoreboard-header">
+                <div><i class="fa-solid fa-list-check"></i> สถิติ</div>
                 <div>รอบ: <span id="round-count">0</span> / 50</div>
             </div>
             <div class="casino-scoreboard">
@@ -501,13 +483,13 @@
                 </div>
             </div>
 
-            <div class="trend-analysis" id="trend-analysis">
+            <div class="trend-analysis">
                 <div class="trend-item">
-                    <div class="trend-label">PLAYER WIN</div>
+                    <div class="trend-label">PLAYER</div>
                     <div class="trend-value p" id="stats-p">0%</div>
                 </div>
                 <div class="trend-item">
-                    <div class="trend-label">BANKER WIN</div>
+                    <div class="trend-label">BANKER</div>
                     <div class="trend-value b" id="stats-b">0%</div>
                 </div>
                 <div class="trend-item">
@@ -515,7 +497,7 @@
                     <div class="trend-value t" id="stats-t">0%</div>
                 </div>
                 <div class="trend-item">
-                    <div class="trend-label">MAX STREAK</div>
+                    <div class="trend-label">STREAK</div>
                     <div class="trend-value max-streak" id="stats-streak">0</div>
                 </div>
             </div>
@@ -524,7 +506,7 @@
 
     <div class="modal-overlay" id="auth-modal">
         <div class="modal-card">
-            <h3 id="auth-title">เข้าสู่ระบบ / สมัครสมาชิก</h3>
+            <h3>เข้าสู่ระบบ / สมัครสมาชิก</h3>
             <div class="form-group">
                 <label>ชื่อผู้ใช้งาน:</label>
                 <input type="text" id="auth-username" placeholder="เช่น ba_eu37">
@@ -533,14 +515,14 @@
                 <label>รหัสผ่าน:</label>
                 <input type="password" id="auth-password" placeholder="ใส่รหัสผ่าน">
             </div>
-            <div style="font-size:0.8rem; color:#9ca3af; margin-bottom:15px; text-align:center;">
-                * สมาชิกใหม่รับเครดิตฟรี <b style="color:var(--gold);">300 THB</b><br>
+            <div style="font-size:0.75rem; color:#9ca3af; margin-bottom:10px; text-align:center;">
+                * สมาชิกใหม่รับ <b style="color:var(--gold);">300 THB</b>
             </div>
             <div class="modal-actions" style="flex-direction:column;">
-                <button class="btn btn-gold" onclick="processAuth(false)">เข้าสู่ระบบ</button>
-                <button class="btn btn-clear" onclick="processAuth(true)" style="margin-top:10px;">สมัครสมาชิกใหม่</button>
+                <button class="btn btn-gold" style="padding:8px;" onclick="processAuth(false)">เข้าสู่ระบบ</button>
+                <button class="btn btn-clear" style="margin-top:8px; padding:8px;" onclick="processAuth(true)">สมัครสมาชิก</button>
             </div>
-            <div style="text-align:center; margin-top:15px;">
+            <div style="text-align:center; margin-top:10px;">
                 <button class="btn btn-clear" onclick="closeAuthModal()" style="background:transparent; color:#9ca3af;">ยกเลิก</button>
             </div>
         </div>
@@ -548,10 +530,10 @@
 
     <div class="modal-overlay" id="redeem-modal">
         <div class="modal-card">
-            <h3><i class="fa-solid fa-ticket"></i> ใส่โค้ดรับเครดิต</h3>
+            <h3><i class="fa-solid fa-ticket"></i> ใส่โค้ด</h3>
             <div class="form-group">
                 <label>รหัสโค้ด:</label>
-                <input type="text" id="redeem-code-input" placeholder="X" style="text-transform:uppercase; letter-spacing:1px; font-family:monospace;">
+                <input type="text" id="redeem-code-input" style="text-transform:uppercase; font-family:monospace;">
             </div>
             <div class="modal-actions">
                 <button class="btn btn-clear" onclick="closeRedeemModal()">ยกเลิก</button>
@@ -564,23 +546,23 @@
         <div class="modal-card">
             <h3><i class="fa-solid fa-wallet"></i> แจ้งถอนเงิน</h3>
             <div class="form-group">
-                <label>ธนาคาร / บัญชี:</label>
+                <label>ธนาคาร:</label>
                 <select id="withdraw-bank">
-                    <option value="KBANK">ธนาคารกสิกรไทย</option>
-                    <option value="TrueMoney">วอเลท TrueMoney</option>
-                    <option value="BBL">ธนาคารกรุงเทพ</option>
-                    <option value="SCB">ธนาคารไทยพาณิชย์</option>
-                    <option value="KTB">ธนาคารกรุงไทย</option>
-                    <option value="GSB">ธนาคารออมสิน</option>
+                    <option value="KBANK">กสิกรไทย</option>
+                    <option value="TrueMoney">TrueMoney</option>
+                    <option value="BBL">กรุงเทพ</option>
+                    <option value="SCB">ไทยพาณิชย์</option>
+                    <option value="KTB">กรุงไทย</option>
+                    <option value="GSB">ออมสิน</option>
                 </select>
             </div>
             <div class="form-group">
-                <label>เลขบัญชี / เบอร์วอเลท:</label>
-                <input type="text" id="withdraw-acc" placeholder="กรอกเลขบัญชี">
+                <label>เลขบัญชี:</label>
+                <input type="text" id="withdraw-acc">
             </div>
             <div class="form-group">
-                <label>จำนวนเงิน (THB):</label>
-                <input type="number" id="withdraw-amount" placeholder="ระบุจำนวน">
+                <label>จำนวนเงิน:</label>
+                <input type="number" id="withdraw-amount">
             </div>
             <div class="modal-actions">
                 <button class="btn btn-clear" onclick="closeWithdrawModal()">ยกเลิก</button>
@@ -609,8 +591,6 @@
         let adminWinMode = 'normal';
         let adminSpecialSide = 'player';
         let renderedHistoryCount = 0;
-        let isDealing = false;
-        let currentRoundResult = null; // ⭐ เก็บผลของรอบปัจจุบัน
         const socket = io({ transports: ['websocket'] });
 
         const allChips = [20, 50, 100, 500, 1000, 5000, 10000];
@@ -646,7 +626,7 @@
             document.getElementById('admin-user-panel').style.display = 'none';
             document.getElementById('drawer-auth-btn').style.display = 'flex';
             document.getElementById('drawer-logout-btn').style.display = 'none';
-            updateUI(); alert('ออกจากระบบเรียบร้อยแล้ว');
+            updateUI();
         }
 
         function updateUI() {
@@ -753,8 +733,14 @@
         }
 
         // ==========================================================
-        // ⭐ วาดตารางใหม่ทั้งหมด (ใช้ตอน init และตอน historyUpdate)
+        // ⭐ วาดตาราง + AUTO-SCROLL ทีละ 4 ช่อง (128px)
         // ==========================================================
+        const SCROLL_STEP_CELLS = 4;
+
+        function getRoadCellSize() {
+            return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--road-cell')) || 24;
+        }
+
         function redrawScoreboard() {
             document.getElementById('round-count').innerText = serverHistory.length;
             const beadPlate = document.getElementById('bead-plate');
@@ -847,10 +833,26 @@
             renderedHistoryCount = serverHistory.length;
             updateStatsUI();
 
-            setTimeout(() => {
-                const container = document.getElementById('big-road-container');
-                if (container) container.scrollTo({ left: container.scrollWidth, behavior: 'smooth' });
-            }, 150);
+            // ⭐ AUTO-SCROLL ไปทีละ 4 ช่อง (ไม่ให้ผู้เล่นเลื่อนเอง)
+            setTimeout(autoScrollBigRoad, 100);
+        }
+
+        // ⭐ Auto-scroll ไปเรื่อยๆ ทีละ 4 ช่อง
+        function autoScrollBigRoad() {
+            const container = document.getElementById('big-road-container');
+            const bigRoad = document.getElementById('big-road');
+            if (!container || !bigRoad) return;
+
+            const cellSize = getRoadCellSize();
+            const totalCells = renderedHistoryCount;
+            // จำนวนช่องที่ต้อง scroll เพื่อให้เห็น cell ล่าสุด (ถ้าเกินพื้นที่)
+            const visibleCells = Math.floor(container.clientWidth / cellSize);
+            const neededCells = Math.max(0, totalCells - visibleCells + SCROLL_STEP_CELLS);
+            const scrollBy = Math.floor(neededCells / SCROLL_STEP_CELLS) * SCROLL_STEP_CELLS;
+            const offsetPx = scrollBy * cellSize;
+
+            // ใช้ transform แทน scrollLeft เพราะ overflow: hidden
+            bigRoad.style.transform = `translateX(-${offsetPx}px)`;
         }
 
         function updateStatsUI() {
@@ -870,7 +872,7 @@
             document.getElementById('stats-p').innerText = Math.round((pCount/total)*100) + '%';
             document.getElementById('stats-b').innerText = Math.round((bCount/total)*100) + '%';
             document.getElementById('stats-t').innerText = Math.round((tCount/total)*100) + '%';
-            document.getElementById('stats-streak').innerText = maxStreak + ' ตัว';
+            document.getElementById('stats-streak').innerText = maxStreak;
         }
 
         const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -881,7 +883,7 @@
             const targetEl = document.getElementById(side === 'left' ? 'player-cards' : 'banker-cards');
             handCard.classList.add('visible'); playCardSlide();
             arm.classList.add(side === 'left' ? 'dealing-left' : 'dealing-right');
-            await sleep(200);
+            await sleep(150);
             const handRect = handCard.getBoundingClientRect();
             const targetRect = targetEl.getBoundingClientRect();
             const fly = document.createElement('div');
@@ -891,12 +893,12 @@
             document.body.appendChild(fly);
             handCard.classList.remove('visible'); playCardLand();
             requestAnimationFrame(() => {
-                const dx = targetRect.left + targetRect.width / 2 - (handRect.left + 40);
-                const dy = targetRect.top + 30 - handRect.top;
+                const dx = targetRect.left + targetRect.width / 2 - (handRect.left + 20);
+                const dy = targetRect.top + 15 - handRect.top;
                 fly.style.transform = `translate(${dx}px, ${dy}px) scale(1) rotate(${(Math.random()*20-10)}deg)`;
                 fly.style.opacity = '1';
             });
-            await sleep(600);
+            await sleep(500);
             fly.remove();
             arm.classList.remove(side === 'left' ? 'dealing-left' : 'dealing-right');
         }
@@ -909,12 +911,7 @@
             el.classList.add('live-pop');
         }
 
-        // ==========================================================
-        // ⭐ เริ่มแจกไพ่ — รับข้อมูลจาก server (ทุกคนเห็นตรงกัน)
-        // ==========================================================
         async function onDealStart(data) {
-            isDealing = true;
-            currentRoundResult = data.result;
             gameState = 'DEALING';
             document.getElementById('betting-grid').classList.add('disabled');
             document.getElementById('side-bets-grid').classList.add('disabled');
@@ -932,22 +929,14 @@
             document.getElementById('banker-side-box').classList.remove('win-glow');
 
             document.getElementById('dealer').classList.add('shuffling');
-            playShuffleSound(); speakThai('เริ่มแจกไพ่');
+            playCardSlide(); speakThai('เริ่มแจกไพ่');
             await sleep(700);
             document.getElementById('dealer').classList.remove('shuffling');
         }
 
-        // ⭐ รับแต้มเรียลไทม์ระหว่างแจก + แสดงไพ่ทีละใบ
-        let clientPushedP = 0, clientPushedB = 0;
         async function onLiveScore(data) {
-            // แสดงไพ่ใบที่เพิ่งจั่ว
-            if (data.side === 'player') {
-                await animateDealToSide('left');
-                clientPushedP++;
-            } else {
-                await animateDealToSide('right');
-                clientPushedB++;
-            }
+            if (data.side === 'player') await animateDealToSide('left');
+            else await animateDealToSide('right');
 
             const target = data.side === 'player' ? 'player-cards' : 'banker-cards';
             const cardDiv = document.createElement('div');
@@ -956,17 +945,15 @@
             cardDiv.innerHTML = `<div class="card-back"><i class="fa-solid fa-diamond"></i></div>`;
             document.getElementById(target).appendChild(cardDiv);
 
-            await sleep(400);
+            await sleep(350);
             cardDiv.classList.add('revealed');
             cardDiv.innerHTML = `<div class="top-val">${c.value}</div><div class="suit-center">${c.suit}</div><div class="bottom-val">${c.value}</div>`;
 
-            // ⭐ อัปเดตแต้มเรียลไทม์ทันที (ไม่รอครบ 4 ใบ)
             if (data.side === 'player') setScoreBadge('player-score', data.pScore);
             else setScoreBadge('banker-score', data.bScore);
         }
 
         async function onDealEnd(data) {
-            isDealing = false;
             const result = data.result;
             setScoreBadge('player-score', result.pScore);
             setScoreBadge('banker-score', result.bScore);
@@ -1003,7 +990,6 @@
             document.getElementById('clear-btn').disabled = false;
         }
 
-        // ================== Admin ==================
         function applyAdminCredit() {
             const amt = parseInt(document.getElementById('admin-credit-input').value);
             if (isNaN(amt)) return alert('กรุณาระบุจำนวนเงิน');
@@ -1023,23 +1009,20 @@
 
         function updateAdminStatusDisplay() {
             const labels = {
-                normal: 'สุ่มปกติ',
-                force_player: 'ล็อก PLAYER ชนะ',
-                force_banker: 'ล็อก BANKER ชนะ',
-                force_tie: 'ล็อก TIE',
-                force_wok: 'ล็อกไพ่วอก (ใบที่ 3)',
-                force_fuang: 'ล็อกไพ่เฟือง (ใบที่ 3)'
+                normal: 'ปกติ',
+                force_player: 'PLAYER ชนะ',
+                force_banker: 'BANKER ชนะ',
+                force_tie: 'TIE',
+                force_wok: 'วอก(ใบ3)',
+                force_fuang: 'เฟือง(ใบ3)'
             };
-            let txt = 'โหมด: ' + (labels[adminWinMode] || adminWinMode);
+            let txt = labels[adminWinMode] || adminWinMode;
             if (adminWinMode === 'force_wok' || adminWinMode === 'force_fuang') {
-                txt += ' → ' + (adminSpecialSide === 'player' ? 'ฝั่ง PLAYER' : 'ฝั่ง BANKER');
+                txt += '→' + (adminSpecialSide === 'player' ? 'P' : 'B');
             }
             document.getElementById('admin-status-display').innerText = txt;
         }
 
-        // ==========================================================
-        // ⭐ FULL STATE — รับตอนเข้าใหม่ (ทุกคนเห็นตารางเดียวกัน)
-        // ==========================================================
         socket.on('fullState', (state) => {
             gameState = state.gameState;
             adminWinMode = state.adminWinMode || 'normal';
@@ -1055,25 +1038,17 @@
             const progress = document.getElementById('time-progress');
             if (progress) progress.style.width = `${((state.countdown||0) / 10) * 100}%`;
 
-            // ⭐ วาดตารางสถิติทั้งหมดทันที
             serverHistory = state.history || [];
             redrawScoreboard();
 
-            // ⭐ ถ้ากำลังแจกไพ่ ให้แสดงไพ่ที่มีอยู่แล้ว (คนเข้าใหม่เห็นเหมือนคนอื่น)
             if (state.gameState === 'DEALING' && state.liveScore) {
                 renderLiveDealState(state.liveScore);
             }
-
-            // ⭐ ถ้ามีผลลัพธ์ล่าสุด ให้แสดงบนจอด้วย
-            if (state.gameState === 'DEALING' && state.lastResult) {
-                // ถ้าเพิ่งแจกเสร็จ ให้เรียก onDealEnd
-                if (state.dealPhase === 'done') {
-                    onDealEnd({ result: state.lastResult, liveScore: state.liveScore });
-                }
+            if (state.gameState === 'DEALING' && state.lastResult && state.dealPhase === 'done') {
+                onDealEnd({ result: state.lastResult, liveScore: state.liveScore });
             }
         });
 
-        // ⭐ วาดสถานะการแจกไพ่ปัจจุบัน (สำหรับคนเข้าใหม่ตอนกำลังแจก)
         function renderLiveDealState(liveScore) {
             document.getElementById('player-cards').innerHTML = '';
             document.getElementById('banker-cards').innerHTML = '';
@@ -1132,6 +1107,7 @@
             serverHistory = [];
             document.getElementById('bead-plate').innerHTML = '';
             document.getElementById('big-road').innerHTML = '';
+            document.getElementById('big-road').style.transform = 'translateX(0)';
             updateStatsUI();
         });
 
@@ -1177,6 +1153,9 @@
         function generateCodes() { alert('ฟังก์ชันสร้างโค้ดยังไม่เชื่อมต่อ backend'); }
         function redeemCode() { alert('ฟังก์ชัน redeem ยังไม่เชื่อมต่อ backend'); }
         function processWithdraw() { alert('ฟังก์ชันถอนเงินยังไม่เชื่อมต่อ backend'); }
+
+        // ⭐ recalc scroll เมื่อหมุนจอ/เปลี่ยนขนาด
+        window.addEventListener('resize', () => { setTimeout(autoScrollBigRoad, 100); });
 
         renderChips();
         updateUI();
