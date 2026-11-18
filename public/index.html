@@ -179,13 +179,14 @@
         .big-road { display: grid; grid-template-columns: repeat(60, 32px); grid-template-rows: repeat(6, 32px); gap: 0; padding: 0; width: max-content; }
         .road-cell { width: 32px; height: 32px; border: 1px solid #e0e0e0; display: flex; justify-content: center; align-items: center; position: relative; background: #fff; box-sizing: border-box; }
         
-        /* แก้ไข CSS ของ Marker ใน Big Road */
+        /* ปรับแต่ง CSS ให้ตัวอักษรเป็นสีขาวเมื่อเป็นสตรีคทึบ */
         .road-marker { width: 26px; height: 26px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.7rem; position: absolute; box-sizing: border-box; z-index: 2; }
         .road-marker.p-win { border: 2px solid var(--player-blue); color: var(--player-blue); background: #fff; }
         .road-marker.b-win { border: 2px solid var(--banker-red); color: var(--banker-red); background: #fff; }
-        /* สีทึบเมื่อไหลเกิน 3 ตัว */
-        .road-marker.streak.p-win { background: var(--player-blue); color: transparent; border: 2px solid var(--player-blue); }
-        .road-marker.streak.b-win { background: var(--banker-red); color: transparent; border: 2px solid var(--banker-red); }
+        
+        /* ตัวที่ 3 ขึ้นไป (Streak) ให้พื้นหลังทึบ และตัวอักษรสีขาว */
+        .road-marker.streak.p-win { background: var(--player-blue); color: #fff; border: 2px solid var(--player-blue); }
+        .road-marker.streak.b-win { background: var(--banker-red); color: #fff; border: 2px solid var(--banker-red); }
         
         .tie-line { position: absolute; width: 24px; height: 24px; border-bottom: 3px solid var(--tie-green); border-right: 3px solid var(--tie-green); transform: rotate(-45deg); border-radius: 2px; z-index: 5; top: 6px; left: 4px; box-shadow: 0 0 3px rgba(22, 163, 74, 0.5); }
 
@@ -643,7 +644,7 @@
                             streakCounters[currentRow][currentCol] = streakCounters[currentRow - 1][currentCol] + 1;
                             lastIndex = currentRow * cols + currentCol; currentRow++;
                         } else {
-                            // *** จุดที่แก้ไข: ถ้าชนขอบล่างแล้ว ให้เลื่อนไปทางขวา ***
+                            // *** จุดที่แก้ไข: ถ้าชนขอบล่างแล้ว ให้เลื่อนไปทางขวา (ไม่ขึ้นบน) ***
                             currentCol++; 
                             if (currentCol >= cols) currentCol = cols - 1; 
 
@@ -674,17 +675,13 @@
                             const marker = document.createElement('div');
                             const streak = streakCounters[r][c];
                             
-                            // *** จุดที่แก้ไข: ให้เป็นสีทึบเมื่อไหลเกิน 3 ตัว ***
+                            // ให้เป็นสีทึบเมื่อไหล 3 ตัวขึ้นไป
                             const isStreak = streak >= 3;
                             
                             marker.className = `road-marker ${baseVal === 'player' ? 'p-win' : 'b-win'} ${isStreak ? 'streak' : ''}`;
+                            // แสดงตัวอักษร P/B เสมอ (สีจะเปลี่ยนตาม CSS)
+                            marker.innerText = baseVal === 'player' ? 'P' : 'B';
                             
-                            // ถ้าเป็น streak (>=3) ไม่ต้องแสดงตัวอักษร P/B
-                            if (!isStreak) {
-                                marker.innerText = baseVal === 'player' ? 'P' : 'B';
-                            } else {
-                                marker.innerText = '';
-                            }
                             cell.appendChild(marker);
                         }
                         if (hasTie) { const line = document.createElement('div'); line.className = 'tie-line'; cell.appendChild(line); }
