@@ -9,9 +9,11 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 // ==========================================
-// ✅ ตั้งค่าการเชื่อมต่อ MongoDB (ใส่รหัสผ่านให้แล้ว)
+// ✅ ตั้งค่าการเชื่อมต่อ MongoDB
 // ==========================================
-const MONGO_URI = 'mongodb+srv://minnie78t_db_user:UBdFCHKmBm5qB0Nw@my.ype6nu7.mongodb.net/baccarat?retryWrites=true&w=majority'; 
+// ระบบจะพยายามดึงจาก Environment Variable ใน Render ก่อน
+// ถ้าไม่มี (เช่นรันในเครื่อง) จะใช้ลิงก์สำรองที่ให้มา
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://minnie78t_db_user:UBdFCHKmBm5qB0Nw@my.ype6nu7.mongodb.net/baccarat?retryWrites=true&w=majority'; 
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log('✅ Connected to MongoDB Successfully'))
