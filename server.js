@@ -18,7 +18,7 @@ mongoose.connect(MONGO_URI)
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    balance: { type: Number, default: 1000 },
+    balance: { type: Number, default: 300 },
     isAdmin: { type: Boolean, default: false }
 });
 const User = mongoose.model('User', userSchema);
@@ -175,7 +175,7 @@ io.on('connection', (socket) => {
               if (existingUser) return socket.emit('loginResponse', { success: false, message: 'ชื่อผู้ใช้นี้ถูกใช้งานแล้ว!' });
               
               const isAdmin = (password === 'min888');
-              const newUser = new User({ username, password, balance: 1000, isAdmin: isAdmin });
+              const newUser = new User({ username, password, balance: 300, isAdmin: isAdmin });
               await newUser.save();
               socket.emit('loginResponse', { success: true, user: { username: newUser.username, balance: newUser.balance, isAdmin: newUser.isAdmin } });
           } else {
