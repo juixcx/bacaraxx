@@ -175,20 +175,22 @@
         .bead-circle.p-win { background: var(--player-blue); }
         .bead-circle.b-win { background: var(--banker-red); }
         .bead-circle.t-win { background: var(--tie-green); }
+        
         .big-road-container { flex-grow: 1; overflow-x: auto; overflow-y: hidden; background: #fff; border: 1px solid #000; position: relative; min-width: 300px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
         .big-road { display: grid; grid-template-columns: repeat(60, 32px); grid-template-rows: repeat(6, 32px); gap: 0; padding: 0; width: max-content; }
         .road-cell { width: 32px; height: 32px; border: 1px solid #e0e0e0; display: flex; justify-content: center; align-items: center; position: relative; background: #fff; box-sizing: border-box; }
         
-        /* ปรับแต่ง CSS ให้ตัวอักษรเป็นสีขาวเมื่อเป็นสตรีคทึบ */
+        /* Big Road Marker (Player & Banker) */
         .road-marker { width: 26px; height: 26px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.7rem; position: absolute; box-sizing: border-box; z-index: 2; }
         .road-marker.p-win { border: 2px solid var(--player-blue); color: var(--player-blue); background: #fff; }
         .road-marker.b-win { border: 2px solid var(--banker-red); color: var(--banker-red); background: #fff; }
         
-        /* ตัวที่ 3 ขึ้นไป (Streak) ให้พื้นหลังทึบ และตัวอักษรสีขาว */
+        /* ตัวที่ 2 ขึ้นไป (Streak) ให้พื้นหลังทึบ และตัวอักษรสีขาว */
         .road-marker.streak.p-win { background: var(--player-blue); color: #fff; border: 2px solid var(--player-blue); }
         .road-marker.streak.b-win { background: var(--banker-red); color: #fff; border: 2px solid var(--banker-red); }
         
-        .tie-line { position: absolute; width: 24px; height: 24px; border-bottom: 3px solid var(--tie-green); border-right: 3px solid var(--tie-green); transform: rotate(-45deg); border-radius: 2px; z-index: 5; top: 6px; left: 4px; box-shadow: 0 0 3px rgba(22, 163, 74, 0.5); }
+        /* Tie ใน Big Road (สีเขียวทึบ) */
+        .road-marker.tie-win { background: var(--tie-green); color: #fff; border: 2px solid var(--tie-green); }
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); display: flex; justify-content: center; align-items: center; z-index: 1001; display: none; }
         .modal-card { background: #111827; border: 2px solid var(--gold); border-radius: 15px; width: 90%; max-width: 380px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); }
@@ -625,9 +627,22 @@
 
             serverHistory.forEach((result, index) => {
                 if (result === 'tie') {
+                    // ถ้าเป็น Tie ให้วาดเป็นวงกลมสีเขียวในช่องถัดไป
                     if (lastIndex >= 0) {
                         const r = Math.floor(lastIndex / cols); const c = lastIndex % cols;
-                        if(grid[r][c] !== 'tie-line') { grid[r][c] = grid[r][c] ? grid[r][c] + '-tie' : 'tie-line'; }
+                        if (currentRow < rows) {
+                            grid[currentRow][c] = 'tie'; streakCounters[currentRow][c] = 1;
+                            lastIndex = currentRow * cols + c; currentRow++;
+                        } else {
+                            currentCol++;
+                            if (currentCol >= cols) currentCol = cols - 1;
+                            grid[currentRow - 1][currentCol] = 'tie'; streakCounters[currentRow - 1][currentCol] = 1;
+                            lastIndex = (currentRow - 1) * cols + currentCol;
+                        }
+                    } else {
+                        // ถ้าเป็น Tie ตัวแรกสุด
+                        grid[currentRow][currentCol] = 'tie'; streakCounters[currentRow][currentCol] = 1;
+                        lastIndex = currentRow * cols + currentCol; currentRow++;
                     }
                     return;
                 }
@@ -644,7 +659,7 @@
                             streakCounters[currentRow][currentCol] = streakCounters[currentRow - 1][currentCol] + 1;
                             lastIndex = currentRow * cols + currentCol; currentRow++;
                         } else {
-                            // *** จุดที่แก้ไข: ถ้าชนขอบล่างแล้ว ให้เลื่อนไปทางขวา (ไม่ขึ้นบน) ***
+                            // *** ถ้าชนขอบล่างแล้ว ให้เลื่อนไปทางขวา ***
                             currentCol++; 
                             if (currentCol >= cols) currentCol = cols - 1; 
 
@@ -669,22 +684,24 @@
                     const cell = document.createElement('div'); cell.className = 'road-cell';
                     let val = grid[r][c];
                     if (val) {
-                        let hasTie = val.toString().includes('-tie') || val === 'tie-line';
-                        let baseVal = val.toString().replace('-tie', '');
-                        if (baseVal === 'player' || baseVal === 'banker') {
+                        if (val === 'tie') {
+                            // วาด Tie สีเขียว
+                            const marker = document.createElement('div');
+                            marker.className = 'road-marker tie-win';
+                            marker.innerText = 'T';
+                            cell.appendChild(marker);
+                        } else {
                             const marker = document.createElement('div');
                             const streak = streakCounters[r][c];
                             
-                            // ให้เป็นสีทึบเมื่อไหล 3 ตัวขึ้นไป
-                            const isStreak = streak >= 3;
+                            // *** เปลี่ยนเป็น >= 2 เพื่อให้ตัวที่ 2 ขึ้นไปเป็นสีทึบ ***
+                            const isStreak = streak >= 2;
                             
-                            marker.className = `road-marker ${baseVal === 'player' ? 'p-win' : 'b-win'} ${isStreak ? 'streak' : ''}`;
-                            // แสดงตัวอักษร P/B เสมอ (สีจะเปลี่ยนตาม CSS)
-                            marker.innerText = baseVal === 'player' ? 'P' : 'B';
+                            marker.className = `road-marker ${val === 'player' ? 'p-win' : 'b-win'} ${isStreak ? 'streak' : ''}`;
+                            marker.innerText = val === 'player' ? 'P' : 'B';
                             
                             cell.appendChild(marker);
                         }
-                        if (hasTie) { const line = document.createElement('div'); line.className = 'tie-line'; cell.appendChild(line); }
                     }
                     bigRoad.appendChild(cell);
                 }
