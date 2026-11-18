@@ -151,17 +151,28 @@
         .side-bets-grid.disabled .side-bet-zone { cursor: not-allowed; opacity: 0.6; }
         .side-bet-zone .odds { font-size: 0.75rem; color: var(--gold); display: block; }
 
-        /* --- Controls --- */
+        /* --- Controls / Chips --- */
         .controls { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 25px; }
-        .chip-selection { display: flex; gap: 15px; }
+        .chip-selection { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
         .chip-selection.disabled { pointer-events: none; opacity: 0.5; }
-        .chip { width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; border: 4px dashed rgba(255,255,255,0.6); transition: transform 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        
+        /* ปรับขนาดชิปให้เล็กลงเพื่อให้ใส่ได้ 5 อัน */
+        .chip { 
+            width: 50px; height: 50px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; font-size: 0.9rem; cursor: pointer; 
+            border: 4px dashed rgba(255,255,255,0.6); transition: transform 0.2s; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3); 
+        }
         .chip:hover { transform: translateY(-5px); }
         .chip.selected-chip { transform: translateY(-8px) scale(1.1); border-color: #fff; box-shadow: 0 0 15px #fff; }
-        .chip-100 { background: #2563eb; }
-        .chip-500 { background: #16a34a; }
-        .chip-1000 { background: #dc2626; }
-        .chip-5000 { background: #7c3aed; }
+        
+        /* สีของชิป */
+        .chip-20 { background: #64748b; }    /* เทา */
+        .chip-50 { background: #d97706; }    /* ส้ม */
+        .chip-100 { background: #2563eb; }   /* น้ำเงิน */
+        .chip-500 { background: #16a34a; }   /* เขียว */
+        .chip-1000 { background: #dc2626; }  /* แดง */
         
         /* --- Buttons --- */
         .btn { padding: 8px 22px; font-size: 1rem; font-weight: 600; border: none; border-radius: 20px; cursor: pointer; transition: all 0.2s; }
@@ -223,7 +234,7 @@
         .road-marker.streak.p-win { background: var(--player-blue); color: #fff; border: 2px solid var(--player-blue); }
         .road-marker.streak.b-win { background: var(--banker-red); color: #fff; border: 2px solid var(--banker-red); }
         
-        /* --- [อัปเดต] ขีดทับตัวอักษร P/B แทนการวาดเส้นทแยงมุม --- */
+        /* --- ขีดทับตัวอักษร P/B แทนการวาดเส้นทแยงมุม --- */
         .tie-line { 
             position: absolute; 
             width: 24px; 
@@ -400,11 +411,13 @@
         </div>
 
         <div class="controls">
+            <!-- อัปเดตชิปเป็น 20, 50, 100, 500, 1000 -->
             <div class="chip-selection" id="chip-selection">
+                <div class="chip chip-20" onclick="selectChip(20, event)">20</div>
+                <div class="chip chip-50" onclick="selectChip(50, event)">50</div>
                 <div class="chip chip-100 selected-chip" onclick="selectChip(100, event)">100</div>
                 <div class="chip chip-500" onclick="selectChip(500, event)">500</div>
                 <div class="chip chip-1000" onclick="selectChip(1000, event)">1K</div>
-                <div class="chip chip-5000" onclick="selectChip(5000, event)">5K</div>
             </div>
             <div style="margin-top:10px;">
                 <button class="btn btn-clear" id="clear-btn" onclick="clearBets()">เคลียร์เดิมพัน</button>
@@ -560,7 +573,7 @@
 
         /* ============ GAME STATE ============ */
         let balance = 0;
-        let currentSelectedChip = 100;
+        let currentSelectedChip = 20; // เปลี่ยนค่าเริ่มต้นเป็น 20
         let bets = { player: 0, banker: 0, tie: 0, p_pair: 0, b_pair: 0, perfect_pair: 0 };
         let gameState = 'BETTING'; 
         let serverHistory = []; 
