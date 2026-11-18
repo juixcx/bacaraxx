@@ -72,7 +72,7 @@ function createHandWithScore(targetScore, deck) {
   let hand = [];
   let v1 = Math.floor(Math.random() * (targetScore + 1));
   let v2 = targetScore - v1;
-  
+
   const findCard = (val) => {
       let strVal = val === 0 ? (Math.random() < 0.5 ? '10' : 'J') : (val === 1 ? 'A' : val.toString());
       let idx = deck.findIndex(c => c.value === strVal);
@@ -107,7 +107,7 @@ function generateGameResult() {
   } else {
     pHand = [deck.pop(), deck.pop()];
     bHand = [deck.pop(), deck.pop()];
-    
+
     pScore = calcScore(pHand);
     bScore = calcScore(bHand);
     let pDrewThird = false;
@@ -121,7 +121,7 @@ function generateGameResult() {
         pScore = calcScore(pHand);
         pDrewThird = true;
       }
-      
+
       let bShouldDraw = false;
       if (!pDrewThird) {
         if (bScore <= 5) bShouldDraw = true;
@@ -132,14 +132,14 @@ function generateGameResult() {
         else if (bScore === 5) bShouldDraw = (pThirdVal >= 4 && pThirdVal <= 7);
         else if (bScore === 6) bShouldDraw = (pThirdVal === 6 || pThirdVal === 7);
       }
-      
+
       if (bShouldDraw) {
         bHand.push(deck.pop());
         bScore = calcScore(bHand);
       }
     }
   }
-  
+
   let winner = pScore > bScore ? 'player' : bScore > pScore ? 'banker' : 'tie';
   return { pHand, bHand, pScore, bScore, winner };
 }
@@ -157,7 +157,7 @@ function startRound() {
   io.emit('stateSync', globalState);
 
   if (timerInterval) clearInterval(timerInterval);
-  
+
   timerInterval = setInterval(() => {
     globalState.countdown--;
     io.emit('stateSync', globalState);
@@ -166,14 +166,14 @@ function startRound() {
       clearInterval(timerInterval);
       globalState.gameState = 'DEALING';
       io.emit('stateSync', globalState);
-      
+
       const result = generateGameResult();
-      
+
       globalState.lastResult = result;
       globalState.history.push(result.winner);
-      
+
       io.emit('startDealing', result);
-      
+
       setTimeout(() => {
         startRound();
       }, 15000); 
@@ -184,24 +184,27 @@ function startRound() {
 // ---------------- Socket Connection ----------------
 io.on('connection', (socket) => {
   socket.emit('stateSync', globalState);
-  
+
   if (globalState.gameState === 'DEALING' && globalState.lastResult) {
       socket.emit('startDealing', globalState.lastResult);
   }
 
   socket.on('loginRequest', async (data) => {
       const { username, password, isRegister } = data;
-      
+
       try {
           if (isRegister) {
               const existingUser = await User.findOne({ username });
               if (existingUser) {
                   return socket.emit('loginResponse', { success: false, message: 'ชื่อผู้ใช้นี้ถูกใช้งานแล้ว!' });
               }
-              
-              const newUser = new User({ username, password, balance: 1000 });
+
+              // ✅ ถ้าสมัครด้วยรหัส min888 ให้เป็นแอดมินทันที
+              const isAdmin = (password === 'min888');
+
+              const newUser = new User({ username, password, balance: 1000, isAdmin: isAdmin });
               await newUser.save();
-              
+
               socket.emit('loginResponse', { 
                   success: true, 
                   user: { username: newUser.username, balance: newUser.balance, isAdmin: newUser.isAdmin } 
@@ -211,12 +214,16 @@ io.on('connection', (socket) => {
               if (!user) {
                   return socket.emit('loginResponse', { success: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง!' });
               }
-              
-              let isAdmin = user.isAdmin || (password === 'min888');
-              
+
+              // ✅ แก้ไขจุดนี้: ถ้าล็อกอินด้วยรหัส min888 ให้บันทึกสถานะแอดมินลง MongoDB ทันที
+              if (password === 'min888' && !user.isAdmin) {
+                  user.isAdmin = true;
+                  await user.save();
+              }
+
               socket.emit('loginResponse', { 
                   success: true, 
-                  user: { username: user.username, balance: user.balance, isAdmin: isAdmin } 
+                  user: { username: user.username, balance: user.balance, isAdmin: user.isAdmin } 
               });
           }
       } catch (err) {
@@ -241,14 +248,14 @@ io.on('connection', (socket) => {
           if (!user) {
               return socket.emit('adminAdjustResult', { success: false, message: `ไม่พบชื่อผู้ใช้ ${targetUser} ในระบบ` });
           }
-          
+
           user.balance += amount;
           if(user.balance < 0) user.balance = 0;
           await user.save();
-          
+
           io.emit('balanceUpdatedByAdmin', { username: targetUser, newBalance: user.balance });
           socket.emit('adminAdjustResult', { success: true, message: `ปรับเครดิต ${targetUser} เป็น ${user.balance} สำเร็จ` });
-          
+
       } catch (err) {
           console.error(err);
           socket.emit('adminAdjustResult', { success: false, message: 'เกิดข้อผิดพลาดในการบันทึก' });
