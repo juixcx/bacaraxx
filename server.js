@@ -12,12 +12,20 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// ---------------- ฐานข้อมูลผู้เล่นจำลอง ----------------
+// เก็บข้อมูลใน Memory (ถ้ารีสตาร์ทเซิร์ฟเวอร์ ข้อมูลจะหาย)
+// รูปแบบ: username: { password, balance, isAdmin }
+let usersDB = {
+    "ba_eu37": { password: "1234", balance: 5000, isAdmin: false },
+    "admin_master": { password: "min888", balance: 999999, isAdmin: true }
+};
+
 // ---------------- สถานะกลางของเซิร์ฟเวอร์ ----------------
 let globalState = {
   gameState: 'BETTING',
   countdown: 10,
   adminWinMode: 'normal',
-  history: [],       // เก็บสถิติ 50 ตา
+  history: [],       
   lastResult: null,  
 };
 
@@ -25,7 +33,6 @@ let timerInterval = null;
 const suits = ['♠', '♥', '♦', '♣'];
 const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
-// สร้างสำรับไพ่ 52 ใบ
 function createDeck() {
     let deck = [];
     for (let s of suits) {
@@ -36,7 +43,6 @@ function createDeck() {
     return deck;
 }
 
-// สับไพ่
 function shuffleDeck(deck) {
     for (let i = deck.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -48,23 +54,20 @@ function shuffleDeck(deck) {
 const getVal = (card) => ['10','J','Q','K'].includes(card.value) ? 0 : card.value === 'A' ? 1 : parseInt(card.value);
 const calcScore = (hand) => hand.reduce((sum, c) => sum + getVal(c), 0) % 10;
 
-// ฟังก์ชันสร้างไพ่ให้ได้แต้มตามที่ต้องการ (ใช้สำหรับ Admin ล็อกผล)
 function createHandWithScore(targetScore, deck) {
   let hand = [];
   let v1 = Math.floor(Math.random() * (targetScore + 1));
   let v2 = targetScore - v1;
   
-  // ดึงไพ่จากสำรับที่มีอยู่จริงเพื่อไม่ให้ไพ่ซ้ำ
   const findCard = (val) => {
       let strVal = val === 0 ? (Math.random() < 0.5 ? '10' : 'J') : (val === 1 ? 'A' : val.toString());
       let idx = deck.findIndex(c => c.value === strVal);
       if (idx !== -1) return deck.splice(idx, 1)[0];
-      return deck.splice(0, 1)[0]; // fallback
+      return deck.splice(0, 1)[0];
   };
 
   hand.push(findCard(v1));
   hand.push(findCard(v2));
-  
   return hand;
 }
 
@@ -88,7 +91,6 @@ function generateGameResult() {
     pHand = createHandWithScore(pScore, deck);
     bHand = createHandWithScore(bScore, deck);
   } else {
-    // สุ่มปกติตามกติกาบาคาร่า
     pHand = [deck.pop(), deck.pop()];
     bHand = [deck.pop(), deck.pop()];
     
@@ -97,7 +99,6 @@ function generateGameResult() {
     let pDrewThird = false;
     let pThirdVal = null;
 
-    // กฎการจั่วไพ่
     if (pScore < 8 && bScore < 8) {
       if (pScore <= 5) {
         let card = deck.pop();
@@ -130,16 +131,14 @@ function generateGameResult() {
 }
 
 function startRound() {
-  // ครบ 50 ตา ค่อยรีเซ็ต
   if (globalState.history.length >= 50) {
-    console.log('ครบ 50 ตา! รีเซ็ตสถิติใหม่');
     globalState.history = []; 
     globalState.lastResult = null;
     io.emit('resetScoreboard'); 
   }
 
   globalState.gameState = 'BETTING';
-  globalState.countdown = 10; // เวลาเดิมพัน 10 วินาที
+  globalState.countdown = 10; 
   globalState.lastResult = null; 
   io.emit('stateSync', globalState);
 
@@ -157,12 +156,10 @@ function startRound() {
       const result = generateGameResult();
       
       globalState.lastResult = result;
-      // เก็บเฉพาะชื่อผู้ชนะลงใน history
       globalState.history.push(result.winner);
       
       io.emit('startDealing', result);
       
-      // รอให้แอนิเมชันแจกไพ่จบ (ประมาณ 12-15 วินาที) แล้วเริ่มรอบใหม่
       setTimeout(() => {
         startRound();
       }, 15000); 
@@ -170,20 +167,64 @@ function startRound() {
   }, 1000);
 }
 
+// ---------------- Socket Connection ----------------
 io.on('connection', (socket) => {
-  // ส่งข้อมูลสถานะปัจจุบันให้ Client ที่เพิ่งเข้ามา
   socket.emit('stateSync', globalState);
   
-  // ถ้าคนใหม่เข้ามาตอนกำลังแจกไพ่ ให้ส่งผลไพ่รอบนั้นไปให้ดูด้วย
   if (globalState.gameState === 'DEALING' && globalState.lastResult) {
       socket.emit('startDealing', globalState.lastResult);
   }
 
-  // รับคำสั่งจาก Admin
+  // --- ระบบ Login / สมัครสมาชิก ---
+  socket.on('loginRequest', (data) => {
+      const { username, password, isRegister } = data;
+      
+      // ถ้าเป็นการสมัครใหม่
+      if (isRegister) {
+          if (usersDB[username]) {
+              socket.emit('loginResponse', { success: false, message: 'ชื่อผู้ใช้นี้มีอยู่ในระบบแล้ว!' });
+          } else {
+              usersDB[username] = { password: password, balance: 1000, isAdmin: false }; // สมัครใหม่รับ 1000
+              socket.emit('loginResponse', { success: true, user: { username: username, balance: usersDB[username].balance, isAdmin: false } });
+          }
+          return;
+      }
+
+      // ถ้าเป็นการล็อกอิน
+      const user = usersDB[username];
+      if (user && user.password === password) {
+          // แอดมิน can login with min888
+          let isAdmin = user.isAdmin || (password === 'min888');
+          socket.emit('loginResponse', { success: true, user: { username: username, balance: user.balance, isAdmin: isAdmin } });
+      } else {
+          socket.emit('loginResponse', { success: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง!' });
+      }
+  });
+
+  // --- ระบบซิงค์เครดิตผู้เล่น (เมื่อเดิมพันหรือรับโค้ด) ---
+  socket.on('updatePlayerBalance', (data) => {
+      const { username, newBalance } = data;
+      if (usersDB[username]) {
+          usersDB[username].balance = newBalance;
+      }
+  });
+
+  // --- ระบบแอดมิน ปรับเครดิตคนอื่น ---
+  socket.on('adminAdjustCredit', (data) => {
+      const { targetUser, amount } = data;
+      if (usersDB[targetUser]) {
+          usersDB[targetUser].balance += amount;
+          // ส่งข้อมูลใหม่ไปหาคนๆ นั้น (ถ้าคนๆ นั้นออนไลน์อยู่)
+          io.emit('balanceUpdatedByAdmin', { username: targetUser, newBalance: usersDB[targetUser].balance });
+          socket.emit('adminAdjustResult', { success: true, message: `ปรับเครดิต ${targetUser} เป็น ${usersDB[targetUser].balance} สำเร็จ` });
+      } else {
+          socket.emit('adminAdjustResult', { success: false, message: `ไม่พบชื่อผู้ใช้ ${targetUser} ในระบบ` });
+      }
+  });
+
   socket.on('adminAction', (data) => {
     if (data.type === 'SET_WIN_MODE') {
       globalState.adminWinMode = data.mode;
-      console.log('Admin เปลี่ยนโหมด结果为:', globalState.adminWinMode);
     }
   });
 });
