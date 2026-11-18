@@ -584,7 +584,7 @@
         }
 
         // ==========================================
-        // ระบบตารางสถิติ
+        // ระบบตารางสถิติ (แก้ไขลอจิกการไหลของกราฟ)
         // ==========================================
         function drawCasinoScoreboard() {
             document.getElementById('round-count').innerText = serverHistory.length;
@@ -626,22 +626,33 @@
                     }
                     return;
                 }
+                
                 if (index === 0) {
                     grid[currentRow][currentCol] = result; streakCounters[currentRow][currentCol] = 1;
                     lastResult = result; lastIndex = currentRow * cols + currentCol; currentRow++;
                 } else {
                     if (result === lastResult) {
+                        // ถ้าผลเหมือนเดิม (ไหลต่อ)
                         if (currentRow < rows) {
+                            // ถ้าลงมาไม่ถึงแถวล่างสุด ให้ลงล่างตามปกติ
                             grid[currentRow][currentCol] = result;
                             streakCounters[currentRow][currentCol] = streakCounters[currentRow - 1][currentCol] + 1;
                             lastIndex = currentRow * cols + currentCol; currentRow++;
                         } else {
-                            currentCol++; currentRow = 0;
-                            if (currentCol >= cols) currentCol = cols - 1;
-                            grid[currentRow][currentCol] = result; streakCounters[currentRow][currentCol] = 1;
-                            lastIndex = currentRow * cols + currentCol; currentRow++;
+                            // *** จุดที่แก้ไข ***
+                            // ถ้าชนขอบล่างแล้ว (currentRow == 6) ให้เลื่อนไปทางขวา (currentCol) ในแถวเดิม (แถวที่ 5)
+                            currentCol++; 
+                            // currentRow ยังคงเป็น 6 (แต่ index จะเริ่มที่ 5)
+                            if (currentCol >= cols) currentCol = cols - 1; // กันไม่ให้เกินขอบขวา
+
+                            // ทำการวาดลูกใหม่ที่ช่องขวาถัดไปในแถวล่างสุด
+                            grid[currentRow - 1][currentCol] = result; 
+                            streakCounters[currentRow - 1][currentCol] = 1; // เริ่มนับสตรีคใหม่ที่ช่องนี้
+                            lastIndex = (currentRow - 1) * cols + currentCol; 
+                            // ไม่ต้องเปลี่ยน currentRow เพราะยังอยู่แถวล่างสุด
                         }
                     } else {
+                        // ถ้าผลเปลี่ยน ให้ขึ้นคอลัมน์ใหม่
                         currentCol++; currentRow = 0;
                         if (currentCol >= cols) currentCol = cols - 1;
                         grid[currentRow][currentCol] = result; streakCounters[currentRow][currentCol] = 1;
