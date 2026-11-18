@@ -103,7 +103,6 @@
         @keyframes pokkPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.8); } 50% { box-shadow: 0 0 0 8px rgba(245,158,11,0); } }
         .cards-row { display: flex; justify-content: center; gap: 10px; min-height: 120px; }
         
-        /* CSS สำหรับไพ่ปกติและไพ่พิเศษ */
         .card { width: 80px; height: 115px; background: white; color: black; border-radius: 8px; padding: 6px 8px; display: flex; flex-direction: column; justify-content: space-between; font-weight: bold; font-size: 1.2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.5); position: relative; animation: dealCard 0.4s ease-out forwards; }
         .card.red { color: var(--banker-red); }
         .card.black { color: #000; }
@@ -146,17 +145,42 @@
         .side-bets-grid.disabled .side-bet-zone { cursor: not-allowed; opacity: 0.6; }
         .side-bet-zone .odds { font-size: 0.75rem; color: var(--gold); display: block; }
 
-        .controls { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 25px; }
-        .chip-selection { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        /* --- ระบบจัดการชิปใหม่ --- */
+        .controls { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 25px; width: 100%; }
+        .chip-container { display: flex; align-items: center; justify-content: center; gap: 15px; width: 100%; flex-wrap: wrap; }
+        
+        .chip-selection { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; transition: all 0.3s; }
         .chip-selection.disabled { pointer-events: none; opacity: 0.5; }
-        .chip { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; cursor: pointer; border: 4px dashed rgba(255,255,255,0.6); transition: transform 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        
+        /* ดีไซน์ชิปแบบในรูป */
+        .chip { 
+            width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; font-size: 1rem; cursor: pointer; position: relative;
+            border: 4px dashed rgba(255,255,255,0.8); 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 0 10px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+            background-color: #fff;
+            color: #000;
+        }
         .chip:hover { transform: translateY(-5px); }
         .chip.selected-chip { transform: translateY(-8px) scale(1.1); border-color: #fff; box-shadow: 0 0 15px #fff; }
-        .chip-20 { background: #64748b; }
-        .chip-50 { background: #d97706; }
-        .chip-100 { background: #2563eb; }
-        .chip-500 { background: #16a34a; }
-        .chip-1000 { background: #dc2626; }
+        
+        /* สีชิป */
+        .chip-20 { background: #fbbf24; color: #000; } /* เหลือง */
+        .chip-50 { background: #65a30d; color: #fff; } /* เขียวเข้ม */
+        .chip-100 { background: #0d9488; color: #fff; } /* เขียวมรกต */
+        .chip-500 { background: #7c3aed; color: #fff; } /* ม่วง */
+        .chip-1000 { background: #dc2626; color: #fff; } /* แดง */
+        .chip-5000 { background: #ea580c; color: #fff; } /* ส้ม */
+        .chip-10000 { background: #1e293b; color: #fff; } /* ดำ */
+        
+        /* ปุ่มเฟือง */
+        .settings-btn { 
+            width: 45px; height: 45px; border-radius: 50%; background: #374151; border: 2px solid var(--gold); 
+            display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.2rem; color: var(--gold);
+            transition: all 0.2s;
+        }
+        .settings-btn:hover { background: var(--gold); color: #000; }
         
         .btn { padding: 8px 22px; font-size: 1rem; font-weight: 600; border: none; border-radius: 20px; cursor: pointer; transition: all 0.2s; }
         .btn-gold { background: var(--gold); color: #000; }
@@ -165,7 +189,19 @@
         .btn-clear:hover:not(:disabled) { background: #6b7280; }
         .btn-admin { background: var(--admin-purple); color: #fff; }
         .btn-admin:hover { background: #6d28d9; }
-        
+
+        /* Modal ตั้งค่าชิป */
+        .chip-settings-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; display: none; justify-content: center; align-items: center; }
+        .chip-settings-content { background: #111827; border: 2px solid var(--gold); border-radius: 15px; padding: 20px; width: 90%; max-width: 400px; }
+        .chip-settings-content h3 { text-align: center; color: var(--gold); margin-bottom: 15px; }
+        .chip-options-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+        .chip-option { 
+            padding: 10px; border-radius: 8px; background: #374151; text-align: center; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; 
+        }
+        .chip-option:hover { background: #4b5563; }
+        .chip-option.selected { border-color: var(--gold); background: #1f2937; box-shadow: 0 0 10px rgba(245,158,11,0.3); }
+        .chip-option.disabled { opacity: 0.4; cursor: not-allowed; }
+
         .admin-panel { background: rgba(124,58,237,0.15); border: 2px dashed var(--admin-purple); border-radius: 12px; padding: 15px 20px; margin-bottom: 20px; display: none; }
         .admin-panel h3 { color: #c084fc; margin-bottom: 10px; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
         .admin-controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
@@ -194,7 +230,6 @@
         
         .road-marker.tie-win { background: var(--tie-green); color: #fff; border: 2px solid var(--tie-green); }
 
-        /* --- ส่วนที่เพิ่มใหม่: สถิติวิเคราะห์ (Trend Analysis) --- */
         .trend-analysis { display: flex; gap: 10px; margin-top: 10px; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 10px; width: 100%; justify-content: space-around; border: 1px solid rgba(255,255,255,0.1); }
         .trend-item { text-align: center; }
         .trend-label { font-size: 0.8rem; color: #9ca3af; margin-bottom: 5px; }
@@ -204,7 +239,6 @@
         .trend-value.t { color: var(--tie-green); }
         .trend-value.max-streak { color: var(--gold); }
 
-        /* --- ส่วนที่เพิ่มใหม่: หลอดเวลา --- */
         .progress-container { width: 100%; height: 6px; background: #374151; border-radius: 4px; margin-bottom: 15px; overflow: hidden; }
         #time-progress { height: 100%; width: 100%; background: var(--gold); transition: width 1s linear; }
 
@@ -218,7 +252,6 @@
         .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
         .modal-actions button { flex: 1; }
 
-        /* --- Effect กระพริบตอนชนะ --- */
         @keyframes flashWin {
             0% { box-shadow: inset 0 0 0px rgba(74, 222, 128, 0); }
             50% { box-shadow: inset 0 0 50px rgba(74, 222, 128, 0.5); }
@@ -228,7 +261,6 @@
     </style>
 </head>
 <body>
-    <!-- โครงสร้าง HTML เดิมทั้งหมด -->
     <div class="status-bar">
         <div style="display:flex; align-items:center; gap:10px;">
             <div class="left-menu-btn" onclick="toggleDrawer()"><i class="fa-solid fa-bars"></i></div>
@@ -243,7 +275,6 @@
 
     <div class="drawer-overlay" id="drawer-overlay" onclick="toggleDrawer()"></div>
     <div class="side-drawer" id="side-drawer">
-        <!-- ... เมนูเดิม ... -->
         <div class="drawer-header">
             <span><i class="fa-solid fa-bars-staggered"></i> เมนูหลัก</span>
             <span class="close-drawer-btn" onclick="toggleDrawer()"><i class="fa-solid fa-xmark"></i></span>
@@ -264,7 +295,6 @@
         </div>
 
         <div class="admin-code-panel" id="admin-code-panel">
-            <!-- ... โค้ดแอดมินเดิม ... -->
             <h4><i class="fa-solid fa-key"></i> สร้างโค้ดเครดิต (Admin)</h4>
             <div class="admin-group">
                 <label>จำนวนเครดิตในโค้ด (THB):</label>
@@ -290,7 +320,6 @@
         </div>
 
         <div class="admin-user-panel" id="admin-user-panel">
-            <!-- ... โค้ดแอดมินเดิม ... -->
             <h4><i class="fa-solid fa-users-gear"></i> ปรับเครดิตผู้เล่น</h4>
             <div class="admin-group">
                 <label>ชื่อผู้เล่น (เช่น ba_eu37):</label>
@@ -324,13 +353,11 @@
 
         <div class="announcement-banner" id="announcement-banner"></div>
         
-        <!-- ✅ เพิ่มหลอด Progress Bar -->
         <div class="progress-container">
             <div id="time-progress"></div>
         </div>
 
         <div class="admin-panel" id="admin-panel">
-            <!-- ... แอดมินเดิม ... -->
             <h3><i class="fa-solid fa-user-shield"></i> แผงควบคุม ADMIN (สิทธิ์พิเศษ min888)</h3>
             <div class="admin-controls-grid">
                 <div class="admin-group">
@@ -401,16 +428,31 @@
             </div>
         </div>
 
+        <!-- ✅ ปรับปรุงส่วนของชิปและการจัดการ -->
         <div class="controls">
-            <div class="chip-selection" id="chip-selection">
-                <div class="chip chip-20" onclick="selectChip(20, event)">20</div>
-                <div class="chip chip-50" onclick="selectChip(50, event)">50</div>
-                <div class="chip chip-100 selected-chip" onclick="selectChip(100, event)">100</div>
-                <div class="chip chip-500" onclick="selectChip(500, event)">500</div>
-                <div class="chip chip-1000" onclick="selectChip(1000, event)">1K</div>
+            <div class="chip-container">
+                <div class="chip-selection" id="chip-selection">
+                    <!-- จะถูกสร้างด้วย JS -->
+                </div>
+                <div class="settings-btn" onclick="openChipSettings()" title="จัดการชิป">
+                    <i class="fa-solid fa-gear"></i>
+                </div>
             </div>
             <div style="margin-top:10px;">
                 <button class="btn btn-clear" id="clear-btn" onclick="clearBets()">เคลียร์เดิมพัน</button>
+            </div>
+        </div>
+
+        <!-- Modal ตั้งค่าชิป -->
+        <div class="chip-settings-modal" id="chip-settings-modal">
+            <div class="chip-settings-content">
+                <h3><i class="fa-solid fa-sliders"></i> ตั้งค่าชิปที่แสดง (สูงสุด 5 อัน)</h3>
+                <div class="chip-options-grid" id="chip-options-grid">
+                    <!-- จะถูกสร้างด้วย JS -->
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-gold" style="width:100%;" onclick="saveChipSettings()">บันทึกการตั้งค่า</button>
+                </div>
             </div>
         </div>
 
@@ -426,7 +468,6 @@
                 </div>
             </div>
             
-            <!-- ✅ เพิ่มส่วนสถิติวิเคราะห์ -->
             <div class="trend-analysis" id="trend-analysis">
                 <div class="trend-item">
                     <div class="trend-label">PLAYER WIN</div>
@@ -449,9 +490,75 @@
     </div>
 
     <!-- Modal ต่างๆ เดิม -->
-    <div class="modal-overlay" id="auth-modal"> ... </div>
-    <div class="modal-overlay" id="redeem-modal"> ... </div>
-    <div class="modal-overlay" id="withdraw-modal"> ... </div>
+    <div class="modal-overlay" id="auth-modal">
+        <div class="modal-card">
+            <h3 id="auth-title">เข้าสู่ระบบ / สมัครสมาชิก</h3>
+            <div class="form-group">
+                <label>ชื่อผู้ใช้งาน:</label>
+                <input type="text" id="auth-username" placeholder="เช่น ba_eu37">
+            </div>
+            <div class="form-group">
+                <label>รหัสผ่าน:</label>
+                <input type="password" id="auth-password" placeholder="ใส่รหัสผ่าน">
+            </div>
+            <div style="font-size:0.8rem; color:#9ca3af; margin-bottom:15px; text-align:center;">
+                * สมาชิกใหม่รับเครดิตฟรี <b style="color:var(--gold);">300 THB</b><br>
+            </div>
+            <div class="modal-actions" style="flex-direction:column;">
+                <button class="btn btn-gold" onclick="processAuth(false)">เข้าสู่ระบบ</button>
+                <button class="btn btn-clear" onclick="processAuth(true)" style="margin-top:10px;">สมัครสมาชิกใหม่</button>
+            </div>
+            <div style="text-align:center; margin-top:15px;">
+                <button class="btn btn-clear" onclick="closeAuthModal()" style="background:transparent; color:#9ca3af;">ยกเลิก</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="redeem-modal">
+        <div class="modal-card">
+            <h3><i class="fa-solid fa-ticket"></i> ใส่โค้ดรับเครดิต</h3>
+            <div class="form-group">
+                <label>รหัสโค้ด:</label>
+                <input type="text" id="redeem-code-input" placeholder="X" style="text-transform:uppercase; letter-spacing:1px; font-family:monospace;">
+            </div>
+            <div style="font-size:0.8rem; color:#9ca3af; margin-bottom:10px;">
+                * โค้ดใช้ได้ครั้งเดียวต่อโค้ด<br>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-clear" onclick="closeRedeemModal()">ยกเลิก</button>
+                <button class="btn btn-gold" onclick="redeemCode()">ยืนยัน</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="withdraw-modal">
+        <div class="modal-card">
+            <h3><i class="fa-solid fa-wallet"></i> แจ้งถอนเงิน</h3>
+            <div class="form-group">
+                <label>ธนาคาร / บัญชี:</label>
+                <select id="withdraw-bank">
+                    <option value="KBANK">ธนาคารกสิกรไทย</option>
+                    <option value="TrueMoney">วอเลท TrueMoney</option>
+                    <option value="BBL">ธนาคารกรุงเทพ</option>
+                    <option value="SCB">ธนาคารไทยพาณิชย์</option>
+                    <option value="KTB">ธนาคารกรุงไทย</option>
+                    <option value="GSB">ธนาคารออมสิน</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>เลขบัญชี / เบอร์วอเลท:</label>
+                <input type="text" id="withdraw-acc" placeholder="กรอกเลขบัญชี">
+            </div>
+            <div class="form-group">
+                <label>จำนวนเงิน (THB):</label>
+                <input type="number" id="withdraw-amount" placeholder="ระบุจำนวน">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-clear" onclick="closeWithdrawModal()">ยกเลิก</button>
+                <button class="btn btn-gold" onclick="processWithdraw()">ยืนยัน</button>
+            </div>
+        </div>
+    </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
@@ -484,6 +591,10 @@
         let renderedHistoryCount = 0; 
         let lastAnnouncedSecond = -1;
         const socket = io({ transports: ['websocket'] });
+
+        // --- ตัวแปรสำหรับระบบชิป ---
+        const allChips = [20, 50, 100, 500, 1000, 5000, 10000];
+        let activeChips = [20, 100, 500, 1000, 10000]; // ค่าเริ่มต้น 5 อัน
 
         // ==========================================
         // ฟังก์ชัน UI ทั่วไป
@@ -577,6 +688,73 @@
             el.innerText = text;
             document.body.appendChild(el);
             setTimeout(() => el.remove(), 2500);
+        }
+
+        // ==========================================
+        // ✅ ระบบจัดการชิป (Settings)
+        // ==========================================
+        function renderChips() {
+            const chipSelection = document.getElementById('chip-selection');
+            chipSelection.innerHTML = '';
+            activeChips.forEach(val => {
+                const div = document.createElement('div');
+                div.className = `chip chip-${val}`;
+                if (val === currentSelectedChip) div.classList.add('selected-chip');
+                div.innerText = val >= 1000 ? (val/1000) + 'K' : val;
+                div.onclick = (e) => selectChip(val, e);
+                chipSelection.appendChild(div);
+            });
+        }
+
+        function openChipSettings() {
+            const grid = document.getElementById('chip-options-grid');
+            grid.innerHTML = '';
+            allChips.forEach(val => {
+                const div = document.createElement('div');
+                const isSelected = activeChips.includes(val);
+                div.className = `chip-option ${isSelected ? 'selected' : ''}`;
+                div.innerText = val >= 1000 ? (val/1000) + 'K' : val;
+                div.onclick = () => toggleChipSelection(val, div);
+                grid.appendChild(div);
+            });
+            document.getElementById('chip-settings-modal').style.display = 'flex';
+        }
+
+        let tempSelectedChips = [];
+
+        function toggleChipSelection(val, element) {
+            if (tempSelectedChips.length === 0) tempSelectedChips = [...activeChips];
+
+            const index = tempSelectedChips.indexOf(val);
+            if (index > -1) {
+                tempSelectedChips.splice(index, 1);
+                element.classList.remove('selected');
+            } else {
+                if (tempSelectedChips.length >= 5) {
+                    alert('เลือกได้สูงสุด 5 อันครับ!');
+                    return;
+                }
+                tempSelectedChips.push(val);
+                element.classList.add('selected');
+            }
+        }
+
+        function saveChipSettings() {
+            if (tempSelectedChips.length === 0) {
+                alert('ต้องเลือกชิปอย่างน้อย 1 อันครับ');
+                return;
+            }
+            // เรียงลำดับจากน้อยไปมาก
+            activeChips = [...tempSelectedChips].sort((a, b) => a - b);
+            
+            // ถ้าชิปที่เลือกอยู่ปัจจุบันไม่อยู่ในลิสต์ใหม่ ให้เปลี่ยนเป็นอันแรก
+            if (!activeChips.includes(currentSelectedChip)) {
+                currentSelectedChip = activeChips[0];
+            }
+
+            document.getElementById('chip-settings-modal').style.display = 'none';
+            tempSelectedChips = []; // reset
+            renderChips();
         }
 
         // ==========================================
@@ -684,7 +862,7 @@
                 }
             }
             renderedHistoryCount = serverHistory.length;
-            updateStatsUI(); // ✅ เรียกใช้ฟังก์ชันสถิติใหม่
+            updateStatsUI();
 
             setTimeout(() => {
                 const container = document.getElementById('big-road-container');
@@ -699,9 +877,6 @@
             }, 150);
         }
 
-        // ==========================================
-        // ✅ ฟังก์ชันอัปเดตสถิติวิเคราะห์ (Trend Analysis)
-        // ==========================================
         function updateStatsUI() {
             let pCount = 0, bCount = 0, tCount = 0;
             let currentStreak = 0, maxStreak = 0, lastResult = null;
@@ -711,7 +886,6 @@
                 else if (r === 'banker') bCount++;
                 else tCount++;
 
-                // คำนวณสตรีค
                 if (r !== 'tie') {
                     if (r === lastResult) {
                         currentStreak++;
@@ -734,7 +908,7 @@
         // ระบบแจกไพ่
         // ==========================================
         function getCardValue(card) { 
-            if (card.isSpecial) return 0; // ไพ่ วอก/เฟือง ไม่มีแต้ม
+            if (card.isSpecial) return 0;
             if (['10','J','Q','K'].includes(card.value)) return 0; 
             if (card.value === 'A') return 1; 
             return parseInt(card.value); 
@@ -794,7 +968,6 @@
             let playerHand = serverResult.pHand;
             let bankerHand = serverResult.bHand;
 
-            // ✅ ถ้าเป็นไพ่พิเศษ (วอก/เฟือง) ให้แสดงผลทันที
             if (serverResult.isSpecialWin) {
                 const sequence = [
                     { side: 'left', hand: playerHand, idx: 0, scoreId: 'player-score' },
@@ -821,7 +994,6 @@
                 }
                 speakThai(`ไพ่พิเศษ! ${serverResult.winner === 'tie' ? 'เสมอ' : serverResult.winner.toUpperCase() + ' ชนะ'}`);
             } else {
-                // การแจกไพ่ปกติ
                 const sequence = [
                     { side: 'left', hand: playerHand, idx: 0, scoreId: 'player-score' },
                     { side: 'right', hand: bankerHand, idx: 0, scoreId: 'banker-score' },
@@ -954,7 +1126,6 @@
             document.getElementById('timer-display').innerHTML = `<i class="fa-solid fa-clock"></i> ${state.countdown}`;
             gameState = state.gameState;
 
-            // ✅ อัปเดตหลอด Progress Bar
             const progress = document.getElementById('time-progress');
             if (progress) {
                 progress.style.width = (state.countdown / 10) * 100 + '%';
@@ -980,7 +1151,7 @@
                 else if (state.countdown === 3 && lastAnnouncedSecond !== 3) { 
                     speakThai('ปิดรับเดิมพัน 3, 2, 1'); 
                     lastAnnouncedSecond = 3; 
-                    playTickSound(); // ✅ เล่นเสียงติ๊ก
+                    playTickSound();
                 }
             } else {
                 document.getElementById('betting-grid').classList.add('disabled');
@@ -1049,6 +1220,7 @@
         updateUI();
         renderCodeList();
         drawCasinoScoreboard();
+        renderChips(); // ✅ เรียกใช้ฟังก์ชันวาดชิปใหม่
     </script>
 </body>
 </html>
