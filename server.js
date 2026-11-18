@@ -2,23 +2,34 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const { Server } = require('socket.io');
+const mongoose = require('mongoose');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// ==========================================
+// ⚠️ แก้ไขรหัสผ่านตรงนี้ (เอา <db_password> ออก แล้วใส่รหัสจริง)
+// ==========================================
+const MONGO_URI = 'mongodb+srv://juihub789_db_user:<db_password>@cluster0.iwne0qh.mongodb.net/'; 
+
+mongoose.connect(MONGO_URI)
+  .then(() => console.log('✅ Connected to MongoDB Successfully'))
+  .catch(err => console.error('❌ MongoDB Connection Error:', err));
+
+// --- สร้าง Schema สำหรับ User ---
+const userSchema = new mongoose.Schema({
+    username: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    balance: { type: Number, default: 1000 }, // สมัครใหม่รับ 1000
+    isAdmin: { type: Boolean, default: false }
+});
+const User = mongoose.model('User', userSchema);
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-
-// ---------------- ฐานข้อมูลผู้เล่นจำลอง ----------------
-// เก็บข้อมูลใน Memory (ถ้ารีสตาร์ทเซิร์ฟเวอร์ ข้อมูลจะหาย)
-// รูปแบบ: username: { password, balance, isAdmin }
-let usersDB = {
-    "ba_eu37": { password: "1234", balance: 5000, isAdmin: false },
-    "admin_master": { password: "min888", balance: 999999, isAdmin: true }
-};
 
 // ---------------- สถานะกลางของเซิร์ฟเวอร์ ----------------
 let globalState = {
@@ -175,50 +186,78 @@ io.on('connection', (socket) => {
       socket.emit('startDealing', globalState.lastResult);
   }
 
-  // --- ระบบ Login / สมัครสมาชิก ---
-  socket.on('loginRequest', (data) => {
+  // --- ระบบ Login / สมัครสมาชิก (MongoDB) ---
+  socket.on('loginRequest', async (data) => {
       const { username, password, isRegister } = data;
       
-      // ถ้าเป็นการสมัครใหม่
-      if (isRegister) {
-          if (usersDB[username]) {
-              socket.emit('loginResponse', { success: false, message: 'ชื่อผู้ใช้นี้มีอยู่ในระบบแล้ว!' });
+      try {
+          if (isRegister) {
+              // เช็คว่ามีชื่อนี้ในระบบหรือยัง
+              const existingUser = await User.findOne({ username });
+              if (existingUser) {
+                  return socket.emit('loginResponse', { success: false, message: 'ชื่อผู้ใช้นี้ถูกใช้งานแล้ว!' });
+              }
+              
+              // สร้าง User ใหม่
+              const newUser = new User({ username, password, balance: 1000 });
+              await newUser.save();
+              
+              socket.emit('loginResponse', { 
+                  success: true, 
+                  user: { username: newUser.username, balance: newUser.balance, isAdmin: newUser.isAdmin } 
+              });
           } else {
-              usersDB[username] = { password: password, balance: 1000, isAdmin: false }; // สมัครใหม่รับ 1000
-              socket.emit('loginResponse', { success: true, user: { username: username, balance: usersDB[username].balance, isAdmin: false } });
+              // ล็อกอิน
+              const user = await User.findOne({ username, password });
+              if (!user) {
+                  return socket.emit('loginResponse', { success: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง!' });
+              }
+              
+              // ตรวจสอบสิทธิ์แอดมิน (ถ้ารหัสเป็น min888 ให้ถือว่าเป็นแอดมิน)
+              let isAdmin = user.isAdmin || (password === 'min888');
+              
+              socket.emit('loginResponse', { 
+                  success: true, 
+                  user: { username: user.username, balance: user.balance, isAdmin: isAdmin } 
+              });
           }
-          return;
-      }
-
-      // ถ้าเป็นการล็อกอิน
-      const user = usersDB[username];
-      if (user && user.password === password) {
-          // แอดมิน can login with min888
-          let isAdmin = user.isAdmin || (password === 'min888');
-          socket.emit('loginResponse', { success: true, user: { username: username, balance: user.balance, isAdmin: isAdmin } });
-      } else {
-          socket.emit('loginResponse', { success: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง!' });
+      } catch (err) {
+          console.error(err);
+          socket.emit('loginResponse', { success: false, message: 'เกิดข้อผิดพลาดที่เซิร์ฟเวอร์' });
       }
   });
 
-  // --- ระบบซิงค์เครดิตผู้เล่น (เมื่อเดิมพันหรือรับโค้ด) ---
-  socket.on('updatePlayerBalance', (data) => {
+  // --- อัปเดตเครดิตผู้เล่น (เมื่อเดิมพันหรือชนะ) ---
+  socket.on('updatePlayerBalance', async (data) => {
       const { username, newBalance } = data;
-      if (usersDB[username]) {
-          usersDB[username].balance = newBalance;
+      try {
+          await User.updateOne({ username }, { balance: newBalance });
+      } catch (err) {
+          console.error('Error updating balance:', err);
       }
   });
 
-  // --- ระบบแอดมิน ปรับเครดิตคนอื่น ---
-  socket.on('adminAdjustCredit', (data) => {
+  // --- แอดมิน ปรับเครดิตผู้เล่นรายบุคคล ---
+  socket.on('adminAdjustCredit', async (data) => {
       const { targetUser, amount } = data;
-      if (usersDB[targetUser]) {
-          usersDB[targetUser].balance += amount;
-          // ส่งข้อมูลใหม่ไปหาคนๆ นั้น (ถ้าคนๆ นั้นออนไลน์อยู่)
-          io.emit('balanceUpdatedByAdmin', { username: targetUser, newBalance: usersDB[targetUser].balance });
-          socket.emit('adminAdjustResult', { success: true, message: `ปรับเครดิต ${targetUser} เป็น ${usersDB[targetUser].balance} สำเร็จ` });
-      } else {
-          socket.emit('adminAdjustResult', { success: false, message: `ไม่พบชื่อผู้ใช้ ${targetUser} ในระบบ` });
+      try {
+          const user = await User.findOne({ username: targetUser });
+          if (!user) {
+              return socket.emit('adminAdjustResult', { success: false, message: `ไม่พบชื่อผู้ใช้ ${targetUser} ในระบบ` });
+          }
+          
+          // อัปเดตเครดิต
+          user.balance += amount;
+          if(user.balance < 0) user.balance = 0; // ไม่ให้ติดลบ
+          await user.save();
+          
+          // แจ้งเตือนผู้เล่นคนนั้น (ถ้าออนไลน์)
+          io.emit('balanceUpdatedByAdmin', { username: targetUser, newBalance: user.balance });
+          socket.emit('adminAdjustResult', { success: true, message: `ปรับเครดิต ${targetUser} เป็น ${user.balance} สำเร็จ` });
+          
+      } catch (err) {
+          console.error(err);
+          socket.emit('adminAdjustResult', { success: false, message: 'เกิดข้อผิดพลาดในการบันทึก' });
       }
   });
 
