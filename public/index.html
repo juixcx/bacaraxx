@@ -97,8 +97,10 @@
         .side-title { font-size: 1.4rem; font-weight: 600; margin-bottom: 10px; text-transform: uppercase; }
         .player-title { color: #60a5fa; }
         .banker-title { color: #f87171; }
-        .score-badge { display: inline-block; background: #fff; color: #000; padding: 2px 12px; border-radius: 20px; font-weight: bold; margin-bottom: 15px; min-width: 40px; }
+        .score-badge { display: inline-block; background: #fff; color: #000; padding: 2px 12px; border-radius: 20px; font-weight: bold; margin-bottom: 15px; min-width: 40px; transition: all 0.3s; }
         .score-badge.pokk { background: var(--gold); color: #000; animation: pokkPulse 1s infinite; }
+        .score-badge.live-pop { animation: scorePop 0.4s ease-out; }
+        @keyframes scorePop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
         @keyframes pokkPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.8); } 50% { box-shadow: 0 0 0 8px rgba(245,158,11,0); } }
         .cards-row { display: flex; justify-content: center; gap: 10px; min-height: 120px; }
 
@@ -191,7 +193,6 @@
         .chip-option { padding: 10px; border-radius: 8px; background: #374151; text-align: center; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
         .chip-option:hover { background: #4b5563; }
         .chip-option.selected { border-color: var(--gold); background: #1f2937; box-shadow: 0 0 10px rgba(245,158,11,0.3); }
-        .chip-option.disabled { opacity: 0.4; cursor: not-allowed; }
 
         .admin-panel { background: rgba(124,58,237,0.15); border: 2px dashed var(--admin-purple); border-radius: 12px; padding: 15px 20px; margin-bottom: 20px; display: none; }
         .admin-panel h3 { color: #c084fc; margin-bottom: 10px; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
@@ -243,14 +244,6 @@
         .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
         .modal-actions button { flex: 1; }
 
-        @keyframes flashWin {
-            0% { box-shadow: inset 0 0 0px rgba(74, 222, 128, 0); }
-            50% { box-shadow: inset 0 0 50px rgba(74, 222, 128, 0.5); }
-            100% { box-shadow: inset 0 0 0px rgba(74, 222, 128, 0); }
-        }
-        .flash-win { animation: flashWin 1s ease-out; }
-
-        /* 📱 Media queries สำหรับมือถือ */
         @media (max-width: 500px) {
             .status-bar { padding: 8px 10px; flex-wrap: wrap; gap: 5px; }
             .status-bar h2 { font-size: 0.95rem !important; }
@@ -342,10 +335,6 @@
             <button class="btn btn-admin" style="width:100%; margin-bottom:10px;" onclick="generateCodes()">
                 <i class="fa-solid fa-plus"></i> สร้างโค้ด
             </button>
-            <div class="generated-code" id="generated-code-box" onclick="copyGeneratedCode()" style="display:none; background:#0f0a1e; border:1px solid var(--gold); border-radius:8px; padding:10px; text-align:center; font-family:monospace; font-size:1.1rem; font-weight:bold; color:var(--gold); letter-spacing:2px; margin-bottom:10px; cursor:pointer;">
-                <span id="generated-code-text">—</span>
-                <small style="display:block; font-size:0.7rem; color:#9ca3af; letter-spacing:0; margin-top:4px; font-family:'Prompt', sans-serif;"><i class="fa-solid fa-copy"></i> แตะเพื่อคัดลอก</small>
-            </div>
             <label style="font-size:0.8rem; color:#9ca3af; display:block; margin-top:5px;">
                 รายการโค้ดทั้งหมด (<span id="code-list-count">0</span>):
             </label>
@@ -392,7 +381,6 @@
             <div id="time-progress"></div>
         </div>
 
-        <!-- ✅ ADMIN PANEL พร้อมตัวเลือกล็อกผลครบ -->
         <div class="admin-panel" id="admin-panel">
             <h3><i class="fa-solid fa-user-shield"></i> แผงควบคุม ADMIN (สิทธิ์พิเศษ min888)</h3>
             <div class="admin-controls-grid">
@@ -410,12 +398,12 @@
                         <option value="force_player">ล็อกให้ PLAYER ชนะ</option>
                         <option value="force_banker">ล็อกให้ BANKER ชนะ</option>
                         <option value="force_tie">ล็อกให้ TIE ชนะ</option>
-                        <option value="force_wok">🔮 ล็อกไพ่วอก</option>
-                        <option value="force_fuang">🔮 ล็อกไพ่เฟือง</option>
+                        <option value="force_wok">🔮 ล็อกไพ่วอก (ใบที่ 3)</option>
+                        <option value="force_fuang">🔮 ล็อกไพ่เฟือง (ใบที่ 3)</option>
                     </select>
                 </div>
                 <div class="admin-group" id="special-side-group" style="display:none;">
-                    <label>เลือกฝั่งที่จะได้ไพ่พิเศษ:</label>
+                    <label>เลือกฝั่งที่จะได้ไพ่พิเศษ (ใบที่ 3):</label>
                     <select id="admin-special-side" class="admin-select" onchange="updateWinMode()">
                         <option value="player">ให้ไพ่พิเศษมาฝั่ง PLAYER</option>
                         <option value="banker">ให้ไพ่พิเศษมาฝั่ง BANKER</option>
@@ -565,9 +553,6 @@
                 <label>รหัสโค้ด:</label>
                 <input type="text" id="redeem-code-input" placeholder="X" style="text-transform:uppercase; letter-spacing:1px; font-family:monospace;">
             </div>
-            <div style="font-size:0.8rem; color:#9ca3af; margin-bottom:10px;">
-                * โค้ดใช้ได้ครั้งเดียวต่อโค้ด<br>
-            </div>
             <div class="modal-actions">
                 <button class="btn btn-clear" onclick="closeRedeemModal()">ยกเลิก</button>
                 <button class="btn btn-gold" onclick="redeemCode()">ยืนยัน</button>
@@ -610,11 +595,8 @@
         function ensureAudioCtx() { if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); return audioCtx; }
         function playCardSlide() { const ctx = ensureAudioCtx(); if (!ctx) return; const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.18, ctx.sampleRate); const data = buffer.getChannelData(0); for (let i = 0; i < data.length; i++) { data[i] = (Math.random() * 2 - 1) * (1 - i / data.length) * 0.4; } const src = ctx.createBufferSource(); src.buffer = buffer; const filter = ctx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 3200; filter.Q.value = 1.2; const gain = ctx.createGain(); gain.gain.setValueAtTime(0.3, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18); src.connect(filter).connect(gain).connect(ctx.destination); src.start(); }
         function playCardLand() { const ctx = ensureAudioCtx(); if (!ctx) return; const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.type = 'triangle'; osc.frequency.setValueAtTime(320, ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.08); gain.gain.setValueAtTime(0.25, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12); osc.connect(gain).connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.13); }
-        function playShuffleSound() { for (let i = 0; i < 4; i++) setTimeout(playCardSlide, i * 90); }
         function playWinSound() { const ctx = ensureAudioCtx(); if (!ctx) return; [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => { const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.type = 'sine'; osc.frequency.value = freq; const start = ctx.currentTime + i * 0.12; gain.gain.setValueAtTime(0, start); gain.gain.linearRampToValueAtTime(0.25, start + 0.02); gain.gain.exponentialRampToValueAtTime(0.001, start + 0.35); osc.connect(gain).connect(ctx.destination); osc.start(start); osc.stop(start + 0.4); }); }
         function playLoseSound() { const ctx = ensureAudioCtx(); if (!ctx) return; const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(400, ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.5); gain.gain.setValueAtTime(0.15, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55); osc.connect(gain).connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.6); }
-        function playTickSound() { const ctx = ensureAudioCtx(); if (!ctx) return; const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.type = 'sine'; osc.frequency.setValueAtTime(800, ctx.currentTime); gain.gain.setValueAtTime(0.05, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1); osc.connect(gain).connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.1); }
-
         function speakThai(text) { if (!window.speechSynthesis) return; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'th-TH'; const voices = speechSynthesis.getVoices(); const thaiVoice = voices.find(v => v.lang.startsWith('th')); if (thaiVoice) u.voice = thaiVoice; speechSynthesis.speak(u); }
 
         let balance = 0;
@@ -627,7 +609,8 @@
         let adminWinMode = 'normal';
         let adminSpecialSide = 'player';
         let renderedHistoryCount = 0;
-        let lastAnnouncedSecond = -1;
+        let isDealing = false;
+        let currentRoundResult = null; // ⭐ เก็บผลของรอบปัจจุบัน
         const socket = io({ transports: ['websocket'] });
 
         const allChips = [20, 50, 100, 500, 1000, 5000, 10000];
@@ -754,13 +737,10 @@
 
         function toggleChipSelection(val, element) {
             const index = tempSelectedChips.indexOf(val);
-            if (index > -1) {
-                tempSelectedChips.splice(index, 1);
-                element.classList.remove('selected');
-            } else {
+            if (index > -1) { tempSelectedChips.splice(index, 1); element.classList.remove('selected'); }
+            else {
                 if (tempSelectedChips.length >= 5) { alert('เลือกได้สูงสุด 5 อันครับ!'); return; }
-                tempSelectedChips.push(val);
-                element.classList.add('selected');
+                tempSelectedChips.push(val); element.classList.add('selected');
             }
         }
 
@@ -772,29 +752,24 @@
             renderChips();
         }
 
-        function drawCasinoScoreboard() {
+        // ==========================================================
+        // ⭐ วาดตารางใหม่ทั้งหมด (ใช้ตอน init และตอน historyUpdate)
+        // ==========================================================
+        function redrawScoreboard() {
             document.getElementById('round-count').innerText = serverHistory.length;
             const beadPlate = document.getElementById('bead-plate');
-            if (serverHistory.length < renderedHistoryCount) {
-                beadPlate.innerHTML = '';
-                document.getElementById('big-road').innerHTML = '';
-                renderedHistoryCount = 0;
-            }
-            if (serverHistory.length <= renderedHistoryCount) return;
+            beadPlate.innerHTML = '';
 
             const recentHistory = serverHistory.slice(-24);
-            const startIndex = renderedHistoryCount > 24 ? renderedHistoryCount - 24 : 0;
-            for (let i = startIndex; i < recentHistory.length; i++) {
-                let cell = beadPlate.children[i];
-                if (!cell) { cell = document.createElement('div'); cell.className = 'bead-cell'; beadPlate.appendChild(cell); }
-                if (cell.innerHTML === '') {
-                    const result = recentHistory[i];
-                    const circle = document.createElement('div');
-                    circle.className = `bead-circle ${result === 'player' ? 'p-win' : result === 'banker' ? 'b-win' : 't-win'}`;
-                    circle.innerText = result === 'player' ? 'P' : result === 'banker' ? 'B' : 'T';
-                    cell.appendChild(circle);
-                }
-            }
+            recentHistory.forEach(result => {
+                const cell = document.createElement('div');
+                cell.className = 'bead-cell';
+                const circle = document.createElement('div');
+                circle.className = `bead-circle ${result === 'player' ? 'p-win' : result === 'banker' ? 'b-win' : 't-win'}`;
+                circle.innerText = result === 'player' ? 'P' : result === 'banker' ? 'B' : 'T';
+                cell.appendChild(circle);
+                beadPlate.appendChild(cell);
+            });
 
             const bigRoad = document.getElementById('big-road');
             const cols = 60; const rows = 6;
@@ -874,10 +849,7 @@
 
             setTimeout(() => {
                 const container = document.getElementById('big-road-container');
-                if (lastIndex >= 0 && container) {
-                    const isNearEnd = Math.abs((container.scrollLeft + container.clientWidth) - container.scrollWidth) < 100;
-                    if (isNearEnd) container.scrollTo({ left: container.scrollWidth, behavior: 'smooth' });
-                }
+                if (container) container.scrollTo({ left: container.scrollWidth, behavior: 'smooth' });
             }, 150);
         }
 
@@ -901,13 +873,6 @@
             document.getElementById('stats-streak').innerText = maxStreak + ' ตัว';
         }
 
-        function getCardValue(card) {
-            if (card.isSpecial) return 0;
-            if (['10','J','Q','K'].includes(card.value)) return 0;
-            if (card.value === 'A') return 1;
-            return parseInt(card.value);
-        }
-        function calculateScore(hand) { return hand.reduce((sum, c) => sum + getCardValue(c), 0) % 10; }
         const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
         async function animateDealToSide(side) {
@@ -936,9 +901,20 @@
             arm.classList.remove(side === 'left' ? 'dealing-left' : 'dealing-right');
         }
 
-        function setScoreBadge(id, score) { document.getElementById(id).innerText = score; }
+        function setScoreBadge(id, score) {
+            const el = document.getElementById(id);
+            el.innerText = score;
+            el.classList.remove('live-pop');
+            void el.offsetWidth;
+            el.classList.add('live-pop');
+        }
 
-        async function startDealing(serverResult) {
+        // ==========================================================
+        // ⭐ เริ่มแจกไพ่ — รับข้อมูลจาก server (ทุกคนเห็นตรงกัน)
+        // ==========================================================
+        async function onDealStart(data) {
+            isDealing = true;
+            currentRoundResult = data.result;
             gameState = 'DEALING';
             document.getElementById('betting-grid').classList.add('disabled');
             document.getElementById('side-bets-grid').classList.add('disabled');
@@ -959,67 +935,43 @@
             playShuffleSound(); speakThai('เริ่มแจกไพ่');
             await sleep(700);
             document.getElementById('dealer').classList.remove('shuffling');
+        }
 
-            let playerHand = serverResult.pHand;
-            let bankerHand = serverResult.bHand;
-
-            const sequence = [
-                { side: 'left', hand: playerHand, idx: 0 },
-                { side: 'right', hand: bankerHand, idx: 0 },
-                { side: 'left', hand: playerHand, idx: 1 },
-                { side: 'right', hand: bankerHand, idx: 1 },
-            ];
-
-            for (const step of sequence) {
-                await animateDealToSide(step.side);
-                const target = step.side === 'left' ? 'player-cards' : 'banker-cards';
-                const cardDiv = document.createElement('div');
-                const c = step.hand[step.idx];
-                cardDiv.className = `card ${c.isSpecial ? 'special' : (c.isRed ? 'red' : 'black')}`;
-                cardDiv.innerHTML = `<div class="card-back"><i class="fa-solid fa-diamond"></i></div>`;
-                document.getElementById(target).appendChild(cardDiv);
-
-                await sleep(400);
-                cardDiv.classList.add('revealed');
-                cardDiv.innerHTML = `
-                    <div class="top-val">${c.value}</div>
-                    <div class="suit-center">${c.suit}</div>
-                    <div class="bottom-val">${c.value}</div>
-                `;
-                await sleep(200);
-            }
-
-            // แจกไพ่ใบที่ 3 ถ้ามี
-            if (serverResult.pHand.length > 2) {
+        // ⭐ รับแต้มเรียลไทม์ระหว่างแจก + แสดงไพ่ทีละใบ
+        let clientPushedP = 0, clientPushedB = 0;
+        async function onLiveScore(data) {
+            // แสดงไพ่ใบที่เพิ่งจั่ว
+            if (data.side === 'player') {
                 await animateDealToSide('left');
-                const cardDiv = document.createElement('div');
-                const c = serverResult.pHand[2];
-                cardDiv.className = `card ${c.isSpecial ? 'special' : (c.isRed ? 'red' : 'black')}`;
-                cardDiv.innerHTML = `<div class="card-back"><i class="fa-solid fa-diamond"></i></div>`;
-                document.getElementById('player-cards').appendChild(cardDiv);
-                await sleep(400);
-                cardDiv.classList.add('revealed');
-                cardDiv.innerHTML = `<div class="top-val">${c.value}</div><div class="suit-center">${c.suit}</div><div class="bottom-val">${c.value}</div>`;
-                await sleep(200);
-            }
-
-            if (serverResult.bHand.length > 2) {
+                clientPushedP++;
+            } else {
                 await animateDealToSide('right');
-                const cardDiv = document.createElement('div');
-                const c = serverResult.bHand[2];
-                cardDiv.className = `card ${c.isSpecial ? 'special' : (c.isRed ? 'red' : 'black')}`;
-                cardDiv.innerHTML = `<div class="card-back"><i class="fa-solid fa-diamond"></i></div>`;
-                document.getElementById('banker-cards').appendChild(cardDiv);
-                await sleep(400);
-                cardDiv.classList.add('revealed');
-                cardDiv.innerHTML = `<div class="top-val">${c.value}</div><div class="suit-center">${c.suit}</div><div class="bottom-val">${c.value}</div>`;
-                await sleep(200);
+                clientPushedB++;
             }
 
-            setScoreBadge('player-score', serverResult.pScore);
-            setScoreBadge('banker-score', serverResult.bScore);
+            const target = data.side === 'player' ? 'player-cards' : 'banker-cards';
+            const cardDiv = document.createElement('div');
+            const c = data.card;
+            cardDiv.className = `card ${c.isSpecial ? 'special' : (c.isRed ? 'red' : 'black')}`;
+            cardDiv.innerHTML = `<div class="card-back"><i class="fa-solid fa-diamond"></i></div>`;
+            document.getElementById(target).appendChild(cardDiv);
 
-            const winner = serverResult.winner;
+            await sleep(400);
+            cardDiv.classList.add('revealed');
+            cardDiv.innerHTML = `<div class="top-val">${c.value}</div><div class="suit-center">${c.suit}</div><div class="bottom-val">${c.value}</div>`;
+
+            // ⭐ อัปเดตแต้มเรียลไทม์ทันที (ไม่รอครบ 4 ใบ)
+            if (data.side === 'player') setScoreBadge('player-score', data.pScore);
+            else setScoreBadge('banker-score', data.bScore);
+        }
+
+        async function onDealEnd(data) {
+            isDealing = false;
+            const result = data.result;
+            setScoreBadge('player-score', result.pScore);
+            setScoreBadge('banker-score', result.bScore);
+
+            const winner = result.winner;
             const winnerBox = winner === 'player' ? 'player-side-box' : winner === 'banker' ? 'banker-side-box' : null;
             if (winnerBox) document.getElementById(winnerBox).classList.add('win-glow');
 
@@ -1029,12 +981,10 @@
             else if (winner === 'banker') banner.innerText = '🎉 BANKER WINNER!';
             else banner.innerText = '🤝 TIE!';
 
-            // จ่ายเงินเดิมพัน
-            let playerWon = false;
             let payout = 0;
-            if (winner === 'player' && bets.player > 0) { payout += bets.player * 2; playerWon = true; }
-            if (winner === 'banker' && bets.banker > 0) { payout += bets.banker * 1.95; playerWon = true; }
-            if (winner === 'tie' && bets.tie > 0) { payout += bets.tie * 9; playerWon = true; }
+            if (winner === 'player' && bets.player > 0) payout += bets.player * 2;
+            if (winner === 'banker' && bets.banker > 0) payout += bets.banker * 1.95;
+            if (winner === 'tie' && bets.tie > 0) payout += bets.tie * 9;
 
             if (payout > 0) { balance += payout; showFloatingText(`+${payout.toFixed(0)}`, true); playWinSound(); }
             else if (bets.player + bets.banker + bets.tie > 0) { playLoseSound(); }
@@ -1043,7 +993,7 @@
             bets.p_pair = 0; bets.b_pair = 0; bets.perfect_pair = 0;
             updateUI();
 
-            if (serverResult.isSpecialWin) speakThai(`ไพ่พิเศษ! ${winner === 'tie' ? 'เสมอ' : winner.toUpperCase() + ' ชนะ'}`);
+            if (result.isSpecialWin) speakThai(`ไพ่พิเศษ! ${winner === 'tie' ? 'เสมอ' : winner.toUpperCase() + ' ชนะ'}`);
             else speakThai(`${winner === 'tie' ? 'เสมอ' : winner === 'player' ? 'ผู้เล่นชนะ' : 'เจ้ามือชนะ'}`);
 
             gameState = 'BETTING';
@@ -1051,9 +1001,6 @@
             document.getElementById('side-bets-grid').classList.remove('disabled');
             document.getElementById('chip-selection').classList.remove('disabled');
             document.getElementById('clear-btn').disabled = false;
-
-            serverHistory.push(winner);
-            drawCasinoScoreboard();
         }
 
         // ================== Admin ==================
@@ -1080,8 +1027,8 @@
                 force_player: 'ล็อก PLAYER ชนะ',
                 force_banker: 'ล็อก BANKER ชนะ',
                 force_tie: 'ล็อก TIE',
-                force_wok: 'ล็อกไพ่วอก',
-                force_fuang: 'ล็อกไพ่เฟือง'
+                force_wok: 'ล็อกไพ่วอก (ใบที่ 3)',
+                force_fuang: 'ล็อกไพ่เฟือง (ใบที่ 3)'
             };
             let txt = 'โหมด: ' + (labels[adminWinMode] || adminWinMode);
             if (adminWinMode === 'force_wok' || adminWinMode === 'force_fuang') {
@@ -1090,7 +1037,70 @@
             document.getElementById('admin-status-display').innerText = txt;
         }
 
-        // ================== Socket ==================
+        // ==========================================================
+        // ⭐ FULL STATE — รับตอนเข้าใหม่ (ทุกคนเห็นตารางเดียวกัน)
+        // ==========================================================
+        socket.on('fullState', (state) => {
+            gameState = state.gameState;
+            adminWinMode = state.adminWinMode || 'normal';
+            adminSpecialSide = state.adminSpecialSide || 'player';
+            document.getElementById('admin-win-mode').value = adminWinMode;
+            document.getElementById('admin-special-side').value = adminSpecialSide;
+            if (adminWinMode === 'force_wok' || adminWinMode === 'force_fuang') {
+                document.getElementById('special-side-group').style.display = 'flex';
+            }
+            updateAdminStatusDisplay();
+
+            document.getElementById('timer-display').innerHTML = `<i class="fa-solid fa-clock"></i> ${state.countdown || 0}`;
+            const progress = document.getElementById('time-progress');
+            if (progress) progress.style.width = `${((state.countdown||0) / 10) * 100}%`;
+
+            // ⭐ วาดตารางสถิติทั้งหมดทันที
+            serverHistory = state.history || [];
+            redrawScoreboard();
+
+            // ⭐ ถ้ากำลังแจกไพ่ ให้แสดงไพ่ที่มีอยู่แล้ว (คนเข้าใหม่เห็นเหมือนคนอื่น)
+            if (state.gameState === 'DEALING' && state.liveScore) {
+                renderLiveDealState(state.liveScore);
+            }
+
+            // ⭐ ถ้ามีผลลัพธ์ล่าสุด ให้แสดงบนจอด้วย
+            if (state.gameState === 'DEALING' && state.lastResult) {
+                // ถ้าเพิ่งแจกเสร็จ ให้เรียก onDealEnd
+                if (state.dealPhase === 'done') {
+                    onDealEnd({ result: state.lastResult, liveScore: state.liveScore });
+                }
+            }
+        });
+
+        // ⭐ วาดสถานะการแจกไพ่ปัจจุบัน (สำหรับคนเข้าใหม่ตอนกำลังแจก)
+        function renderLiveDealState(liveScore) {
+            document.getElementById('player-cards').innerHTML = '';
+            document.getElementById('banker-cards').innerHTML = '';
+            gameState = 'DEALING';
+            document.getElementById('betting-grid').classList.add('disabled');
+            document.getElementById('side-bets-grid').classList.add('disabled');
+            document.getElementById('chip-selection').classList.add('disabled');
+            document.getElementById('clear-btn').disabled = true;
+            document.getElementById('timer-display').innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`;
+
+            (liveScore.pCards || []).forEach(c => {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = `card revealed ${c.isSpecial ? 'special' : (c.isRed ? 'red' : 'black')}`;
+                cardDiv.innerHTML = `<div class="top-val">${c.value}</div><div class="suit-center">${c.suit}</div><div class="bottom-val">${c.value}</div>`;
+                document.getElementById('player-cards').appendChild(cardDiv);
+            });
+            (liveScore.bCards || []).forEach(c => {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = `card revealed ${c.isSpecial ? 'special' : (c.isRed ? 'red' : 'black')}`;
+                cardDiv.innerHTML = `<div class="top-val">${c.value}</div><div class="suit-center">${c.suit}</div><div class="bottom-val">${c.value}</div>`;
+                document.getElementById('banker-cards').appendChild(cardDiv);
+            });
+
+            setScoreBadge('player-score', liveScore.pScore || 0);
+            setScoreBadge('banker-score', liveScore.bScore || 0);
+        }
+
         socket.on('stateSync', (state) => {
             gameState = state.gameState;
             adminWinMode = state.adminWinMode || 'normal';
@@ -1109,10 +1119,17 @@
             }
         });
 
-        socket.on('startDealing', (result) => { startDealing(result); });
+        socket.on('dealStart', (data) => { onDealStart(data); });
+        socket.on('liveScoreUpdate', (data) => { onLiveScore(data); });
+        socket.on('dealEnd', (data) => { onDealEnd(data); });
+
+        socket.on('historyUpdate', (data) => {
+            serverHistory = data.history || [];
+            redrawScoreboard();
+        });
 
         socket.on('resetScoreboard', () => {
-            serverHistory = []; renderedHistoryCount = 0;
+            serverHistory = [];
             document.getElementById('bead-plate').innerHTML = '';
             document.getElementById('big-road').innerHTML = '';
             updateStatsUI();
@@ -1134,9 +1151,7 @@
                     document.getElementById('admin-user-panel').style.display = 'block';
                 }
                 updateUI();
-            } else {
-                alert(res.message);
-            }
+            } else { alert(res.message); }
         });
 
         socket.on('adminActionResult', (res) => {
@@ -1159,16 +1174,12 @@
         }
         socket.on('adminAdjustResult', (res) => { alert(res.message); });
 
-        // Placeholder สำหรับฟังก์ชันที่ยังไม่มี backend
         function generateCodes() { alert('ฟังก์ชันสร้างโค้ดยังไม่เชื่อมต่อ backend'); }
-        function copyGeneratedCode() {}
         function redeemCode() { alert('ฟังก์ชัน redeem ยังไม่เชื่อมต่อ backend'); }
         function processWithdraw() { alert('ฟังก์ชันถอนเงินยังไม่เชื่อมต่อ backend'); }
 
-        // ================== Init ==================
         renderChips();
         updateUI();
-        drawCasinoScoreboard();
     </script>
 </body>
 </html>
