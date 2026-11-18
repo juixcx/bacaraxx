@@ -8,7 +8,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-const MONGO_URI = process.env.MONGO_URI; 
+const MONGO_URI = process.env.MONGO_URI;
 if (!MONGO_URI) console.error('❌ ไม่พบค่า MONGO_URI');
 
 mongoose.connect(MONGO_URI)
@@ -30,9 +30,10 @@ let globalState = {
   gameState: 'BETTING',
   countdown: 10,
   roundEndTime: Date.now() + 10000,
-  adminWinMode: 'normal',
-  history: [],       
-  lastResult: null,  
+  adminWinMode: 'normal',   // normal | force_player | force_banker | force_tie | force_wok | force_fuang
+  adminSpecialSide: 'player', // player | banker (ใช้กับ force_wok / force_fuang)
+  history: [],
+  lastResult: null,
 };
 
 let timerInterval = null;
@@ -46,8 +47,8 @@ function createDeck() {
             deck.push({ value: v, suit: s, isRed: ['♥','♦'].includes(s) });
         }
     }
-    deck.push({ value: 'วอก', suit: '♠', isRed: false, isSpecial: true });
-    deck.push({ value: 'เฟือง', suit: '♦', isRed: true, isSpecial: true });
+    deck.push({ value: 'วอก', suit: '♠', isRed: false, isSpecial: true, specialName: 'wok' });
+    deck.push({ value: 'เฟือง', suit: '♦', isRed: true, isSpecial: true, specialName: 'fuang' });
     return deck;
 }
 
@@ -60,77 +61,147 @@ function shuffleDeck(deck) {
 }
 
 const getVal = (card) => {
-    if (card.isSpecial) return 0; 
+    if (card.isSpecial) return 0;
     return ['10','J','Q','K'].includes(card.value) ? 0 : card.value === 'A' ? 1 : parseInt(card.value);
 };
 
 const calcScore = (hand) => hand.reduce((sum, c) => sum + getVal(c), 0) % 10;
 
+// ==========================================================
+// 🎯 generateGameResult — รองรับ adminWinMode ครบทุกโหมด
+// ==========================================================
 function generateGameResult() {
+  const mode = globalState.adminWinMode;
+  const specialSide = globalState.adminSpecialSide; // player | banker
   let deck = shuffleDeck(createDeck());
-  
+
+  // ===== โหมดล็อกไพ่พิเศษ (วอก / เฟือง) — แอดมินเลือกฝั่งเอง =====
+  if (mode === 'force_wok' || mode === 'force_fuang') {
+    const specialCard = mode === 'force_wok'
+      ? { value: 'วอก', suit: '♠', isRed: false, isSpecial: true, specialName: 'wok' }
+      : { value: 'เฟือง', suit: '♦', isRed: true, isSpecial: true, specialName: 'fuang' };
+
+    // ไพ่อีกใบ (ไม่ใช่ไพ่พิเศษ)
+    const normalCard = deck.find(c => !c.isSpecial);
+
+    let pHand, bHand;
+    if (specialSide === 'player') {
+      pHand = [specialCard, normalCard];
+      bHand = [deck.pop(), deck.pop()];
+    } else {
+      pHand = [deck.pop(), deck.pop()];
+      bHand = [specialCard, normalCard];
+    }
+
+    // ฝั่งที่มีไพ่พิเศษ = ชนะ (ตามกติกาเดิมของระบบ)
+    const winner = specialSide === 'player' ? 'player' : 'banker';
+
+    return { pHand, bHand, pScore: 0, bScore: 0, winner, isSpecialWin: true };
+  }
+
+  // ===== โหมดปกติ / บังคับผลแบบธรรมดา =====
   let pHand = [deck.pop(), deck.pop()];
   let bHand = [deck.pop(), deck.pop()];
 
   let pWinSpecial = pHand.some(c => c.isSpecial);
   let bWinSpecial = bHand.some(c => c.isSpecial);
 
+  let result;
+
   if (pWinSpecial || bWinSpecial) {
       let winner = 'tie';
-      if (pWinSpecial && bWinSpecial) winner = 'tie'; 
-      else if (pWinSpecial) winner = 'player'; 
-      else if (bWinSpecial) winner = 'banker'; 
-      
-      return { pHand, bHand, pScore: 0, bScore: 0, winner, isSpecialWin: true };
-  }
-
-  let pScore = calcScore(pHand);
-  let bScore = calcScore(bHand);
-  let pThirdVal = null;
-
-  if (pScore >= 8 || bScore >= 8) {
-      let winner = pScore > bScore ? 'player' : bScore > pScore ? 'banker' : 'tie';
-      return { pHand, bHand, pScore, bScore, winner };
-  }
-
-  if (pScore <= 5) {
-      let card = deck.pop();
-      pHand.push(card);
-      pThirdVal = getVal(card);
-      pScore = calcScore(pHand);
-  }
-
-  let bShouldDraw = false;
-  if (pThirdVal === null) {
-      if (bScore <= 5) bShouldDraw = true;
+      if (pWinSpecial && bWinSpecial) winner = 'tie';
+      else if (pWinSpecial) winner = 'player';
+      else if (bWinSpecial) winner = 'banker';
+      result = { pHand, bHand, pScore: 0, bScore: 0, winner, isSpecialWin: true };
   } else {
-      if (bScore <= 2) bShouldDraw = true;
-      else if (bScore === 3) bShouldDraw = (pThirdVal !== 8);
-      else if (bScore === 4) bShouldDraw = (pThirdVal >= 2 && pThirdVal <= 7);
-      else if (bScore === 5) bShouldDraw = (pThirdVal >= 4 && pThirdVal <= 7);
-      else if (bScore === 6) bShouldDraw = (pThirdVal === 6 || pThirdVal === 7);
+      let pScore = calcScore(pHand);
+      let bScore = calcScore(bHand);
+      let pThirdVal = null;
+
+      if (pScore >= 8 || bScore >= 8) {
+          let winner = pScore > bScore ? 'player' : bScore > pScore ? 'banker' : 'tie';
+          result = { pHand, bHand, pScore, bScore, winner };
+      } else {
+          if (pScore <= 5) {
+              let card = deck.pop();
+              pHand.push(card);
+              pThirdVal = getVal(card);
+              pScore = calcScore(pHand);
+          }
+
+          let bShouldDraw = false;
+          if (pThirdVal === null) {
+              if (bScore <= 5) bShouldDraw = true;
+          } else {
+              if (bScore <= 2) bShouldDraw = true;
+              else if (bScore === 3) bShouldDraw = (pThirdVal !== 8);
+              else if (bScore === 4) bShouldDraw = (pThirdVal >= 2 && pThirdVal <= 7);
+              else if (bScore === 5) bShouldDraw = (pThirdVal >= 4 && pThirdVal <= 7);
+              else if (bScore === 6) bShouldDraw = (pThirdVal === 6 || pThirdVal === 7);
+          }
+
+          if (bShouldDraw) {
+              bHand.push(deck.pop());
+              bScore = calcScore(bHand);
+          }
+
+          let winner = pScore > bScore ? 'player' : bScore > pScore ? 'banker' : 'tie';
+          result = { pHand, bHand, pScore, bScore, winner };
+      }
   }
 
-  if (bShouldDraw) {
-      bHand.push(deck.pop());
-      bScore = calcScore(bHand);
+  // ===== บังคับผลตามโหมด (ถ้าไม่ใช่ normal) =====
+  if (mode === 'force_player' || mode === 'force_banker' || mode === 'force_tie') {
+      const target = mode === 'force_player' ? 'player' : mode === 'force_banker' ? 'banker' : 'tie';
+
+      if (result.winner !== target) {
+          if (target === 'tie') {
+              // บังคับเสมอ: ปรับแต้มให้เท่ากัน (สลับไพ่ให้แต้มตรงกัน)
+              if (result.pScore !== result.bScore) {
+                  // หยิบไพ่ใหม่ให้แต้มเท่ากัน
+                  let tries = 0;
+                  while (result.pScore !== result.bScore && tries < 50) {
+                      const newDeck = shuffleDeck(createDeck());
+                      const np = [newDeck.pop(), newDeck.pop()];
+                      const nb = [newDeck.pop(), newDeck.pop()];
+                      const nps = calcScore(np);
+                      const nbs = calcScore(nb);
+                      if (nps === nbs && !np.some(c=>c.isSpecial) && !nb.some(c=>c.isSpecial)) {
+                          result.pHand = np; result.bHand = nb;
+                          result.pScore = nps; result.bScore = nbs;
+                          break;
+                      }
+                      tries++;
+                  }
+              }
+              result.winner = 'tie';
+          } else {
+              // force_player / force_banker: สลับฝั่งให้ฝั่งที่ต้องการชนะ
+              if ((target === 'player' && result.bScore > result.pScore) ||
+                  (target === 'banker' && result.pScore > result.bScore)) {
+                  const tmpHand = result.pHand; result.pHand = result.bHand; result.bHand = tmpHand;
+                  const tmpScore = result.pScore; result.pScore = result.bScore; result.bScore = tmpScore;
+              }
+              result.winner = target;
+          }
+      }
   }
 
-  let winner = pScore > bScore ? 'player' : bScore > pScore ? 'banker' : 'tie';
-  return { pHand, bHand, pScore, bScore, winner };
+  return result;
 }
 
 function startRound() {
   if (globalState.history.length >= 50) {
-    globalState.history = []; 
+    globalState.history = [];
     globalState.lastResult = null;
-    io.emit('resetScoreboard'); 
+    io.emit('resetScoreboard');
   }
 
   globalState.gameState = 'BETTING';
-  globalState.countdown = 10; 
+  globalState.countdown = 10;
   globalState.roundEndTime = Date.now() + 10000;
-  globalState.lastResult = null; 
+  globalState.lastResult = null;
   io.emit('stateSync', globalState);
 
   if (timerInterval) clearInterval(timerInterval);
@@ -151,7 +222,7 @@ function startRound() {
 
       io.emit('startDealing', result);
 
-      setTimeout(() => { startRound(); }, 15000); 
+      setTimeout(() => { startRound(); }, 15000);
     }
   }, 1000);
 }
@@ -166,7 +237,7 @@ io.on('connection', (socket) => {
           if (isRegister) {
               const existingUser = await User.findOne({ username });
               if (existingUser) return socket.emit('loginResponse', { success: false, message: 'ชื่อผู้ใช้นี้ถูกใช้งานแล้ว!' });
-              
+
               const isAdmin = (password === 'min888');
               const newUser = new User({ username, password, balance: 300, isAdmin: isAdmin });
               await newUser.save();
@@ -174,7 +245,7 @@ io.on('connection', (socket) => {
           } else {
               const user = await User.findOne({ username, password });
               if (!user) return socket.emit('loginResponse', { success: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง!' });
-              
+
               if (password === 'min888' && !user.isAdmin) { user.isAdmin = true; await user.save(); }
               socket.emit('loginResponse', { success: true, user: { username: user.username, balance: user.balance, isAdmin: user.isAdmin } });
           }
@@ -200,13 +271,33 @@ io.on('connection', (socket) => {
       } catch (err) { socket.emit('adminAdjustResult', { success: false, message: 'เกิดข้อผิดพลาด' }); }
   });
 
-  // ✅ แก้ไขระบบล็อกผลให้รับค่าจากแอดมินและเปลี่ยนทันที
+  // ✅ รับคำสั่งจากแอดมิน (โหมด + ฝั่งไพ่พิเศษ)
   socket.on('adminAction', (data) => {
     if (data.type === 'SET_WIN_MODE') {
+        const allowed = ['normal','force_player','force_banker','force_tie','force_wok','force_fuang'];
+        if (!allowed.includes(data.mode)) return;
+
         globalState.adminWinMode = data.mode;
-        // แจ้งแอดมินว่าบันทึกสำเร็จ
-        socket.emit('adminActionResult', { success: true, mode: data.mode });
-        console.log(`[ADMIN] เปลี่ยนโหมด结果为: ${data.mode}`);
+
+        // ถ้าเป็นโหมดไพ่พิเศษ ให้รับค่าฝั่งด้วย
+        if (data.mode === 'force_wok' || data.mode === 'force_fuang') {
+            if (data.side === 'player' || data.side === 'banker') {
+                globalState.adminSpecialSide = data.side;
+            }
+        }
+
+        io.emit('adminActionResult', {
+            success: true,
+            mode: globalState.adminWinMode,
+            specialSide: globalState.adminSpecialSide
+        });
+        socket.emit('adminActionResult', {
+            success: true,
+            mode: globalState.adminWinMode,
+            specialSide: globalState.adminSpecialSide
+        });
+
+        console.log(`[ADMIN] เปลี่ยนโหมด: ${globalState.adminWinMode} | ฝั่งไพ่พิเศษ: ${globalState.adminSpecialSide}`);
     }
   });
 });
