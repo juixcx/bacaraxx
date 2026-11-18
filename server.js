@@ -9,9 +9,9 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 // ==========================================
-// ⚠️ แก้ไขรหัสผ่านตรงนี้ (เอา <db_password> ออก แล้วใส่รหัสจริง)
+// ✅ ตั้งค่าการเชื่อมต่อ MongoDB (ใส่รหัสผ่านให้แล้ว)
 // ==========================================
-const MONGO_URI = 'mongodb+srv://juihub789_db_user:<db_password>@cluster0.iwne0qh.mongodb.net/'; 
+const MONGO_URI = 'mongodb+srv://minnie78t_db_user:UBdFCHKmBm5qB0Nw@my.ype6nu7.mongodb.net/baccarat?retryWrites=true&w=majority'; 
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log('✅ Connected to MongoDB Successfully'))
@@ -26,6 +26,7 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', userSchema);
 
+// ให้ Express เสิร์ฟไฟล์ในโฟลเดอร์ public
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -44,6 +45,7 @@ let timerInterval = null;
 const suits = ['♠', '♥', '♦', '♣'];
 const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
+// --- ฟังก์ชันสร้างไพ่และคำนวณแต้ม ---
 function createDeck() {
     let deck = [];
     for (let s of suits) {
@@ -261,6 +263,7 @@ io.on('connection', (socket) => {
       }
   });
 
+  // --- รับคำสั่งจากแอดมิน (เปลี่ยนโหมดเกม) ---
   socket.on('adminAction', (data) => {
     if (data.type === 'SET_WIN_MODE') {
       globalState.adminWinMode = data.mode;
@@ -268,6 +271,8 @@ io.on('connection', (socket) => {
   });
 });
 
+// เริ่มต้นเกม
 startRound();
+
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
