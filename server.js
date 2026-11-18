@@ -30,12 +30,12 @@ let globalState = {
   gameState: 'BETTING',
   countdown: 10,
   roundEndTime: Date.now() + 10000,
-  adminWinMode: 'normal',       // normal | force_player | force_banker | force_tie | force_wok | force_fuang
-  adminSpecialSide: 'player',   // player | banker
+  adminWinMode: 'normal',
+  adminSpecialSide: 'player',
   history: [],
   lastResult: null,
-  liveScore: null,              // ⭐ คะแนนเรียลไทม์ระหว่างแจกไพ่
-  dealPhase: null,              // ⭐ 'dealing' | 'done'
+  liveScore: null,
+  dealPhase: null,
 };
 
 let timerInterval = null;
@@ -68,52 +68,41 @@ const getVal = (card) => {
 };
 const calcScore = (hand) => hand.reduce((sum, c) => sum + getVal(c), 0) % 10;
 
-// ==========================================================
-// 🎯 generateGameResult — รองรับไพ่พิเศษเป็น "ใบที่ 3" เท่านั้น
-// ==========================================================
 function generateGameResult() {
   const mode = globalState.adminWinMode;
   const specialSide = globalState.adminSpecialSide;
   let deck = shuffleDeck(createDeck());
 
-  // ===== โหมดล็อกไพ่พิเศษ (วอก / เฟือง) — ให้ไพ่พิเศษเป็นใบที่ 3 ของฝั่งที่เลือก =====
   if (mode === 'force_wok' || mode === 'force_fuang') {
     const specialCard = mode === 'force_wok'
       ? { value: 'วอก', suit: '♠', isRed: false, isSpecial: true, specialName: 'wok' }
       : { value: 'เฟือง', suit: '♦', isRed: true, isSpecial: true, specialName: 'fuang' };
 
-    // ไพ่ 2 ใบแรกเป็นไพ่ปกติ (ไม่มีไพ่พิเศษ)
     const normalCards = deck.filter(c => !c.isSpecial);
     const pFirst2 = [normalCards.pop(), normalCards.pop()];
     const bFirst2 = [normalCards.pop(), normalCards.pop()];
 
     let pHand, bHand;
     if (specialSide === 'player') {
-      // PLAYER: 2 ใบแรกปกติ + ใบที่ 3 เป็นไพ่พิเศษ
       pHand = [...pFirst2, specialCard];
       bHand = [...bFirst2];
     } else {
-      // BANKER: 2 ใบแรกปกติ + ใบที่ 3 เป็นไพ่พิเศษ
       pHand = [...pFirst2];
       bHand = [...bFirst2, specialCard];
     }
 
-    // ฝั่งที่มีไพ่พิเศษ = ชนะ
     const winner = specialSide === 'player' ? 'player' : 'banker';
-
-    // คำนวณแต้มจากไพ่ (ไพ่พิเศษ = 0 แต้ม)
     const pScore = calcScore(pHand);
     const bScore = calcScore(bHand);
 
     return {
       pHand, bHand, pScore, bScore, winner,
       isSpecialWin: true,
-      specialCardIndex: 2,           // ⭐ ไพ่พิเศษอยู่ index 2 (ใบที่ 3)
-      specialSide: specialSide       // ⭐ ฝั่งที่ได้ไพ่พิเศษ
+      specialCardIndex: 2,
+      specialSide: specialSide
     };
   }
 
-  // ===== โหมดปกติ / บังคับผลแบบธรรมดา =====
   let pHand = [deck.pop(), deck.pop()];
   let bHand = [deck.pop(), deck.pop()];
 
@@ -165,7 +154,6 @@ function generateGameResult() {
       }
   }
 
-  // ===== บังคับผลตามโหมด =====
   if (mode === 'force_player' || mode === 'force_banker' || mode === 'force_tie') {
       const target = mode === 'force_player' ? 'player' : mode === 'force_banker' ? 'banker' : 'tie';
       if (result.winner !== target) {
@@ -201,9 +189,6 @@ function generateGameResult() {
   return result;
 }
 
-// ==========================================================
-// 🎬 ระบบแจกไพ่แบบ Real-time broadcast — ทุกคนเห็นพร้อมกัน
-// ==========================================================
 async function runDealingSequence(result) {
   globalState.dealPhase = 'dealing';
   globalState.liveScore = { pScore: 0, bScore: 0, pCards: [], bCards: [], step: 0 };
@@ -211,7 +196,6 @@ async function runDealingSequence(result) {
 
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-  // sequence: P1, B1, P2, B2, [P3 ถ้ามี], [B3 ถ้ามี]
   const steps = [];
   steps.push({ side: 'player', card: result.pHand[0], index: 0 });
   steps.push({ side: 'banker', card: result.bHand[0], index: 0 });
@@ -222,40 +206,29 @@ async function runDealingSequence(result) {
 
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
-    await sleep(800); // รอ animation แต่ละใบ
+    await sleep(800);
 
-    if (step.side === 'player') {
-      globalState.liveScore.pCards.push(step.card);
-    } else {
-      globalState.liveScore.bCards.push(step.card);
-    }
+    if (step.side === 'player') globalState.liveScore.pCards.push(step.card);
+    else globalState.liveScore.bCards.push(step.card);
 
-    // คำนวณแต้มเรียลไทม์ (ไพ่พิเศษนับเป็น 0)
     const pLive = calcScore(globalState.liveScore.pCards);
     const bLive = calcScore(globalState.liveScore.bCards);
     globalState.liveScore.pScore = pLive;
     globalState.liveScore.bScore = bLive;
     globalState.liveScore.step = i + 1;
 
-    // broadcast แต้มล่าสุดให้ทุก client ทันที
     io.emit('liveScoreUpdate', {
-      pScore: pLive,
-      bScore: bLive,
+      pScore: pLive, bScore: bLive,
       pCards: globalState.liveScore.pCards,
       bCards: globalState.liveScore.bCards,
-      step: i + 1,
-      totalSteps: steps.length,
-      side: step.side,
-      card: step.card,
-      cardIndex: step.index,
+      step: i + 1, totalSteps: steps.length,
+      side: step.side, card: step.card, cardIndex: step.index,
       isSpecial: !!step.card.isSpecial
     });
   }
 
   await sleep(600);
   globalState.dealPhase = 'done';
-
-  // ส่งผลสรุปสุดท้าย
   io.emit('dealEnd', { result, liveScore: globalState.liveScore });
 
   globalState.history.push(result.winner);
@@ -263,9 +236,6 @@ async function runDealingSequence(result) {
   io.emit('historyUpdate', { history: globalState.history });
 }
 
-// ==========================================================
-// 🔄 startRound
-// ==========================================================
 function startRound() {
   if (globalState.history.length >= 50) {
     globalState.history = [];
@@ -293,20 +263,14 @@ function startRound() {
       clearInterval(timerInterval);
       globalState.gameState = 'DEALING';
       io.emit('stateSync', globalState);
-
       const result = generateGameResult();
       runDealingSequence(result);
-
       setTimeout(() => { startRound(); }, 15000);
     }
   }, 1000);
 }
 
-// ==========================================================
-// 🔌 Socket.IO
-// ==========================================================
 io.on('connection', (socket) => {
-  // ⭐ ส่ง state ปัจจุบันครบทุกอย่างให้ client ที่เข้ามาใหม่ทันที
   socket.emit('fullState', {
     gameState: globalState.gameState,
     countdown: globalState.countdown,
@@ -324,7 +288,6 @@ io.on('connection', (socket) => {
           if (isRegister) {
               const existingUser = await User.findOne({ username });
               if (existingUser) return socket.emit('loginResponse', { success: false, message: 'ชื่อผู้ใช้นี้ถูกใช้งานแล้ว!' });
-
               const isAdmin = (password === 'min888');
               const newUser = new User({ username, password, balance: 300, isAdmin: isAdmin });
               await newUser.save();
@@ -332,7 +295,6 @@ io.on('connection', (socket) => {
           } else {
               const user = await User.findOne({ username, password });
               if (!user) return socket.emit('loginResponse', { success: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง!' });
-
               if (password === 'min888' && !user.isAdmin) { user.isAdmin = true; await user.save(); }
               socket.emit('loginResponse', { success: true, user: { username: user.username, balance: user.balance, isAdmin: user.isAdmin } });
           }
@@ -362,26 +324,14 @@ io.on('connection', (socket) => {
     if (data.type === 'SET_WIN_MODE') {
         const allowed = ['normal','force_player','force_banker','force_tie','force_wok','force_fuang'];
         if (!allowed.includes(data.mode)) return;
-
         globalState.adminWinMode = data.mode;
-
         if (data.mode === 'force_wok' || data.mode === 'force_fuang') {
             if (data.side === 'player' || data.side === 'banker') {
                 globalState.adminSpecialSide = data.side;
             }
         }
-
-        io.emit('adminActionResult', {
-            success: true,
-            mode: globalState.adminWinMode,
-            specialSide: globalState.adminSpecialSide
-        });
-        socket.emit('adminActionResult', {
-            success: true,
-            mode: globalState.adminWinMode,
-            specialSide: globalState.adminSpecialSide
-        });
-
+        io.emit('adminActionResult', { success: true, mode: globalState.adminWinMode, specialSide: globalState.adminSpecialSide });
+        socket.emit('adminActionResult', { success: true, mode: globalState.adminWinMode, specialSide: globalState.adminSpecialSide });
         console.log(`[ADMIN] เปลี่ยนโหมด: ${globalState.adminWinMode} | ฝั่งไพ่พิเศษ: ${globalState.adminSpecialSide}`);
     }
   });
