@@ -8,16 +8,16 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// ==========================================
-// ✅ ตั้งค่าการเชื่อมต่อ MongoDB
-// ==========================================
-// ระบบจะพยายามดึงจาก Environment Variable ใน Render ก่อน
-// ถ้าไม่มี (เช่นรันในเครื่อง) จะใช้ลิงก์สำรองที่ให้มา
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://minnie78t_db_user:oAVxmOYAT4r4Qdjb@my.ype6nu7.mongodb.net/baccarat?retryWrites=true&w=majority'; 
+// ✅ ตั้งค่าการเชื่อมต่อ MongoDB (ดึงจาก Render Environment Variable)
+const MONGO_URI = process.env.MONGO_URI; 
+
+if (!MONGO_URI) {
+    console.error('❌ ไม่พบค่า MONGO_URI ใน Environment Variable กรุณาตั้งค่าใน Render ด้วยครับ');
+}
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log('✅ Connected to MongoDB Successfully'))
-  .catch(err => console.error('❌ MongoDB Connection Error:', err));
+  .catch(err => console.error('❌ MongoDB Connection Error:', err.message));
 
 // --- สร้าง Schema สำหรับ User ---
 const userSchema = new mongoose.Schema({
@@ -28,7 +28,6 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', userSchema);
 
-// ให้ Express เสิร์ฟไฟล์ในโฟลเดอร์ public
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -47,7 +46,7 @@ let timerInterval = null;
 const suits = ['♠', '♥', '♦', '♣'];
 const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
-// --- ฟังก์ชันสร้างไพ่และคำนวณแต้ม ---
+// --- ฟังก์ชันสร้างไพ่ ---
 function createDeck() {
     let deck = [];
     for (let s of suits) {
@@ -190,19 +189,16 @@ io.on('connection', (socket) => {
       socket.emit('startDealing', globalState.lastResult);
   }
 
-  // --- ระบบ Login / สมัครสมาชิก (MongoDB) ---
   socket.on('loginRequest', async (data) => {
       const { username, password, isRegister } = data;
       
       try {
           if (isRegister) {
-              // เช็คว่ามีชื่อนี้ในระบบหรือยัง
               const existingUser = await User.findOne({ username });
               if (existingUser) {
                   return socket.emit('loginResponse', { success: false, message: 'ชื่อผู้ใช้นี้ถูกใช้งานแล้ว!' });
               }
               
-              // สร้าง User ใหม่
               const newUser = new User({ username, password, balance: 1000 });
               await newUser.save();
               
@@ -211,13 +207,11 @@ io.on('connection', (socket) => {
                   user: { username: newUser.username, balance: newUser.balance, isAdmin: newUser.isAdmin } 
               });
           } else {
-              // ล็อกอิน
               const user = await User.findOne({ username, password });
               if (!user) {
                   return socket.emit('loginResponse', { success: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง!' });
               }
               
-              // ตรวจสอบสิทธิ์แอดมิน (ถ้ารหัสเป็น min888 ให้ถือว่าเป็นแอดมิน)
               let isAdmin = user.isAdmin || (password === 'min888');
               
               socket.emit('loginResponse', { 
@@ -231,7 +225,6 @@ io.on('connection', (socket) => {
       }
   });
 
-  // --- อัปเดตเครดิตผู้เล่น (เมื่อเดิมพันหรือชนะ) ---
   socket.on('updatePlayerBalance', async (data) => {
       const { username, newBalance } = data;
       try {
@@ -241,7 +234,6 @@ io.on('connection', (socket) => {
       }
   });
 
-  // --- แอดมิน ปรับเครดิตผู้เล่นรายบุคคล ---
   socket.on('adminAdjustCredit', async (data) => {
       const { targetUser, amount } = data;
       try {
@@ -250,12 +242,10 @@ io.on('connection', (socket) => {
               return socket.emit('adminAdjustResult', { success: false, message: `ไม่พบชื่อผู้ใช้ ${targetUser} ในระบบ` });
           }
           
-          // อัปเดตเครดิต
           user.balance += amount;
-          if(user.balance < 0) user.balance = 0; // ไม่ให้ติดลบ
+          if(user.balance < 0) user.balance = 0;
           await user.save();
           
-          // แจ้งเตือนผู้เล่นคนนั้น (ถ้าออนไลน์)
           io.emit('balanceUpdatedByAdmin', { username: targetUser, newBalance: user.balance });
           socket.emit('adminAdjustResult', { success: true, message: `ปรับเครดิต ${targetUser} เป็น ${user.balance} สำเร็จ` });
           
@@ -265,7 +255,6 @@ io.on('connection', (socket) => {
       }
   });
 
-  // --- รับคำสั่งจากแอดมิน (เปลี่ยนโหมดเกม) ---
   socket.on('adminAction', (data) => {
     if (data.type === 'SET_WIN_MODE') {
       globalState.adminWinMode = data.mode;
@@ -273,7 +262,6 @@ io.on('connection', (socket) => {
   });
 });
 
-// เริ่มต้นเกม
 startRound();
 
 const PORT = process.env.PORT || 3000;
