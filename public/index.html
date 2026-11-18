@@ -459,71 +459,23 @@
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-
     <script>
-        /* ============ AUDIO ENGINE ============ */
+        // ==========================================
+        // ระบบเสียงและตัวแปรพื้นฐาน
+        // ==========================================
         let audioCtx = null;
-        function ensureAudioCtx() {
-            if (!audioCtx) {
-                try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
-            }
-            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-            return audioCtx;
-        }
-        function playCardSlide() {
-            const ctx = ensureAudioCtx(); if (!ctx) return;
-            const dur = 0.18;
-            const buffer = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < data.length; i++) {
-                const t = i / data.length;
-                data[i] = (Math.random() * 2 - 1) * (1 - t) * 0.4;
-            }
-            const src = ctx.createBufferSource(); src.buffer = buffer;
-            const filter = ctx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 3200; filter.Q.value = 1.2;
-            const gain = ctx.createGain(); gain.gain.setValueAtTime(0.3, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
-            src.connect(filter).connect(gain).connect(ctx.destination); src.start();
-        }
-        function playCardLand() {
-            const ctx = ensureAudioCtx(); if (!ctx) return;
-            const osc = ctx.createOscillator(); const gain = ctx.createGain();
-            osc.type = 'triangle'; osc.frequency.setValueAtTime(320, ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.08);
-            gain.gain.setValueAtTime(0.25, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
-            osc.connect(gain).connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.13);
-        }
+        function ensureAudioCtx() { if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); return audioCtx; }
+        function playCardSlide() { const ctx = ensureAudioCtx(); if (!ctx) return; const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.18, ctx.sampleRate); const data = buffer.getChannelData(0); for (let i = 0; i < data.length; i++) { data[i] = (Math.random() * 2 - 1) * (1 - i / data.length) * 0.4; } const src = ctx.createBufferSource(); src.buffer = buffer; const filter = ctx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 3200; filter.Q.value = 1.2; const gain = ctx.createGain(); gain.gain.setValueAtTime(0.3, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18); src.connect(filter).connect(gain).connect(ctx.destination); src.start(); }
+        function playCardLand() { const ctx = ensureAudioCtx(); if (!ctx) return; const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.type = 'triangle'; osc.frequency.setValueAtTime(320, ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.08); gain.gain.setValueAtTime(0.25, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12); osc.connect(gain).connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.13); }
         function playShuffleSound() { for (let i = 0; i < 4; i++) setTimeout(playCardSlide, i * 90); }
-        function playWinSound() {
-            const ctx = ensureAudioCtx(); if (!ctx) return;
-            [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
-                const osc = ctx.createOscillator(); const gain = ctx.createGain();
-                osc.type = 'sine'; osc.frequency.value = freq;
-                const start = ctx.currentTime + i * 0.12;
-                gain.gain.setValueAtTime(0, start); gain.gain.linearRampToValueAtTime(0.25, start + 0.02); gain.gain.exponentialRampToValueAtTime(0.001, start + 0.35);
-                osc.connect(gain).connect(ctx.destination); osc.start(start); osc.stop(start + 0.4);
-            });
-        }
-        function playLoseSound() {
-            const ctx = ensureAudioCtx(); if (!ctx) return;
-            const osc = ctx.createOscillator(); const gain = ctx.createGain();
-            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(400, ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.5);
-            gain.gain.setValueAtTime(0.15, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
-            osc.connect(gain).connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.6);
-        }
-
-        /* ============ SPEECH ENGINE ============ */
-        function speakThai(text, opts = {}) {
-            if (!window.speechSynthesis) return;
-            speechSynthesis.cancel();
-            const u = new SpeechSynthesisUtterance(text);
-            u.lang = 'th-TH'; u.rate = opts.rate || 1.0; u.pitch = opts.pitch || 1.0; u.volume = opts.volume || 1.0;
-            const voices = speechSynthesis.getVoices();
-            const thaiVoice = voices.find(v => v.lang.startsWith('th'));
-            if (thaiVoice) u.voice = thaiVoice;
-            speechSynthesis.speak(u);
-        }
-        if (window.speechSynthesis) { speechSynthesis.onvoiceschanged = () => {}; speechSynthesis.getVoices(); }
-
-        /* ============ GAME STATE ============ */
+        function playWinSound() { const ctx = ensureAudioCtx(); if (!ctx) return; [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => { const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.type = 'sine'; osc.frequency.value = freq; const start = ctx.currentTime + i * 0.12; gain.gain.setValueAtTime(0, start); gain.gain.linearRampToValueAtTime(0.25, start + 0.02); gain.gain.exponentialRampToValueAtTime(0.001, start + 0.35); osc.connect(gain).connect(ctx.destination); osc.start(start); osc.stop(start + 0.4); }); }
+        function playLoseSound() { const ctx = ensureAudioCtx(); if (!ctx) return; const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(400, ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.5); gain.gain.setValueAtTime(0.15, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55); osc.connect(gain).connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.6); }
+        
+        function speakThai(text) { if (!window.speechSynthesis) return; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'th-TH'; const voices = speechSynthesis.getVoices(); const thaiVoice = voices.find(v => v.lang.startsWith('th')); if (thaiVoice) u.voice = thaiVoice; speechSynthesis.speak(u); }
+        
+        // ==========================================
+        // ตัวแปรสถานะเกม
+        // ==========================================
         let balance = 0;
         let currentSelectedChip = 20; 
         let bets = { player: 0, banker: 0, tie: 0, p_pair: 0, b_pair: 0, perfect_pair: 0 };
@@ -535,20 +487,105 @@
         let creditCodes = []; 
         let renderedHistoryCount = 0; 
         let lastAnnouncedSecond = -1;
+        const socket = io({ transports: ['websocket'] });
 
+        // ==========================================
+        // ฟังก์ชัน UI ทั่วไป
+        // ==========================================
         function toggleDrawer() {
             const drawer = document.getElementById('side-drawer');
             const overlay = document.getElementById('drawer-overlay');
-            if (drawer.classList.contains('open')) {
-                drawer.classList.remove('open'); overlay.style.display = 'none';
-            } else {
-                drawer.classList.add('open'); overlay.style.display = 'block';
+            if (drawer.classList.contains('open')) { drawer.classList.remove('open'); overlay.style.display = 'none'; } 
+            else { drawer.classList.add('open'); overlay.style.display = 'block'; }
+        }
+
+        function openAuthModal() { toggleDrawer(); document.getElementById('auth-modal').style.display = 'flex'; }
+        function closeAuthModal() { document.getElementById('auth-modal').style.display = 'none'; }
+        
+        function processAuth(isRegister) {
+            const userVal = document.getElementById('auth-username').value.trim();
+            const passVal = document.getElementById('auth-password').value.trim();
+            if (!userVal || !passVal) { alert('กรุณากรอกชื่อผู้ใช้และรหัสผ่าน'); return; }
+            socket.emit('loginRequest', { username: userVal, password: passVal, isRegister: isRegister });
+            const btn = isRegister ? document.querySelector('button[onclick="processAuth(true)"]') : document.querySelector('button[onclick="processAuth(false)"]');
+            if(btn) btn.innerText = 'กำลังดำเนินการ...';
+        }
+
+        function logout() {
+            toggleDrawer(); currentUser = null; isAdmin = false; balance = 0; clearBets();
+            document.getElementById('user-badge').innerText = 'ผู้เยี่ยมชม';
+            document.getElementById('user-badge').className = 'user-badge';
+            document.getElementById('admin-panel').style.display = 'none';
+            document.getElementById('admin-code-panel').style.display = 'none';
+            document.getElementById('admin-user-panel').style.display = 'none';
+            document.getElementById('drawer-auth-btn').style.display = 'flex';
+            document.getElementById('drawer-logout-btn').style.display = 'none';
+            updateUI(); alert('ออกจากระบบเรียบร้อยแล้ว');
+        }
+
+        function updateUI() {
+            document.getElementById('balance-display').innerText = balance.toLocaleString();
+            if (currentUser) socket.emit('updatePlayerBalance', { username: currentUser, newBalance: balance });
+            
+            for (let zone in bets) {
+                const chipDiv = document.getElementById(`chip-${zone}`);
+                if (chipDiv) {
+                    if (bets[zone] > 0) {
+                        let text = bets[zone] >= 1000 ? (bets[zone] / 1000) + 'K' : bets[zone];
+                        chipDiv.innerHTML = `<div class="placed-chip" style="width:30px;height:30px;font-size:0.7rem;">${text}</div>`;
+                    } else { chipDiv.innerHTML = ''; }
+                }
             }
         }
 
-        /* ==========================================
-           ระบบวาดตารางสถิติแบบคาสิโน (Auto Scroll)
-           ========================================== */
+        function selectChip(amount, evt) {
+            if (gameState !== 'BETTING') return;
+            currentSelectedChip = amount;
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected-chip'));
+            evt.currentTarget.classList.add('selected-chip');
+        }
+
+        function placeBet(zone) {
+            if (gameState !== 'BETTING') return;
+            if (!currentUser) { alert('กรุณาเข้าสู่ระบบก่อนเดิมพัน!'); document.getElementById('auth-modal').style.display = 'flex'; return; }
+            if (balance <= 0) { alert('เครดิตไม่เพียงพอ!'); return; }
+
+            if (zone === 'player' && (bets.banker > 0 || bets.tie > 0)) { alert('ไม่สามารถลง Player พร้อมกับ Banker/Tie ได้ครับ'); return; }
+            if (zone === 'banker' && (bets.player > 0 || bets.tie > 0)) { alert('ไม่สามารถลง Banker พร้อมกับ Player/Tie ได้ครับ'); return; }
+            if (zone === 'tie' && (bets.player > 0 || bets.banker > 0)) { alert('ไม่สามารถลง Tie พร้อมกับ Player/Banker ได้ครับ'); return; }
+
+            const actualBet = Math.min(currentSelectedChip, balance);
+            bets[zone] += actualBet; balance -= actualBet; updateUI();
+        }
+
+        function placeSideBet(zone) {
+            if (gameState !== 'BETTING') return;
+            if (!currentUser) { alert('กรุณาเข้าสู่ระบบก่อนเดิมพัน!'); document.getElementById('auth-modal').style.display = 'flex'; return; }
+            if (balance <= 0) { alert('เครดิตไม่เพียงพอ!'); return; }
+            const actualBet = Math.min(currentSelectedChip, balance);
+            bets[zone] += actualBet; balance -= actualBet; updateUI();
+        }
+
+        function clearBets() {
+            if (gameState !== 'BETTING') return;
+            let totalRefund = 0;
+            for (let key in bets) totalRefund += bets[key];
+            balance += totalRefund;
+            bets = { player: 0, banker: 0, tie: 0, p_pair: 0, b_pair: 0, perfect_pair: 0 }; 
+            updateUI();
+        }
+
+        function showFloatingText(text, isWin) {
+            const el = document.createElement('div');
+            el.className = `floating-text ${isWin ? 'win' : 'lose'}`;
+            el.innerText = text;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 2500);
+        }
+
+        // ==========================================
+        // ระบบตารางสถิติ
+        // ==========================================
         function drawCasinoScoreboard() {
             document.getElementById('round-count').innerText = serverHistory.length;
             const beadPlate = document.getElementById('bead-plate');
@@ -565,11 +602,7 @@
             
             for (let i = startIndex; i < recentHistory.length; i++) {
                 let cell = beadPlate.children[i];
-                if (!cell) {
-                    cell = document.createElement('div');
-                    cell.className = 'bead-cell';
-                    beadPlate.appendChild(cell);
-                }
+                if (!cell) { cell = document.createElement('div'); cell.className = 'bead-cell'; beadPlate.appendChild(cell); }
                 if (cell.innerHTML === '') {
                     const result = recentHistory[i];
                     const circle = document.createElement('div');
@@ -589,9 +622,7 @@
                 if (result === 'tie') {
                     if (lastIndex >= 0) {
                         const r = Math.floor(lastIndex / cols); const c = lastIndex % cols;
-                        if(grid[r][c] !== 'tie-line') {
-                            grid[r][c] = grid[r][c] ? grid[r][c] + '-tie' : 'tie-line'; 
-                        }
+                        if(grid[r][c] !== 'tie-line') { grid[r][c] = grid[r][c] ? grid[r][c] + '-tie' : 'tie-line'; }
                     }
                     return;
                 }
@@ -623,14 +654,11 @@
             bigRoad.innerHTML = '';
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'road-cell';
+                    const cell = document.createElement('div'); cell.className = 'road-cell';
                     let val = grid[r][c];
-                    
                     if (val) {
                         let hasTie = val.toString().includes('-tie') || val === 'tie-line';
                         let baseVal = val.toString().replace('-tie', '');
-
                         if (baseVal === 'player' || baseVal === 'banker') {
                             const marker = document.createElement('div');
                             const streak = streakCounters[r][c];
@@ -639,12 +667,7 @@
                             marker.innerText = baseVal === 'player' ? 'P' : 'B';
                             cell.appendChild(marker);
                         }
-
-                        if (hasTie) {
-                            const line = document.createElement('div');
-                            line.className = 'tie-line';
-                            cell.appendChild(line);
-                        }
+                        if (hasTie) { const line = document.createElement('div'); line.className = 'tie-line'; cell.appendChild(line); }
                     }
                     bigRoad.appendChild(cell);
                 }
@@ -658,272 +681,23 @@
                     if (targetCell) {
                         const isScrolledToEnd = container.scrollLeft + container.clientWidth >= container.scrollWidth - 50;
                         const isNearEnd = Math.abs((container.scrollLeft + container.clientWidth) - container.scrollWidth) < 100;
-                        
-                        if (isScrolledToEnd || isNearEnd) {
-                            container.scrollTo({
-                                left: container.scrollWidth,
-                                behavior: 'smooth'
-                            });
-                        }
+                        if (isScrolledToEnd || isNearEnd) container.scrollTo({ left: container.scrollWidth, behavior: 'smooth' });
                     }
                 }
             }, 150);
         }
 
-        /* ==== CODE SYSTEM ==== */
-        function generateCodeString() {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            let s = '';
-            for (let i = 0; i < 8; i++) s += chars[Math.floor(Math.random() * chars.length)];
-            return 'BAC-' + s;
-        }
-        function generateCodes() {
-            if (!isAdmin) return;
-            const amt = parseFloat(document.getElementById('code-amount-input').value);
-            const cnt = parseInt(document.getElementById('code-count-input').value);
-            if (isNaN(amt) || amt <= 0) { alert('กรุณาระบุจำนวนเครดิตให้ถูกต้อง'); return; }
-            if (isNaN(cnt) || cnt < 1 || cnt > 50) { alert('จำนวนโค้ดต้องอยู่ระหว่าง 1-50'); return; }
-            const created = [];
-            for (let i = 0; i < cnt; i++) {
-                let code;
-                do { code = generateCodeString(); } while (creditCodes.find(c => c.code === code));
-                creditCodes.push({ code, amount: amt, used: false, usedBy: null });
-                created.push(code);
-            }
-            document.getElementById('generated-code-text').innerText = created.join(' / ');
-            document.getElementById('generated-code-box').classList.add('show');
-            renderCodeList();
-            speakThai('สร้างโค้ดสำเร็จ');
-        }
-        function renderCodeList() {
-            const list = document.getElementById('code-list');
-            document.getElementById('code-list-count').innerText = creditCodes.length;
-            if (creditCodes.length === 0) { list.innerHTML = '<div class="code-list-empty">ยังไม่มีโค้ด</div>'; return; }
-            list.innerHTML = creditCodes.slice().reverse().map(c => `
-                <div class="code-list-item ${c.used ? 'used' : ''}">
-                    <span>${c.code}</span>
-                    <span class="code-amt">${c.amount.toLocaleString()}</span>
-                    <span class="code-status ${c.used ? 'used' : 'avail'}">${c.used ? 'ใช้แล้ว' : 'ว่าง'}</span>
-                </div>
-            `).join('');
-        }
-        function copyGeneratedCode() {
-            const txt = document.getElementById('generated-code-text').innerText;
-            if (!txt || txt === '—') return;
-            navigator.clipboard.writeText(txt).then(() => { speakThai('คัดลอกแล้ว'); }).catch(() => {});
-        }
-        function openRedeemModal() {
-            toggleDrawer();
-            if (!currentUser) { alert('กรุณาเข้าสู่ระบบก่อนใช้โค้ด!'); document.getElementById('auth-modal').style.display = 'flex'; return; }
-            document.getElementById('redeem-modal').style.display = 'flex';
-        }
-        function closeRedeemModal() { document.getElementById('redeem-modal').style.display = 'none'; }
-        function redeemCode() {
-            const input = document.getElementById('redeem-code-input');
-            const code = input.value.trim().toUpperCase();
-            if (!code) { alert('กรุณากรอกโค้ด'); return; }
-            const found = creditCodes.find(c => c.code === code);
-            if (!found) { alert('ไม่พบโค้ดนี้! กรุณาตรวจสอบอีกครั้ง'); return; }
-            if (found.used) { alert('โค้ดนี้ถูกใช้ไปแล้ว!'); return; }
-            found.used = true; found.usedBy = currentUser;
-            balance += found.amount; updateUI();
-            renderCodeList(); input.value = ''; closeRedeemModal();
-            playWinSound(); alert(`ใช้โค้ดสำเร็จ! ได้รับ ${found.amount.toLocaleString()} THB`);
-        }
-
-        /* ==== AUTH ==== */
-        function openAuthModal() { toggleDrawer(); document.getElementById('auth-modal').style.display = 'flex'; }
-        function closeAuthModal() { document.getElementById('auth-modal').style.display = 'none'; }
-        
-        function processAuth(isRegister) {
-            const userVal = document.getElementById('auth-username').value.trim();
-            const passVal = document.getElementById('auth-password').value.trim();
-            
-            if (!userVal || !passVal) { alert('กรุณากรอกชื่อผู้ใช้และรหัสผ่าน'); return; }
-
-            socket.emit('loginRequest', { username: userVal, password: passVal, isRegister: isRegister });
-            
-            const btn = isRegister ? document.querySelector('button[onclick="processAuth(true)"]') : document.querySelector('button[onclick="processAuth(false)"]');
-            if(btn) btn.innerText = 'กำลังดำเนินการ...';
-        }
-
-        socket.on('loginResponse', (data) => {
-            document.querySelector('button[onclick="processAuth(true)"]').innerText = 'สมัครสมาชิกใหม่';
-            document.querySelector('button[onclick="processAuth(false)"]').innerText = 'เข้าสู่ระบบ';
-
-            if (data.success) {
-                currentUser = data.user.username;
-                balance = data.user.balance;
-                isAdmin = data.user.isAdmin;
-
-                if (isAdmin) {
-                    document.getElementById('user-badge').innerText = `ADMIN: ${currentUser}`;
-                    document.getElementById('user-badge').className = 'user-badge admin';
-                    document.getElementById('admin-panel').style.display = 'block';
-                    document.getElementById('admin-code-panel').style.display = 'block';
-                    document.getElementById('admin-user-panel').style.display = 'block';
-                } else {
-                    document.getElementById('user-badge').innerText = `สมาชิก: ${currentUser}`;
-                    document.getElementById('user-badge').className = 'user-badge';
-                    document.getElementById('admin-panel').style.display = 'none';
-                    document.getElementById('admin-code-panel').style.display = 'none';
-                    document.getElementById('admin-user-panel').style.display = 'none';
-                }
-
-                document.getElementById('drawer-auth-btn').style.display = 'none';
-                document.getElementById('drawer-logout-btn').style.display = 'flex';
-                document.getElementById('auth-username').value = ''; 
-                document.getElementById('auth-password').value = '';
-                updateUI(); 
-                closeAuthModal();
-                alert(isAdmin ? 'เข้าสู่ระบบแอดมินสำเร็จ!' : 'เข้าสู่ระบบสำเร็จ!');
-            } else {
-                alert(data.message);
-            }
-        });
-
-        function logout() {
-            toggleDrawer(); currentUser = null; isAdmin = false; balance = 0; clearBets();
-            document.getElementById('user-badge').innerText = 'ผู้เยี่ยมชม';
-            document.getElementById('user-badge').className = 'user-badge';
-            document.getElementById('admin-panel').style.display = 'none';
-            document.getElementById('admin-code-panel').style.display = 'none';
-            document.getElementById('admin-user-panel').style.display = 'none';
-            document.getElementById('drawer-auth-btn').style.display = 'flex';
-            document.getElementById('drawer-logout-btn').style.display = 'none';
-            updateUI(); alert('ออกจากระบบเรียบร้อยแล้ว');
-        }
-
-        function adminAdjustCredit() {
-            if (!isAdmin) return;
-            const targetUser = document.getElementById('admin-target-user').value.trim();
-            const amount = parseFloat(document.getElementById('admin-credit-amount').value);
-            if (!targetUser || isNaN(amount)) { alert('กรุณาระบุชื่อผู้เล่นและจำนวนเงิน'); return; }
-            socket.emit('adminAdjustCredit', { targetUser: targetUser, amount: amount });
-        }
-
-        socket.on('adminAdjustResult', (data) => {
-            alert(data.message);
-            if(data.success) document.getElementById('admin-target-user').value = '';
-        });
-
-        socket.on('balanceUpdatedByAdmin', (data) => {
-            if (currentUser === data.username) {
-                balance = data.newBalance;
-                updateUI();
-                alert(`แอดมินได้ปรับเครดิตของคุณเป็น ${balance.toLocaleString()} THB`);
-            }
-        });
-
-        function syncBalanceToServer() {
-            if (currentUser) {
-                socket.emit('updatePlayerBalance', { username: currentUser, newBalance: balance });
-            }
-        }
-
-        /* ==== WITHDRAW & ADMIN FUNCTIONS ==== */
-        function openWithdrawModal() {
-            toggleDrawer();
-            if (!currentUser) { alert('กรุณาเข้าสู่ระบบก่อนทำรายการถอนเงิน!'); document.getElementById('auth-modal').style.display = 'flex'; return; }
-            document.getElementById('withdraw-modal').style.display = 'flex';
-        }
-        function closeWithdrawModal() { document.getElementById('withdraw-modal').style.display = 'none'; }
-        function processWithdraw() {
-            const bank = document.getElementById('withdraw-bank').value;
-            const acc = document.getElementById('withdraw-acc').value.trim();
-            const amount = parseFloat(document.getElementById('withdraw-amount').value);
-            if (!acc || isNaN(amount) || amount <= 0) { alert('กรุณากรอกข้อมูลให้ถูกต้อง'); return; }
-            if (amount > balance) { alert(`ยอดเงินไม่พอ! คงเหลือ ${balance.toLocaleString()} THB`); return; }
-            balance -= amount; updateUI(); closeWithdrawModal();
-            document.getElementById('withdraw-acc').value = ''; document.getElementById('withdraw-amount').value = '';
-            alert(`แจ้งถอนสำเร็จ!\n${bank}\n${acc}\n${amount.toLocaleString()} THB`);
-        }
-        function applyAdminCredit() {
-            if (!isAdmin) return;
-            const newCredit = parseFloat(document.getElementById('admin-credit-input').value);
-            if (!isNaN(newCredit) && newCredit >= 0) { balance = newCredit; updateUI(); alert(`ปรับเครดิตเป็น ${balance.toLocaleString()} THB สำเร็จ!`); }
-        }
-
-        function updateUI() {
-            document.getElementById('balance-display').innerText = balance.toLocaleString();
-            syncBalanceToServer();
-            
-            for (let zone in bets) {
-                const chipDiv = document.getElementById(`chip-${zone}`);
-                if (chipDiv) {
-                    if (bets[zone] > 0) {
-                        let text = bets[zone] >= 1000 ? (bets[zone] / 1000) + 'K' : bets[zone];
-                        chipDiv.innerHTML = `<div class="placed-chip" style="width:30px;height:30px;font-size:0.7rem;">${text}</div>`;
-                    } else { chipDiv.innerHTML = ''; }
-                }
-            }
-        }
-        
-        function selectChip(amount, evt) {
-            if (gameState !== 'BETTING') return;
-            currentSelectedChip = amount;
-            document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected-chip'));
-            evt.currentTarget.classList.add('selected-chip');
-        }
-        
-        function placeBet(zone) {
-            if (gameState !== 'BETTING') return;
-            if (!currentUser) { alert('กรุณาเข้าสู่ระบบก่อนเดิมพัน!'); document.getElementById('auth-modal').style.display = 'flex'; return; }
-            if (balance <= 0) { alert('เครดิตไม่เพียงพอ!'); return; }
-
-            if (zone === 'player' && (bets.banker > 0 || bets.tie > 0)) { alert('ไม่สามารถลง Player พร้อมกับ Banker/Tie ได้ครับ กรุณาเคลียร์เดิมพันก่อน'); return; }
-            if (zone === 'banker' && (bets.player > 0 || bets.tie > 0)) { alert('ไม่สามารถลง Banker พร้อมกับ Player/Tie ได้ครับ กรุณาเคลียร์เดิมพันก่อน'); return; }
-            if (zone === 'tie' && (bets.player > 0 || bets.banker > 0)) { alert('ไม่สามารถลง Tie พร้อมกับ Player/Banker ได้ครับ กรุณาเคลียร์เดิมพันก่อน'); return; }
-
-            const actualBet = Math.min(currentSelectedChip, balance);
-            bets[zone] += actualBet; balance -= actualBet; updateUI();
-        }
-
-        function placeSideBet(zone) {
-            if (gameState !== 'BETTING') return;
-            if (!currentUser) { alert('กรุณาเข้าสู่ระบบก่อนเดิมพัน!'); document.getElementById('auth-modal').style.display = 'flex'; return; }
-            if (balance <= 0) { alert('เครดิตไม่เพียงพอ!'); return; }
-
-            const actualBet = Math.min(currentSelectedChip, balance);
-            bets[zone] += actualBet; balance -= actualBet; updateUI();
-        }
-
-        function clearBets() {
-            if (gameState !== 'BETTING') return;
-            let totalRefund = 0;
-            for (let key in bets) totalRefund += bets[key];
-            balance += totalRefund;
-            bets = { player: 0, banker: 0, tie: 0, p_pair: 0, b_pair: 0, perfect_pair: 0 }; 
-            updateUI();
-        }
-
-        function showFloatingText(text, isWin) {
-            const el = document.createElement('div');
-            el.className = `floating-text ${isWin ? 'win' : 'lose'}`;
-            el.innerText = text;
-            document.body.appendChild(el);
-            setTimeout(() => el.remove(), 2500);
-        }
-
-        function getCardValue(card) {
-            if (['10','J','Q','K'].includes(card.value)) return 0;
-            if (card.value === 'A') return 1;
-            return parseInt(card.value);
-        }
+        // ==========================================
+        // ระบบแจกไพ่
+        // ==========================================
+        function getCardValue(card) { if (['10','J','Q','K'].includes(card.value)) return 0; if (card.value === 'A') return 1; return parseInt(card.value); }
         function calculateScore(hand) { return hand.reduce((sum, c) => sum + getCardValue(c), 0) % 10; }
-
-        const dealerEl = () => document.getElementById('dealer');
-        const armLeft = () => document.getElementById('dealer-arm-left');
-        const armRight = () => document.getElementById('dealer-arm-right');
-        const handCardLeft = () => document.getElementById('dealer-card-left');
-        const handCardRight = () => document.getElementById('dealer-card-right');
         const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
         async function animateDealToSide(side) {
-            const arm = side === 'left' ? armLeft() : armRight();
-            const handCard = side === 'left' ? handCardLeft() : handCardRight();
-            const targetId = side === 'left' ? 'player-cards' : 'banker-cards';
-            const targetEl = document.getElementById(targetId);
+            const arm = side === 'left' ? document.getElementById('dealer-arm-left') : document.getElementById('dealer-arm-right');
+            const handCard = side === 'left' ? document.getElementById('dealer-card-left') : document.getElementById('dealer-card-right');
+            const targetEl = document.getElementById(side === 'left' ? 'player-cards' : 'banker-cards');
             
             handCard.classList.add('visible'); playCardSlide();
             arm.classList.add(side === 'left' ? 'dealing-left' : 'dealing-right');
@@ -934,9 +708,7 @@
             const fly = document.createElement('div');
             fly.className = 'flying-card';
             fly.innerHTML = `<div class="card-back"><i class="fa-solid fa-diamond"></i></div>`;
-            fly.style.left = handRect.left + 'px';
-            fly.style.top = handRect.top + 'px';
-            fly.style.transform = 'scale(0.35)';
+            fly.style.left = handRect.left + 'px'; fly.style.top = handRect.top + 'px'; fly.style.transform = 'scale(0.35)';
             document.body.appendChild(fly);
             
             handCard.classList.remove('visible'); playCardLand();
@@ -963,16 +735,13 @@
             
             document.getElementById('player-cards').innerHTML = '';
             document.getElementById('banker-cards').innerHTML = '';
-            setScoreBadge('player-score', 0);
-            setScoreBadge('banker-score', 0);
+            setScoreBadge('player-score', 0); setScoreBadge('banker-score', 0);
             document.getElementById('announcement-banner').style.display = 'none';
-            document.getElementById('player-score').classList.remove('pokk');
-            document.getElementById('banker-score').classList.remove('pokk');
-            document.getElementById('player-side-box').classList.remove('win-glow');
-            document.getElementById('banker-side-box').classList.remove('win-glow');
+            document.getElementById('player-score').classList.remove('pokk'); document.getElementById('banker-score').classList.remove('pokk');
+            document.getElementById('player-side-box').classList.remove('win-glow'); document.getElementById('banker-side-box').classList.remove('win-glow');
 
-            dealerEl().classList.add('shuffling'); playShuffleSound(); speakThai('เริ่มแจกไพ่');
-            await sleep(700); dealerEl().classList.remove('shuffling');
+            document.getElementById('dealer').classList.add('shuffling'); playShuffleSound(); speakThai('เริ่มแจกไพ่');
+            await sleep(700); document.getElementById('dealer').classList.remove('shuffling');
 
             let playerHand = serverResult.pHand;
             let bankerHand = serverResult.bHand;
@@ -1061,7 +830,6 @@
             let pPairWin = false, bPairWin = false, perfectPairWin = false;
             if (playerHand.length >= 2 && playerHand[0].value === playerHand[1].value) pPairWin = true;
             if (bankerHand.length >= 2 && bankerHand[0].value === bankerHand[1].value) bPairWin = true;
-            
             if (pPairWin && playerHand[0].suit === playerHand[1].suit) perfectPairWin = true;
             if (bPairWin && bankerHand[0].suit === bankerHand[1].suit) perfectPairWin = true;
 
@@ -1084,17 +852,9 @@
                 else if (netProfit < 0) showFloatingText(`${netProfit.toLocaleString()}`, false);
             }
             
-            if (winner === 'player') {
-                banner.style.borderColor = 'var(--player-blue)';
-                document.getElementById('player-side-box').classList.add('win-glow');
-            } else if (winner === 'banker') {
-                banner.style.borderColor = 'var(--banker-red)';
-                document.getElementById('banker-side-box').classList.add('win-glow');
-            } else {
-                banner.style.borderColor = 'var(--tie-green)';
-                document.getElementById('player-side-box').classList.add('win-glow');
-                document.getElementById('banker-side-box').classList.add('win-glow');
-            }
+            if (winner === 'player') { banner.style.borderColor = 'var(--player-blue)'; document.getElementById('player-side-box').classList.add('win-glow'); } 
+            else if (winner === 'banker') { banner.style.borderColor = 'var(--banker-red)'; document.getElementById('banker-side-box').classList.add('win-glow'); } 
+            else { banner.style.borderColor = 'var(--tie-green)'; document.getElementById('player-side-box').classList.add('win-glow'); document.getElementById('banker-side-box').classList.add('win-glow'); }
 
             if (winner === 'tie') speakThai('เสมอ');
             else speakThai(`${winner === 'player' ? 'Player' : 'Banker'} ชนะ ${Math.max(pScore, bScore)} ต่อ ${Math.min(pScore, bScore)}`);
@@ -1103,47 +863,33 @@
 
             await sleep(3500); 
             bets = { player: 0, banker: 0, tie: 0, p_pair: 0, b_pair: 0, perfect_pair: 0 }; updateUI();
-            document.getElementById('player-side-box').classList.remove('win-glow');
-            document.getElementById('banker-side-box').classList.remove('win-glow');
+            document.getElementById('player-side-box').classList.remove('win-glow'); document.getElementById('banker-side-box').classList.remove('win-glow');
         }
 
-        const socket = io({ transports: ['websocket'] });
-
+        // ==========================================
+        // ระบบ Socket.io
+        // ==========================================
         socket.on('stateSync', (state) => {
             document.getElementById('timer-display').innerHTML = `<i class="fa-solid fa-clock"></i> ${state.countdown}`;
             gameState = state.gameState;
 
-            if (state.history) {
-                serverHistory = state.history;
-                drawCasinoScoreboard(); 
-            }
+            if (state.history) { serverHistory = state.history; drawCasinoScoreboard(); }
             
             if (gameState === 'BETTING') {
                 if(document.getElementById('player-cards').innerHTML !== '') {
-                     document.getElementById('player-cards').innerHTML = '';
-                     document.getElementById('banker-cards').innerHTML = '';
-                     setScoreBadge('player-score', 0);
-                     setScoreBadge('banker-score', 0);
+                     document.getElementById('player-cards').innerHTML = ''; document.getElementById('banker-cards').innerHTML = '';
+                     setScoreBadge('player-score', 0); setScoreBadge('banker-score', 0);
                      document.getElementById('announcement-banner').style.display = 'none';
-                     document.getElementById('player-score').classList.remove('pokk');
-                     document.getElementById('banker-score').classList.remove('pokk');
-                     document.getElementById('player-side-box').classList.remove('win-glow');
-                     document.getElementById('banker-side-box').classList.remove('win-glow');
+                     document.getElementById('player-score').classList.remove('pokk'); document.getElementById('banker-score').classList.remove('pokk');
+                     document.getElementById('player-side-box').classList.remove('win-glow'); document.getElementById('banker-side-box').classList.remove('win-glow');
                 }
-
                 document.getElementById('betting-grid').classList.remove('disabled');
                 document.getElementById('side-bets-grid').classList.remove('disabled');
                 document.getElementById('chip-selection').classList.remove('disabled');
                 document.getElementById('clear-btn').disabled = false;
 
-                if (state.countdown === 10 && lastAnnouncedSecond !== 10) {
-                    speakThai('เชิญลูกค้าทำการวางเดิมพันครับ');
-                    lastAnnouncedSecond = 10;
-                } else if (state.countdown === 3 && lastAnnouncedSecond !== 3) {
-                    speakThai('ปิดรับเดิมพัน 3, 2, 1');
-                    lastAnnouncedSecond = 3;
-                }
-
+                if (state.countdown === 10 && lastAnnouncedSecond !== 10) { speakThai('เชิญลูกค้าทำการวางเดิมพันครับ'); lastAnnouncedSecond = 10; }
+                else if (state.countdown === 3 && lastAnnouncedSecond !== 3) { speakThai('ปิดรับเดิมพัน 3, 2, 1'); lastAnnouncedSecond = 3; }
             } else {
                 document.getElementById('betting-grid').classList.add('disabled');
                 document.getElementById('side-bets-grid').classList.add('disabled');
@@ -1153,23 +899,61 @@
         });
 
         socket.on('resetScoreboard', () => {
-            serverHistory = [];
-            renderedHistoryCount = 0;
-            document.getElementById('bead-plate').innerHTML = '';
-            document.getElementById('big-road').innerHTML = '';
+            serverHistory = []; renderedHistoryCount = 0;
+            document.getElementById('bead-plate').innerHTML = ''; document.getElementById('big-road').innerHTML = '';
             drawCasinoScoreboard();
         });
 
-        socket.on('startDealing', (serverResult) => {
-            startDealing(serverResult);
+        socket.on('startDealing', (serverResult) => { startDealing(serverResult); });
+        
+        socket.on('loginResponse', (data) => {
+            document.querySelector('button[onclick="processAuth(true)"]').innerText = 'สมัครสมาชิกใหม่';
+            document.querySelector('button[onclick="processAuth(false)"]').innerText = 'เข้าสู่ระบบ';
+
+            if (data.success) {
+                currentUser = data.user.username; balance = data.user.balance; isAdmin = data.user.isAdmin;
+                if (isAdmin) {
+                    document.getElementById('user-badge').innerText = `ADMIN: ${currentUser}`; document.getElementById('user-badge').className = 'user-badge admin';
+                    document.getElementById('admin-panel').style.display = 'block'; document.getElementById('admin-code-panel').style.display = 'block'; document.getElementById('admin-user-panel').style.display = 'block';
+                } else {
+                    document.getElementById('user-badge').innerText = `สมาชิก: ${currentUser}`; document.getElementById('user-badge').className = 'user-badge';
+                    document.getElementById('admin-panel').style.display = 'none'; document.getElementById('admin-code-panel').style.display = 'none'; document.getElementById('admin-user-panel').style.display = 'none';
+                }
+                document.getElementById('drawer-auth-btn').style.display = 'none'; document.getElementById('drawer-logout-btn').style.display = 'flex';
+                document.getElementById('auth-username').value = ''; document.getElementById('auth-password').value = '';
+                updateUI(); closeAuthModal(); alert(isAdmin ? 'เข้าสู่ระบบแอดมินสำเร็จ!' : 'เข้าสู่ระบบสำเร็จ!');
+            } else { alert(data.message); }
         });
 
-        updateWinMode = function() {
-            if (!isAdmin) return;
-            adminWinMode = document.getElementById('admin-win-mode').value;
-            socket.emit('adminAction', { type: 'SET_WIN_MODE', mode: adminWinMode });
-        };
+        socket.on('adminAdjustResult', (data) => { alert(data.message); if(data.success) document.getElementById('admin-target-user').value = ''; });
+        socket.on('balanceUpdatedByAdmin', (data) => { if (currentUser === data.username) { balance = data.newBalance; updateUI(); alert(`แอดมินได้ปรับเครดิตของคุณเป็น ${balance.toLocaleString()} THB`); } });
 
+        // ==========================================
+        // ฟังก์ชันแอดมินและโค้ด
+        // ==========================================
+        function updateWinMode() { if (!isAdmin) return; adminWinMode = document.getElementById('admin-win-mode').value; socket.emit('adminAction', { type: 'SET_WIN_MODE', mode: adminWinMode }); }
+        function adminAdjustCredit() { if (!isAdmin) return; const targetUser = document.getElementById('admin-target-user').value.trim(); const amount = parseFloat(document.getElementById('admin-credit-amount').value); if (!targetUser || isNaN(amount)) { alert('กรุณาระบุชื่อผู้เล่นและจำนวนเงิน'); return; } socket.emit('adminAdjustCredit', { targetUser: targetUser, amount: amount }); }
+        function applyAdminCredit() { if (!isAdmin) return; const newCredit = parseFloat(document.getElementById('admin-credit-input').value); if (!isNaN(newCredit) && newCredit >= 0) { balance = newCredit; updateUI(); alert(`ปรับเครดิตเป็น ${balance.toLocaleString()} THB สำเร็จ!`); } }
+
+        function generateCodeString() { const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 8; i++) s += chars[Math.floor(Math.random() * chars.length)]; return 'BAC-' + s; }
+        function generateCodes() {
+            if (!isAdmin) return;
+            const amt = parseFloat(document.getElementById('code-amount-input').value); const cnt = parseInt(document.getElementById('code-count-input').value);
+            if (isNaN(amt) || amt <= 0) { alert('กรุณาระบุจำนวนเครดิตให้ถูกต้อง'); return; } if (isNaN(cnt) || cnt < 1 || cnt > 50) { alert('จำนวนโค้ดต้องอยู่ระหว่าง 1-50'); return; }
+            const created = [];
+            for (let i = 0; i < cnt; i++) { let code; do { code = generateCodeString(); } while (creditCodes.find(c => c.code === code)); creditCodes.push({ code, amount: amt, used: false, usedBy: null }); created.push(code); }
+            document.getElementById('generated-code-text').innerText = created.join(' / '); document.getElementById('generated-code-box').classList.add('show'); renderCodeList(); speakThai('สร้างโค้ดสำเร็จ');
+        }
+        function renderCodeList() { const list = document.getElementById('code-list'); document.getElementById('code-list-count').innerText = creditCodes.length; if (creditCodes.length === 0) { list.innerHTML = '<div class="code-list-empty">ยังไม่มีโค้ด</div>'; return; } list.innerHTML = creditCodes.slice().reverse().map(c => `<div class="code-list-item ${c.used ? 'used' : ''}"><span>${c.code}</span><span class="code-amt">${c.amount.toLocaleString()}</span><span class="code-status ${c.used ? 'used' : 'avail'}">${c.used ? 'ใช้แล้ว' : 'ว่าง'}</span></div>`).join(''); }
+        function copyGeneratedCode() { const txt = document.getElementById('generated-code-text').innerText; if (!txt || txt === '—') return; navigator.clipboard.writeText(txt).then(() => { speakThai('คัดลอกแล้ว'); }).catch(() => {}); }
+        function openRedeemModal() { toggleDrawer(); if (!currentUser) { alert('กรุณาเข้าสู่ระบบก่อนใช้โค้ด!'); document.getElementById('auth-modal').style.display = 'flex'; return; } document.getElementById('redeem-modal').style.display = 'flex'; }
+        function closeRedeemModal() { document.getElementById('redeem-modal').style.display = 'none'; }
+        function redeemCode() { const input = document.getElementById('redeem-code-input'); const code = input.value.trim().toUpperCase(); if (!code) { alert('กรุณากรอกโค้ด'); return; } const found = creditCodes.find(c => c.code === code); if (!found) { alert('ไม่พบโค้ดนี้! กรุณาตรวจสอบอีกครั้ง'); return; } if (found.used) { alert('โค้ดนี้ถูกใช้ไปแล้ว!'); return; } found.used = true; found.usedBy = currentUser; balance += found.amount; updateUI(); renderCodeList(); input.value = ''; closeRedeemModal(); playWinSound(); alert(`ใช้โค้ดสำเร็จ! ได้รับ ${found.amount.toLocaleString()} THB`); }
+        function openWithdrawModal() { toggleDrawer(); if (!currentUser) { alert('กรุณาเข้าสู่ระบบก่อนทำรายการถอนเงิน!'); document.getElementById('auth-modal').style.display = 'flex'; return; } document.getElementById('withdraw-modal').style.display = 'flex'; }
+        function closeWithdrawModal() { document.getElementById('withdraw-modal').style.display = 'none'; }
+        function processWithdraw() { const bank = document.getElementById('withdraw-bank').value; const acc = document.getElementById('withdraw-acc').value.trim(); const amount = parseFloat(document.getElementById('withdraw-amount').value); if (!acc || isNaN(amount) || amount <= 0) { alert('กรุณากรอกข้อมูลให้ถูกต้อง'); return; } if (amount > balance) { alert(`ยอดเงินไม่พอ! คงเหลือ ${balance.toLocaleString()} THB`); return; } balance -= amount; updateUI(); closeWithdrawModal(); document.getElementById('withdraw-acc').value = ''; document.getElementById('withdraw-amount').value = ''; alert(`แจ้งถอนสำเร็จ!\n${bank}\n${acc}\n${amount.toLocaleString()} THB`); }
+
+        // เริ่มต้นระบบ
         updateUI();
         renderCodeList();
         drawCasinoScoreboard();
