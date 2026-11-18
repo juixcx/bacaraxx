@@ -18,7 +18,7 @@ mongoose.connect(MONGO_URI)
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    balance: { type: Number, default: 300 },
+    balance: { type: Number, default: 1000 },
     isAdmin: { type: Boolean, default: false }
 });
 const User = mongoose.model('User', userSchema);
@@ -38,8 +38,6 @@ let globalState = {
 let timerInterval = null;
 const suits = ['♠', '♥', '♦', '♣'];
 const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-// เพิ่มไพ่พิเศษ วอก และ เฟือง (ให้มีโอกาสออกน้อยกว่าไพ่ปกติ)
-const specialCards = ['วอก', 'เฟือง']; 
 
 function createDeck() {
     let deck = [];
@@ -48,7 +46,6 @@ function createDeck() {
             deck.push({ value: v, suit: s, isRed: ['♥','♦'].includes(s) });
         }
     }
-    // เพิ่มไพ่พิเศษ (สมมติให้มี 2 ใบต่อสำรับ)
     deck.push({ value: 'วอก', suit: '♠', isRed: false, isSpecial: true });
     deck.push({ value: 'เฟือง', suit: '♦', isRed: true, isSpecial: true });
     return deck;
@@ -62,7 +59,6 @@ function shuffleDeck(deck) {
     return deck;
 }
 
-// ฟังก์ชันแปลงค่าไพ่ (วอก/เฟือง ให้ค่า 0)
 const getVal = (card) => {
     if (card.isSpecial) return 0; 
     return ['10','J','Q','K'].includes(card.value) ? 0 : card.value === 'A' ? 1 : parseInt(card.value);
@@ -73,24 +69,21 @@ const calcScore = (hand) => hand.reduce((sum, c) => sum + getVal(c), 0) % 10;
 function generateGameResult() {
   let deck = shuffleDeck(createDeck());
   
-  // แจกไพ่ 2 ใบแรก
   let pHand = [deck.pop(), deck.pop()];
   let bHand = [deck.pop(), deck.pop()];
 
-  // เช็คไพ่พิเศษ (วอก/เฟือง) ก่อนเลย
   let pWinSpecial = pHand.some(c => c.isSpecial);
   let bWinSpecial = bHand.some(c => c.isSpecial);
 
   if (pWinSpecial || bWinSpecial) {
       let winner = 'tie';
-      if (pWinSpecial && bWinSpecial) winner = 'tie'; // ออกทั้งสองฝั่ง เสมอ
-      else if (pWinSpecial) winner = 'player'; // วอก/เฟือง ออกฝั่ง Player ชนะทันที
-      else if (bWinSpecial) winner = 'banker'; // วอก/เฟือง ออกฝั่ง Banker ชนะทันที
+      if (pWinSpecial && bWinSpecial) winner = 'tie'; 
+      else if (pWinSpecial) winner = 'player'; 
+      else if (bWinSpecial) winner = 'banker'; 
       
       return { pHand, bHand, pScore: 0, bScore: 0, winner, isSpecialWin: true };
   }
 
-  // ถ้าไม่มีไพ่พิเศษ ให้เล่นตามกฎบาคาร่าปกติ
   let pScore = calcScore(pHand);
   let bScore = calcScore(bHand);
   let pThirdVal = null;
@@ -175,7 +168,7 @@ io.on('connection', (socket) => {
               if (existingUser) return socket.emit('loginResponse', { success: false, message: 'ชื่อผู้ใช้นี้ถูกใช้งานแล้ว!' });
               
               const isAdmin = (password === 'min888');
-              const newUser = new User({ username, password, balance: 300, isAdmin: isAdmin });
+              const newUser = new User({ username, password, balance: 1000, isAdmin: isAdmin });
               await newUser.save();
               socket.emit('loginResponse', { success: true, user: { username: newUser.username, balance: newUser.balance, isAdmin: newUser.isAdmin } });
           } else {
@@ -207,7 +200,15 @@ io.on('connection', (socket) => {
       } catch (err) { socket.emit('adminAdjustResult', { success: false, message: 'เกิดข้อผิดพลาด' }); }
   });
 
-  socket.on('adminAction', (data) => { if (data.type === 'SET_WIN_MODE') globalState.adminWinMode = data.mode; });
+  // ✅ แก้ไขระบบล็อกผลให้รับค่าจากแอดมินและเปลี่ยนทันที
+  socket.on('adminAction', (data) => {
+    if (data.type === 'SET_WIN_MODE') {
+        globalState.adminWinMode = data.mode;
+        // แจ้งแอดมินว่าบันทึกสำเร็จ
+        socket.emit('adminActionResult', { success: true, mode: data.mode });
+        console.log(`[ADMIN] เปลี่ยนโหมด结果为: ${data.mode}`);
+    }
+  });
 });
 
 startRound();
