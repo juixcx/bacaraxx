@@ -42,6 +42,7 @@ let timerInterval = null;
 const suits = ['♠', '♥', '♦', '♣'];
 const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
+// ⭐ เด็คปกติ: ไม่มีไพ่พิเศษ (วอก/เฟือง) — จะเพิ่มเฉพาะตอนแอดมินล็อกเท่านั้น
 function createDeck() {
     let deck = [];
     for (let s of suits) {
@@ -49,9 +50,15 @@ function createDeck() {
             deck.push({ value: v, suit: s, isRed: ['♥','♦'].includes(s) });
         }
     }
-    deck.push({ value: 'วอก', suit: '♠', isRed: false, isSpecial: true, specialName: 'wok' });
-    deck.push({ value: 'เฟือง', suit: '♦', isRed: true, isSpecial: true, specialName: 'fuang' });
     return deck;
+}
+
+// ⭐ สร้างไพ่พิเศษแยก (ใช้เฉพาะตอนล็อก)
+function createSpecialCard(type) {
+    if (type === 'wok') {
+        return { value: 'วอก', suit: '♠', isRed: false, isSpecial: true, specialName: 'wok' };
+    }
+    return { value: 'เฟือง', suit: '♦', isRed: true, isSpecial: true, specialName: 'fuang' };
 }
 
 function shuffleDeck(deck) {
@@ -68,27 +75,29 @@ const getVal = (card) => {
 };
 const calcScore = (hand) => hand.reduce((sum, c) => sum + getVal(c), 0) % 10;
 
+// ==========================================================
+// 🎯 generateGameResult — ไพ่พิเศษออกเฉพาะตอนแอดมินล็อกเท่านั้น
+// ==========================================================
 function generateGameResult() {
   const mode = globalState.adminWinMode;
   const specialSide = globalState.adminSpecialSide;
   let deck = shuffleDeck(createDeck());
 
+  // ===== โหมดล็อกไพ่พิเศษ (วอก / เฟือง) — ใส่ไพ่พิเศษเป็นใบที่ 3 =====
   if (mode === 'force_wok' || mode === 'force_fuang') {
-    const specialCard = mode === 'force_wok'
-      ? { value: 'วอก', suit: '♠', isRed: false, isSpecial: true, specialName: 'wok' }
-      : { value: 'เฟือง', suit: '♦', isRed: true, isSpecial: true, specialName: 'fuang' };
+    const specialCard = createSpecialCard(mode === 'force_wok' ? 'wok' : 'fuang');
 
-    const normalCards = deck.filter(c => !c.isSpecial);
-    const pFirst2 = [normalCards.pop(), normalCards.pop()];
-    const bFirst2 = [normalCards.pop(), normalCards.pop()];
+    // ไพ่ 2 ใบแรกเป็นไพ่ปกติ
+    const pFirst2 = [deck.pop(), deck.pop()];
+    const bFirst2 = [deck.pop(), deck.pop()];
 
     let pHand, bHand;
     if (specialSide === 'player') {
-      pHand = [...pFirst2, specialCard];
+      pHand = [...pFirst2, specialCard];  // ไพ่พิเศษ = ใบที่ 3 ของ PLAYER
       bHand = [...bFirst2];
     } else {
       pHand = [...pFirst2];
-      bHand = [...bFirst2, specialCard];
+      bHand = [...bFirst2, specialCard];  // ไพ่พิเศษ = ใบที่ 3 ของ BANKER
     }
 
     const winner = specialSide === 'player' ? 'player' : 'banker';
@@ -103,57 +112,47 @@ function generateGameResult() {
     };
   }
 
+  // ===== โหมดปกติ / บังคับผลแบบธรรมดา (ไม่มีไพ่พิเศษ) =====
   let pHand = [deck.pop(), deck.pop()];
   let bHand = [deck.pop(), deck.pop()];
 
-  let pWinSpecial = pHand.some(c => c.isSpecial);
-  let bWinSpecial = bHand.some(c => c.isSpecial);
-
+  let pScore = calcScore(pHand);
+  let bScore = calcScore(bHand);
+  let pThirdVal = null;
   let result;
 
-  if (pWinSpecial || bWinSpecial) {
-      let winner = 'tie';
-      if (pWinSpecial && bWinSpecial) winner = 'tie';
-      else if (pWinSpecial) winner = 'player';
-      else if (bWinSpecial) winner = 'banker';
-      result = { pHand, bHand, pScore: 0, bScore: 0, winner, isSpecialWin: true };
+  if (pScore >= 8 || bScore >= 8) {
+      let winner = pScore > bScore ? 'player' : bScore > pScore ? 'banker' : 'tie';
+      result = { pHand, bHand, pScore, bScore, winner };
   } else {
-      let pScore = calcScore(pHand);
-      let bScore = calcScore(bHand);
-      let pThirdVal = null;
-
-      if (pScore >= 8 || bScore >= 8) {
-          let winner = pScore > bScore ? 'player' : bScore > pScore ? 'banker' : 'tie';
-          result = { pHand, bHand, pScore, bScore, winner };
-      } else {
-          if (pScore <= 5) {
-              let card = deck.pop();
-              pHand.push(card);
-              pThirdVal = getVal(card);
-              pScore = calcScore(pHand);
-          }
-
-          let bShouldDraw = false;
-          if (pThirdVal === null) {
-              if (bScore <= 5) bShouldDraw = true;
-          } else {
-              if (bScore <= 2) bShouldDraw = true;
-              else if (bScore === 3) bShouldDraw = (pThirdVal !== 8);
-              else if (bScore === 4) bShouldDraw = (pThirdVal >= 2 && pThirdVal <= 7);
-              else if (bScore === 5) bShouldDraw = (pThirdVal >= 4 && pThirdVal <= 7);
-              else if (bScore === 6) bShouldDraw = (pThirdVal === 6 || pThirdVal === 7);
-          }
-
-          if (bShouldDraw) {
-              bHand.push(deck.pop());
-              bScore = calcScore(bHand);
-          }
-
-          let winner = pScore > bScore ? 'player' : bScore > pScore ? 'banker' : 'tie';
-          result = { pHand, bHand, pScore, bScore, winner };
+      if (pScore <= 5) {
+          let card = deck.pop();
+          pHand.push(card);
+          pThirdVal = getVal(card);
+          pScore = calcScore(pHand);
       }
+
+      let bShouldDraw = false;
+      if (pThirdVal === null) {
+          if (bScore <= 5) bShouldDraw = true;
+      } else {
+          if (bScore <= 2) bShouldDraw = true;
+          else if (bScore === 3) bShouldDraw = (pThirdVal !== 8);
+          else if (bScore === 4) bShouldDraw = (pThirdVal >= 2 && pThirdVal <= 7);
+          else if (bScore === 5) bShouldDraw = (pThirdVal >= 4 && pThirdVal <= 7);
+          else if (bScore === 6) bShouldDraw = (pThirdVal === 6 || pThirdVal === 7);
+      }
+
+      if (bShouldDraw) {
+          bHand.push(deck.pop());
+          bScore = calcScore(bHand);
+      }
+
+      let winner = pScore > bScore ? 'player' : bScore > pScore ? 'banker' : 'tie';
+      result = { pHand, bHand, pScore, bScore, winner };
   }
 
+  // ===== บังคับผลตามโหมด =====
   if (mode === 'force_player' || mode === 'force_banker' || mode === 'force_tie') {
       const target = mode === 'force_player' ? 'player' : mode === 'force_banker' ? 'banker' : 'tie';
       if (result.winner !== target) {
@@ -166,7 +165,7 @@ function generateGameResult() {
                       const nb = [newDeck.pop(), newDeck.pop()];
                       const nps = calcScore(np);
                       const nbs = calcScore(nb);
-                      if (nps === nbs && !np.some(c=>c.isSpecial) && !nb.some(c=>c.isSpecial)) {
+                      if (nps === nbs) {
                           result.pHand = np; result.bHand = nb;
                           result.pScore = nps; result.bScore = nbs;
                           break;
