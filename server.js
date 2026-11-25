@@ -281,19 +281,19 @@ io.on('connection', (socket) => {
   socket.on('getAllUsers', async () => {
       try {
           const users = await User.find({}, 'username balance isAdmin').sort({ username: 1 });
-          socket.emit('allUsersList', users.map(u => ({
+          socket.emit('usersList', users.map(u => ({
               username: u.username,
               balance: u.balance,
               isAdmin: u.isAdmin
           })));
       } catch (err) {
-          socket.emit('allUsersList', []);
+          socket.emit('usersList', []);
       }
   });
 
   // ⭐ adminAdjustCredit แบบใหม่: รับ mode (add/subtract)
   socket.on('adminAdjustCredit', async (data) => {
-      const { targetUser, amount, mode } = data;  // mode = 'add' | 'subtract'
+      const { targetUser, amount, mode } = data;
       try {
           const user = await User.findOne({ username: targetUser });
           if (!user) return socket.emit('adminAdjustResult', { success: false, message: `ไม่พบชื่อผู้ใช้ ${targetUser}` });
