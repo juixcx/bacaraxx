@@ -206,7 +206,19 @@
         .bead-circle.t-win { background: var(--tie-green); }
 
         .big-road-container { flex-grow: 1; overflow: hidden; background: #fff; border: 1px solid #000; position: relative; min-width: 0; pointer-events: none; touch-action: none; }
-        .big-road { display: grid; grid-template-columns: repeat(60, var(--road-cell)); grid-template-rows: repeat(6, var(--road-cell)); gap: 0; width: max-content; transition: transform 0.6s cubic-bezier(.4,0,.2,1); will-change: transform; }
+        
+        /* ⭐ แก้ Big Road ให้เห็นลาย */
+        .big-road { 
+            display: grid; 
+            grid-template-columns: repeat(60, var(--road-cell)); 
+            grid-template-rows: repeat(6, var(--road-cell)); 
+            gap: 0; 
+            width: max-content; 
+            transition: transform 0.4s ease-out; 
+            will-change: transform;
+            transform: translateX(0); /* ⭐ เริ่มที่ 0 */
+        }
+        
         .road-cell { width: var(--road-cell); height: var(--road-cell); border: 1px solid #e0e0e0; display: flex; justify-content: center; align-items: center; position: relative; background: #fff; }
         .road-marker { width: calc(var(--road-cell) - 4px); height: calc(var(--road-cell) - 4px); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.5rem; position: absolute; }
         .road-marker.p-win { border: 1.5px solid var(--player-blue); color: var(--player-blue); background: #fff; }
@@ -312,7 +324,6 @@
             </button>
         </div>
 
-        <!-- ⭐ ADMIN USER PANEL — dropdown เลือก user + เพิ่ม/ลบเงิน -->
         <div class="admin-user-panel" id="admin-user-panel">
             <h4><i class="fa-solid fa-users-gear"></i> ปรับเครดิตผู้เล่น</h4>
             <div class="admin-group">
@@ -712,7 +723,7 @@
         let renderedHistoryCount = 0;
         let lastAnnouncedSecond = -1;
         let wasDealing = false;
-        let allUsersCache = []; // ⭐ เก็บรายชื่อผู้เล่น
+        let allUsersCache = []; 
         const socket = io({ transports: ['websocket'] });
 
         const allChips = [20, 50, 100, 500, 1000, 5000, 10000];
@@ -880,10 +891,8 @@
         }
 
         // ==========================================
-        // ตาราง Big Road + AUTO-SCROLL ทีละ 4 ช่อง
+        // ⭐ ตาราง Big Road แก้ไข Logic การเลื่อน
         // ==========================================
-        const SCROLL_STEP_CELLS = 4;
-
         function getRoadCellSize() {
             return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--road-cell')) || 24;
         }
@@ -892,12 +901,25 @@
             const container = document.getElementById('big-road-container');
             const bigRoad = document.getElementById('big-road');
             if (!container || !bigRoad) return;
+
             const cellSize = getRoadCellSize();
             const totalCells = renderedHistoryCount;
-            const visibleCells = Math.floor(container.clientWidth / cellSize);
-            const neededCells = Math.max(0, totalCells - visibleCells + SCROLL_STEP_CELLS);
-            const scrollBy = Math.floor(neededCells / SCROLL_STEP_CELLS) * SCROLL_STEP_CELLS;
-            const offsetPx = scrollBy * cellSize;
+            
+            // ⭐ คำนวณหาจำนวนช่องที่มองเห็นได้บนหน้าจอ (เว้นขอบนิดหน่อย)
+            const visibleCells = Math.floor((container.clientWidth - 4) / cellSize);
+            
+            // ⭐ ถ้าจำนวนผลไม่เกินที่มองเห็น ให้เริ่มที่ 0 (ไม่ต้องเลื่อน)
+            // ⭐ ถ้าเกินแล้ว ให้เลื่อนไปทีละ 1 ช่องตามผลที่เพิ่ม
+            let scrollCells = totalCells - visibleCells;
+            if (scrollCells < 0) scrollCells = 0;
+
+            // ห้ามเลื่อนเกินขอบตารางที่มีจริง
+            const maxScroll = Math.max(0, (60 * 6) - visibleCells); 
+            if (scrollCells > maxScroll) scrollCells = maxScroll;
+
+            const offsetPx = scrollCells * cellSize;
+            
+            // ⭐ ใช้ transform ขยับเนียนๆ
             bigRoad.style.transform = `translateX(-${offsetPx}px)`;
         }
 
@@ -992,7 +1014,7 @@
             }
             renderedHistoryCount = serverHistory.length;
             updateStatsUI();
-            setTimeout(autoScrollBigRoad, 100);
+            setTimeout(autoScrollBigRoad, 50); // ⭐ เลื่อนตารางหลังวาดเสร็จ
         }
 
         function updateStatsUI() {
@@ -1127,7 +1149,6 @@
 
         async function onDealEnd(data) {
             const result = data.result;
-
             await sleep(2500);
 
             setScoreBadge('player-score', result.pScore);
@@ -1363,7 +1384,7 @@
             serverHistory = [];
             document.getElementById('bead-plate').innerHTML = '';
             document.getElementById('big-road').innerHTML = '';
-            document.getElementById('big-road').style.transform = 'translateX(0)';
+            document.getElementById('big-road').style.transform = 'translateX(0)'; // ⭐ รีเซ็ตกลับ 0
             updateStatsUI();
         });
 
@@ -1381,7 +1402,7 @@
                     document.getElementById('admin-panel').style.display = 'block';
                     document.getElementById('admin-code-panel').style.display = 'block';
                     document.getElementById('admin-user-panel').style.display = 'block';
-                    loadUsersList();  // ⭐ โหลดรายชื่อผู้เล่นทันที
+                    loadUsersList();
                 }
                 updateUI();
             } else { alert(res.message); }
@@ -1395,7 +1416,6 @@
             }
         });
 
-        // ⭐ รับรายชื่อผู้เล่นจาก server
         socket.on('usersList', (users) => {
             allUsersCache = users || [];
             const select = document.getElementById('admin-target-user-select');
@@ -1419,7 +1439,7 @@
 
         socket.on('adminAdjustResult', (res) => {
             alert(res.message);
-            if (res.success) loadUsersList();  // ⭐ รีเฟรชรายชื่อหลังปรับ
+            if (res.success) loadUsersList();
         });
 
         socket.on('balanceUpdatedByAdmin', (data) => {
