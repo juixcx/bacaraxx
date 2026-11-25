@@ -117,8 +117,41 @@
         .admin-group label { font-size: 0.65rem; color: #e9d5ff; }
         .admin-input, .admin-select { padding: 3px 6px; border-radius: 4px; border: 1px solid var(--admin-purple); background: #1e1b4b; color: #fff; font-size: 0.7rem; outline: none; width: 100%; }
 
-        .cards-display { display: flex; justify-content: space-around; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 4px; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; gap: 6px; }
-        .side-box { text-align: center; flex: 1; border-radius: 6px; padding: 2px; }
+        /* ⭐ 5 ช่องเสือมังกร (ตามรูป) */
+        .dragon-tiger-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; flex-shrink: 0; margin-bottom: 4px; }
+        .dt-zone { 
+            background: #0d2818; border: 1.5px solid #1a4a2a; border-radius: 6px; padding: 8px 4px; text-align: center; cursor: pointer; 
+            transition: all 0.3s; position: relative; user-select: none; overflow: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .dt-zone:hover:not(.disabled) { border-color: var(--gold); box-shadow: 0 0 10px rgba(245,158,11,0.3); }
+        .dt-zone:active:not(.disabled) { transform: scale(0.97); }
+        .dt-zone.active { border-color: var(--gold); background: #14532d; }
+        .dragon-tiger-grid.disabled .dt-zone { cursor: not-allowed; opacity: 0.6; }
+        
+        .dt-image { width: 100%; height: 30px; margin-bottom: 4px; display: flex; justify-content: center; align-items: flex-end; overflow: hidden; position: relative; }
+        .dt-img-inner { width: 140%; height: 100%; object-fit: cover; border-radius: 4px; opacity: 0.8; }
+        
+        .dt-title { font-size: 0.65rem; font-weight: 600; color: #4ade80; line-height: 1.1; margin-bottom: 2px; }
+        .dt-title.blue { color: #60a5fa; }
+        .dt-title.red { color: #f87171; }
+        .dt-odds { font-size: 0.55rem; color: #4ade80; }
+        .dt-odds.gold { color: var(--gold); }
+
+        /* ⭐ เอฟเฟกต์สว่าง/มืด */
+        .dt-zone.winner-highlight {
+            animation: dtBlink 0.4s infinite alternate;
+            border-color: #fff;
+            z-index: 10;
+        }
+        @keyframes dtBlink {
+            from { box-shadow: 0 0 5px #fff, 0 0 10px #4ade80; opacity: 0.8; }
+            to { box-shadow: 0 0 15px #fff, 0 0 30px #4ade80; opacity: 1; }
+        }
+
+        .cards-display { display: flex; justify-content: space-around; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 4px; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; gap: 6px; transition: opacity 0.3s; }
+        .cards-display.dimmed { opacity: 0.3; pointer-events: none; }
+        .side-box { text-align: center; flex: 1; border-radius: 6px; padding: 2px; transition: all 0.3s; }
         .side-title { font-size: 0.85rem; font-weight: 600; margin-bottom: 2px; }
         .player-title { color: #60a5fa; }
         .banker-title { color: #f87171; }
@@ -204,21 +237,11 @@
         .bead-circle.p-win { background: var(--player-blue); }
         .bead-circle.b-win { background: var(--banker-red); }
         .bead-circle.t-win { background: var(--tie-green); }
+        .bead-circle.d-win { background: #3b82f6; } /* Dragon Blue */
+        .bead-circle.g-win { background: #ef4444; } /* Tiger Red */
 
         .big-road-container { flex-grow: 1; overflow: hidden; background: #fff; border: 1px solid #000; position: relative; min-width: 0; pointer-events: none; touch-action: none; }
-        
-        /* ⭐ แก้ Big Road ให้เห็นลาย */
-        .big-road { 
-            display: grid; 
-            grid-template-columns: repeat(60, var(--road-cell)); 
-            grid-template-rows: repeat(6, var(--road-cell)); 
-            gap: 0; 
-            width: max-content; 
-            transition: transform 0.4s ease-out; 
-            will-change: transform;
-            transform: translateX(0); /* ⭐ เริ่มที่ 0 */
-        }
-        
+        .big-road { display: grid; grid-template-columns: repeat(60, var(--road-cell)); grid-template-rows: repeat(6, var(--road-cell)); gap: 0; width: max-content; transition: transform 0.4s ease-out; will-change: transform; transform: translateX(0); }
         .road-cell { width: var(--road-cell); height: var(--road-cell); border: 1px solid #e0e0e0; display: flex; justify-content: center; align-items: center; position: relative; background: #fff; }
         .road-marker { width: calc(var(--road-cell) - 4px); height: calc(var(--road-cell) - 4px); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.5rem; position: absolute; }
         .road-marker.p-win { border: 1.5px solid var(--player-blue); color: var(--player-blue); background: #fff; }
@@ -226,6 +249,14 @@
         .road-marker.streak.p-win { background: var(--player-blue); color: #fff; border: 1.5px solid var(--player-blue); }
         .road-marker.streak.b-win { background: var(--banker-red); color: #fff; border: 1.5px solid var(--banker-red); }
         .road-marker.tie-win { background: var(--tie-green); color: #fff; border: 1.5px solid var(--tie-green); }
+        /* ⭐ สัญลักษณ์เสือมังกร */
+        .road-marker.dt-marker { border-radius: 4px; font-size: 0.65rem; }
+        .road-marker.dt-dragon { border: 1.5px solid #3b82f6; color: #3b82f6; background: #fff; }
+        .road-marker.dt-tiger { border: 1.5px solid #ef4444; color: #ef4444; background: #fff; }
+        .road-marker.dt-duel { border: 1.5px solid #a855f7; color: #a855f7; background: #fff; }
+        .road-marker.dt-dragon.streak { background: #3b82f6; color: #fff; }
+        .road-marker.dt-tiger.streak { background: #ef4444; color: #fff; }
+        .road-marker.dt-duel.streak { background: #a855f7; color: #fff; }
 
         .trend-analysis { display: flex; gap: 4px; margin-top: 3px; background: rgba(0,0,0,0.4); padding: 3px; border-radius: 6px; width: 100%; justify-content: space-around; flex-shrink: 0; }
         .trend-item { text-align: center; }
@@ -255,6 +286,8 @@
             .dealer-arm { width: 8px; height: 24px; top: 22px; }
             .chip { width: 26px; height: 26px; font-size: 0.55rem; }
             .bet-zone .zone-name { font-size: 0.7rem; }
+            .dt-image { height: 20px; }
+            .dt-title { font-size: 0.55rem; }
         }
         @media (max-height: 600px) {
             :root { --card-w: 30px; --card-h: 44px; --road-cell: 18px; }
@@ -268,6 +301,9 @@
             .side-title { font-size: 0.7rem; }
             .trend-label { font-size: 0.5rem; }
             .trend-value { font-size: 0.65rem; }
+            .dt-image { height: 15px; }
+            .dt-title { font-size: 0.5rem; }
+            .dt-odds { font-size: 0.45rem; }
         }
     </style>
 </head>
@@ -384,7 +420,7 @@
 
         <div class="admin-panel" id="admin-panel">
             <h3><i class="fa-solid fa-user-shield"></i> ADMIN PANEL (min888)</h3>
-            <div class="admin-controls-grid">
+            <div class="admin-controls-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr 1fr;">
                 <div class="admin-group">
                     <label>เครดิต:</label>
                     <div style="display:flex; gap:3px;">
@@ -393,7 +429,7 @@
                     </div>
                 </div>
                 <div class="admin-group">
-                    <label>ล็อกผล:</label>
+                    <label>ล็อกบาคาร่า:</label>
                     <select id="admin-win-mode" class="admin-select" onchange="updateWinMode()">
                         <option value="normal">สุ่มปกติ</option>
                         <option value="force_player">PLAYER ชนะ</option>
@@ -410,6 +446,16 @@
                         <option value="banker">BANKER</option>
                     </select>
                 </div>
+                <!-- ⭐ เพิ่มล็อกเสือมังกร -->
+                <div class="admin-group">
+                    <label>ล็อกเสือมังกร:</label>
+                    <select id="admin-dragon-mode" class="admin-select" onchange="updateDragonMode()">
+                        <option value="normal">สุ่มปกติ</option>
+                        <option value="force_dragon">มังกรชนะ</option>
+                        <option value="force_tiger">เสือชนะ</option>
+                        <option value="force_duel">เสมอ (Duel)</option>
+                    </select>
+                </div>
                 <div class="admin-group">
                     <label>สถานะ:</label>
                     <div id="admin-status-display" style="padding:3px 6px; background:#1e1b4b; border:1px solid var(--admin-purple); border-radius:4px; font-size:0.6rem; color:#c084fc; text-align:center;">ปกติ</div>
@@ -417,7 +463,44 @@
             </div>
         </div>
 
-        <div class="cards-display">
+        <!-- ⭐ 5 ช่องเสือมังกร (เหนือปุ่ม PLAYER/BANKER/TIE) -->
+        <div class="dragon-tiger-grid" id="dragon-tiger-grid">
+            <div class="dt-zone" onclick="placeDragonTigerBet('small_dragon')" id="dt-zone-small_dragon">
+                <div class="dt-image"><img src="https://img.icons8.com/color/96/000000/dragon.png" class="dt-img-inner" style="object-position: center bottom;"></div>
+                <div class="dt-title blue">SMALL<br>DRAGON</div>
+                <div class="dt-odds gold">1:15</div>
+                <div id="chip-small_dragon"></div>
+            </div>
+            <div class="dt-zone" onclick="placeDragonTigerBet('big_dragon')" id="dt-zone-big_dragon">
+                <div class="dt-image"><img src="https://img.icons8.com/color/96/000000/dragon.png" class="dt-img-inner" style="object-position: center top;"></div>
+                <div class="dt-title blue">BIG<br>DRAGON</div>
+                <div class="dt-odds gold">1:30</div>
+                <div id="chip-big_dragon"></div>
+            </div>
+            <div class="dt-zone" onclick="placeDragonTigerBet('duel')" id="dt-zone-duel">
+                <div class="dt-image" style="display:flex; justify-content:space-between; width:100%; padding:0 2px;">
+                    <img src="https://img.icons8.com/color/48/000000/dragon.png" style="width:45%; object-fit:contain;">
+                    <img src="https://img.icons8.com/color/48/000000/tiger.png" style="width:45%; object-fit:contain;">
+                </div>
+                <div class="dt-title" style="color:#a855f7;">DRAGON<br>TIGER<br>DUEL</div>
+                <div class="dt-odds gold">MAX 1:100</div>
+                <div id="chip-duel"></div>
+            </div>
+            <div class="dt-zone" onclick="placeDragonTigerBet('big_tiger')" id="dt-zone-big_tiger">
+                <div class="dt-image"><img src="https://img.icons8.com/color/96/000000/tiger.png" class="dt-img-inner" style="object-position: center top;"></div>
+                <div class="dt-title red">BIG<br>TIGER</div>
+                <div class="dt-odds gold">1:50</div>
+                <div id="chip-big_tiger"></div>
+            </div>
+            <div class="dt-zone" onclick="placeDragonTigerBet('small_tiger')" id="dt-zone-small_tiger">
+                <div class="dt-image"><img src="https://img.icons8.com/color/96/000000/tiger.png" class="dt-img-inner" style="object-position: center bottom;"></div>
+                <div class="dt-title red">SMALL<br>TIGER</div>
+                <div class="dt-odds gold">1:22</div>
+                <div id="chip-small_tiger"></div>
+            </div>
+        </div>
+
+        <div class="cards-display" id="cards-display-container">
             <div class="side-box" id="player-side-box">
                 <div class="side-title player-title">PLAYER</div>
                 <div class="score-badge" id="player-score">0</div>
@@ -500,15 +583,15 @@
 
             <div class="trend-analysis">
                 <div class="trend-item">
-                    <div class="trend-label">PLAYER</div>
+                    <div class="trend-label">PLAYER / DRAGON</div>
                     <div class="trend-value p" id="stats-p">0%</div>
                 </div>
                 <div class="trend-item">
-                    <div class="trend-label">BANKER</div>
+                    <div class="trend-label">BANKER / TIGER</div>
                     <div class="trend-value b" id="stats-b">0%</div>
                 </div>
                 <div class="trend-item">
-                    <div class="trend-label">TIE</div>
+                    <div class="trend-label">TIE / DUEL</div>
                     <div class="trend-value t" id="stats-t">0%</div>
                 </div>
                 <div class="trend-item">
@@ -713,13 +796,17 @@
         // ==========================================
         let balance = 0;
         let currentSelectedChip = 20;
-        let bets = { player: 0, banker: 0, tie: 0, p_pair: 0, b_pair: 0, perfect_pair: 0 };
+        let bets = { 
+            player: 0, banker: 0, tie: 0, p_pair: 0, b_pair: 0, perfect_pair: 0,
+            small_dragon: 0, big_dragon: 0, duel: 0, big_tiger: 0, small_tiger: 0
+        };
         let gameState = 'BETTING';
         let serverHistory = [];
         let currentUser = null;
         let isAdmin = false;
         let adminWinMode = 'normal';
         let adminSpecialSide = 'player';
+        let adminDragonMode = 'normal';
         let renderedHistoryCount = 0;
         let lastAnnouncedSecond = -1;
         let wasDealing = false;
@@ -818,6 +905,16 @@
             playChipPlaceSound();
         }
 
+        // ⭐ เดิมพันเสือมังกร
+        function placeDragonTigerBet(zone) {
+            if (gameState !== 'BETTING') return;
+            if (!currentUser) { alert('กรุณาเข้าสู่ระบบก่อนเดิมพัน!'); document.getElementById('auth-modal').style.display = 'flex'; return; }
+            if (balance <= 0) { alert('เครดิตไม่เพียงพอ!'); return; }
+            const actualBet = Math.min(currentSelectedChip, balance);
+            bets[zone] += actualBet; balance -= actualBet; updateUI();
+            playChipPlaceSound();
+        }
+
         function placeSideBet(zone) {
             if (gameState !== 'BETTING') return;
             if (!currentUser) { alert('กรุณาเข้าสู่ระบบก่อนเดิมพัน!'); document.getElementById('auth-modal').style.display = 'flex'; return; }
@@ -832,7 +929,10 @@
             let totalRefund = 0;
             for (let key in bets) totalRefund += bets[key];
             balance += totalRefund;
-            bets = { player: 0, banker: 0, tie: 0, p_pair: 0, b_pair: 0, perfect_pair: 0 };
+            bets = { 
+                player: 0, banker: 0, tie: 0, p_pair: 0, b_pair: 0, perfect_pair: 0,
+                small_dragon: 0, big_dragon: 0, duel: 0, big_tiger: 0, small_tiger: 0
+            };
             updateUI();
         }
 
@@ -891,7 +991,7 @@
         }
 
         // ==========================================
-        // ⭐ ตาราง Big Road แก้ไข Logic การเลื่อน
+        // ⭐ ตาราง Big Road + AUTO-SCROLL
         // ==========================================
         function getRoadCellSize() {
             return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--road-cell')) || 24;
@@ -904,22 +1004,14 @@
 
             const cellSize = getRoadCellSize();
             const totalCells = renderedHistoryCount;
-            
-            // ⭐ คำนวณหาจำนวนช่องที่มองเห็นได้บนหน้าจอ (เว้นขอบนิดหน่อย)
             const visibleCells = Math.floor((container.clientWidth - 4) / cellSize);
             
-            // ⭐ ถ้าจำนวนผลไม่เกินที่มองเห็น ให้เริ่มที่ 0 (ไม่ต้องเลื่อน)
-            // ⭐ ถ้าเกินแล้ว ให้เลื่อนไปทีละ 1 ช่องตามผลที่เพิ่ม
             let scrollCells = totalCells - visibleCells;
             if (scrollCells < 0) scrollCells = 0;
-
-            // ห้ามเลื่อนเกินขอบตารางที่มีจริง
             const maxScroll = Math.max(0, (60 * 6) - visibleCells); 
             if (scrollCells > maxScroll) scrollCells = maxScroll;
 
             const offsetPx = scrollCells * cellSize;
-            
-            // ⭐ ใช้ transform ขยับเนียนๆ
             bigRoad.style.transform = `translateX(-${offsetPx}px)`;
         }
 
@@ -933,8 +1025,16 @@
                 const cell = document.createElement('div');
                 cell.className = 'bead-cell';
                 const circle = document.createElement('div');
-                circle.className = `bead-circle ${result === 'player' ? 'p-win' : result === 'banker' ? 'b-win' : 't-win'}`;
-                circle.innerText = result === 'player' ? 'P' : result === 'banker' ? 'B' : 'T';
+                
+                let cls = 't-win';
+                let txt = 'T';
+                if (result === 'player') { cls = 'p-win'; txt = 'P'; }
+                else if (result === 'banker') { cls = 'b-win'; txt = 'B'; }
+                else if (result === 'dragon') { cls = 'd-win'; txt = 'D'; }
+                else if (result === 'tiger') { cls = 'g-win'; txt = 'T'; } // Tiger ใช้ T แต่สีแดง
+                
+                circle.className = `bead-circle ${cls}`;
+                circle.innerText = txt;
                 cell.appendChild(circle);
                 beadPlate.appendChild(cell);
             });
@@ -946,28 +1046,34 @@
             let currentCol = 0; let currentRow = 0; let lastResult = null; let lastIndex = -1;
 
             serverHistory.forEach((result, index) => {
-                if (result === 'tie') {
+                // จัดกลุ่ม Tie/Duel เป็นตัวเบรคเกอร์ (ไม่นับ streak)
+                const isTieType = result === 'tie' || result === 'duel';
+                const isDT = result === 'dragon' || result === 'tiger';
+                
+                if (isTieType) {
                     if (lastIndex >= 0) {
                         const c = lastIndex % cols;
                         if (currentRow < rows) {
-                            grid[currentRow][c] = 'tie'; streakCounters[currentRow][c] = 1;
+                            grid[currentRow][c] = result; streakCounters[currentRow][c] = 1;
                             lastIndex = currentRow * cols + c; currentRow++;
                         } else {
                             currentCol++;
                             if (currentCol >= cols) currentCol = cols - 1;
-                            grid[currentRow - 1][currentCol] = 'tie'; streakCounters[currentRow - 1][currentCol] = 1;
+                            grid[currentRow - 1][currentCol] = result; streakCounters[currentRow - 1][currentCol] = 1;
                             lastIndex = (currentRow - 1) * cols + currentCol;
                         }
                     } else {
-                        grid[currentRow][currentCol] = 'tie'; streakCounters[currentRow][currentCol] = 1;
+                        grid[currentRow][currentCol] = result; streakCounters[currentRow][currentCol] = 1;
                         lastIndex = currentRow * cols + currentCol; currentRow++;
                     }
                     return;
                 }
-                if (index === 0) {
+                
+                if (index === 0 || lastResult === null) {
                     grid[currentRow][currentCol] = result; streakCounters[currentRow][currentCol] = 1;
                     lastResult = result; lastIndex = currentRow * cols + currentCol; currentRow++;
                 } else {
+                    // ถ้าผลเหมือนเดิมให้ต่อ streak (ถ้าเป็น D/T)
                     if (result === lastResult) {
                         if (currentRow < rows) {
                             grid[currentRow][currentCol] = result;
@@ -996,35 +1102,46 @@
                     const cell = document.createElement('div'); cell.className = 'road-cell';
                     let val = grid[r][c];
                     if (val) {
+                        const marker = document.createElement('div');
+                        const streak = streakCounters[r][c];
+                        const isStreak = streak >= 2;
+                        
                         if (val === 'tie') {
-                            const marker = document.createElement('div');
                             marker.className = 'road-marker tie-win'; marker.innerText = 'T';
-                            cell.appendChild(marker);
-                        } else {
-                            const marker = document.createElement('div');
-                            const streak = streakCounters[r][c];
-                            const isStreak = streak >= 2;
-                            marker.className = `road-marker ${val === 'player' ? 'p-win' : 'b-win'} ${isStreak ? 'streak' : ''}`;
-                            marker.innerText = val === 'player' ? 'P' : 'B';
-                            cell.appendChild(marker);
+                        } else if (val === 'duel') {
+                            marker.className = 'road-marker dt-duel'; marker.innerText = 'D';
+                        } else if (val === 'dragon') {
+                            marker.className = `road-marker dt-dragon ${isStreak ? 'streak' : ''}`; 
+                            // ⭐ รูปหัวเสือชนมังกร
+                            marker.innerHTML = `<img src="https://img.icons8.com/color/24/000000/dragon.png" style="width:100%;height:100%;object-fit:contain;">`;
+                        } else if (val === 'tiger') {
+                            marker.className = `road-marker dt-tiger ${isStreak ? 'streak' : ''}`;
+                            marker.innerHTML = `<img src="https://img.icons8.com/color/24/000000/tiger.png" style="width:100%;height:100%;object-fit:contain;">`;
+                        } else if (val === 'player') {
+                            marker.className = `road-marker p-win ${isStreak ? 'streak' : ''}`; marker.innerText = 'P';
+                        } else if (val === 'banker') {
+                            marker.className = `road-marker b-win ${isStreak ? 'streak' : ''}`; marker.innerText = 'B';
                         }
+                        
+                        cell.appendChild(marker);
                     }
                     bigRoad.appendChild(cell);
                 }
             }
             renderedHistoryCount = serverHistory.length;
             updateStatsUI();
-            setTimeout(autoScrollBigRoad, 50); // ⭐ เลื่อนตารางหลังวาดเสร็จ
+            setTimeout(autoScrollBigRoad, 50);
         }
 
         function updateStatsUI() {
             let pCount = 0, bCount = 0, tCount = 0;
             let currentStreak = 0, maxStreak = 0, lastResult = null;
             serverHistory.forEach(r => {
-                if (r === 'player') pCount++;
-                else if (r === 'banker') bCount++;
+                if (r === 'player' || r === 'dragon') pCount++;
+                else if (r === 'banker' || r === 'tiger') bCount++;
                 else tCount++;
-                if (r !== 'tie') {
+                
+                if (r !== 'tie' && r !== 'duel') {
                     if (r === lastResult) currentStreak++;
                     else { currentStreak = 1; lastResult = r; }
                     if (currentStreak > maxStreak) maxStreak = currentStreak;
@@ -1078,11 +1195,25 @@
 
         async function onDealStart(data) {
             gameState = 'DEALING';
-            document.getElementById('betting-grid').classList.add('disabled');
-            document.getElementById('side-bets-grid').classList.add('disabled');
+            const isDT = data.result.type === 'dragon_tiger';
+            
+            if (isDT) {
+                document.getElementById('dragon-tiger-grid').classList.add('disabled');
+                document.getElementById('betting-grid').classList.add('disabled');
+                document.getElementById('side-bets-grid').classList.add('disabled');
+            } else {
+                document.getElementById('dragon-tiger-grid').classList.add('disabled');
+                document.getElementById('betting-grid').classList.add('disabled');
+                document.getElementById('side-bets-grid').classList.add('disabled');
+            }
+            
             document.getElementById('chip-selection').classList.add('disabled');
             document.getElementById('clear-btn').disabled = true;
             document.getElementById('timer-display').innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`;
+
+            // ⭐ ทำช่องมืดลงตอนแจก
+            document.querySelectorAll('.dt-zone').forEach(el => el.classList.remove('winner-highlight', 'active'));
+            document.getElementById('cards-display-container').classList.add('dimmed');
 
             document.getElementById('player-cards').innerHTML = '';
             document.getElementById('banker-cards').innerHTML = '';
@@ -1129,18 +1260,24 @@
         }
 
         async function onLiveScore(data) {
-            if (data.side === 'player') await animateDealToSide('left');
-            else await animateDealToSide('right');
+            if (data.side === 'player' || data.side === 'dragon') await animateDealToSide('left');
+            else if (data.side === 'banker' || data.side === 'tiger') await animateDealToSide('right');
 
-            const target = data.side === 'player' ? 'player-cards' : 'banker-cards';
+            const target = (data.side === 'player' || data.side === 'dragon') ? 'player-cards' : 'banker-cards';
+            
+            // ⭐ ถ้าเป็นเสือมังกร ให้ล้างไพ่ก่อนแจกใหม่ทีละใบ
+            if (data.side === 'dragon' || data.side === 'tiger') {
+                document.getElementById(target).innerHTML = '';
+            }
+
             const cardDiv = createCard3D(data.card);
             document.getElementById(target).appendChild(cardDiv);
 
             await sleep(200);
             cardDiv.classList.add('revealed');
 
-            if (data.side === 'player') setScoreBadge('player-score', data.pScore);
-            else setScoreBadge('banker-score', data.bScore);
+            if (data.side === 'player' || data.side === 'dragon') setScoreBadge('player-score', data.side === 'dragon' ? data.dVal : data.pScore);
+            else if (data.side === 'banker' || data.side === 'tiger') setScoreBadge('banker-score', data.side === 'tiger' ? data.tVal : data.bScore);
 
             if (data.step === data.totalSteps) {
                 await sleep(1500);
@@ -1151,42 +1288,105 @@
             const result = data.result;
             await sleep(2500);
 
-            setScoreBadge('player-score', result.pScore);
-            setScoreBadge('banker-score', result.bScore);
+            const isDT = result.type === 'dragon_tiger';
 
-            const winner = result.winner;
-            const winnerBox = winner === 'player' ? 'player-side-box' : winner === 'banker' ? 'banker-side-box' : null;
-            if (winnerBox) document.getElementById(winnerBox).classList.add('win-glow');
+            if (isDT) {
+                // ⭐ เสือมังกร
+                const winner = result.winner; // 'dragon', 'tiger', 'duel'
+                
+                // เปิดไฟสว่างช่องที่ชนะ
+                let highlightId = '';
+                if (winner === 'dragon') {
+                    highlightId = result.dVal <= 6 ? 'dt-zone-small_dragon' : 'dt-zone-big_dragon';
+                } else if (winner === 'tiger') {
+                    highlightId = result.tVal <= 6 ? 'dt-zone-small_tiger' : 'dt-zone-big_tiger';
+                } else if (winner === 'duel') {
+                    highlightId = 'dt-zone-duel';
+                }
+                
+                if (highlightId) {
+                    const el = document.getElementById(highlightId);
+                    el.classList.add('winner-highlight', 'active');
+                }
+                document.getElementById('cards-display-container').classList.remove('dimmed');
 
-            const banner = document.getElementById('announcement-banner');
-            banner.style.display = 'block';
-            if (winner === 'player') banner.innerText = '🎉 PLAYER WINNER!';
-            else if (winner === 'banker') banner.innerText = '🎉 BANKER WINNER!';
-            else banner.innerText = '🤝 TIE!';
+                const banner = document.getElementById('announcement-banner');
+                banner.style.display = 'block';
+                banner.innerText = winner === 'dragon' ? '🐉 DRAGON WINNER!' : (winner === 'tiger' ? '🐯 TIGER WINNER!' : '🤝 DUEL (TIE)!');
 
-            let payout = 0;
-            if (winner === 'player' && bets.player > 0) payout += bets.player * 2;
-            if (winner === 'banker' && bets.banker > 0) payout += bets.banker * 1.95;
-            if (winner === 'tie' && bets.tie > 0) payout += bets.tie * 9;
+                let payout = 0;
+                // คำนวณเงินเสือมังกร
+                if (winner === 'dragon' && result.dVal <= 6 && bets.small_dragon > 0) payout += bets.small_dragon * 16;
+                if (winner === 'dragon' && result.dVal >= 8 && bets.big_dragon > 0) payout += bets.big_dragon * 31;
+                if (winner === 'tiger' && result.tVal <= 6 && bets.small_tiger > 0) payout += bets.small_tiger * 23;
+                if (winner === 'tiger' && result.tVal >= 8 && bets.big_tiger > 0) payout += bets.big_tiger * 51;
+                
+                // Duel
+                if (winner === 'duel' && bets.duel > 0) {
+                    // ถ้าไพ่ 7 เท่ากัน จ่าย 100 เท่า, ถ้า 8-13 เท่ากัน จ่าย 50 เท่า (หรือกำหนดเอง)
+                    const duelPayout = result.dVal === 7 ? 100 : 50; 
+                    payout += bets.duel * (duelPayout + 1);
+                }
 
-            if (payout > 0) { 
-                balance += payout; 
-                showFloatingText(`+${payout.toFixed(0)}`, true); 
-                playWinSound(); 
-                const balEl = document.getElementById('balance-display');
-                balEl.classList.add('flash');
-                setTimeout(() => balEl.classList.remove('flash'), 500);
+                if (payout > 0) { balance += payout; showFloatingText(`+${payout.toFixed(0)}`, true); playWinSound(); }
+                else if (bets.small_dragon + bets.big_dragon + bets.duel + bets.big_tiger + bets.small_tiger > 0) { playLoseSound(); }
+
+                // คืนเงินถ้าเดิมพันหลักแล้วเสมอ
+                const tieRefund = bets.dragon_base + bets.tiger_base;
+                if (tieRefund > 0) {
+                    balance += tieRefund;
+                    showFloatingText(`+0`, true); // ⭐ คืนตังค์แต่ขึ้น +0
+                }
+
+                bets.small_dragon = 0; bets.big_dragon = 0; bets.duel = 0; bets.big_tiger = 0; bets.small_tiger = 0;
+                bets.dragon_base = 0; bets.tiger_base = 0;
+                updateUI();
+
+                speakThai(`${winner === 'dragon' ? 'มังกรชนะ' : winner === 'tiger' ? 'เสือชนะ' : 'เสมอ'}`);
+
+            } else {
+                // ⭐ บาคาร่าเดิม
+                setScoreBadge('player-score', result.pScore);
+                setScoreBadge('banker-score', result.bScore);
+
+                const winner = result.winner;
+                const winnerBox = winner === 'player' ? 'player-side-box' : winner === 'banker' ? 'banker-side-box' : null;
+                if (winnerBox) document.getElementById(winnerBox).classList.add('win-glow');
+
+                const banner = document.getElementById('announcement-banner');
+                banner.style.display = 'block';
+                if (winner === 'player') banner.innerText = '🎉 PLAYER WINNER!';
+                else if (winner === 'banker') banner.innerText = '🎉 BANKER WINNER!';
+                else banner.innerText = '🤝 TIE!';
+
+                let payout = 0;
+                if (winner === 'player' && bets.player > 0) payout += bets.player * 2;
+                if (winner === 'banker' && bets.banker > 0) payout += bets.banker * 1.95;
+                if (winner === 'tie' && bets.tie > 0) payout += bets.tie * 9;
+
+                if (payout > 0) { 
+                    balance += payout; 
+                    showFloatingText(`+${payout.toFixed(0)}`, true); 
+                    playWinSound(); 
+                }
+                else if (bets.player + bets.banker + bets.tie > 0) { playLoseSound(); }
+
+                // ⭐ คืนเงินถ้าออก Tie แล้วเราลง Player/Banker (ตามสั่ง)
+                if (winner === 'tie' && (bets.player > 0 || bets.banker > 0)) {
+                    const refund = bets.player + bets.banker;
+                    balance += refund;
+                    showFloatingText(`+0`, true); // ⭐ ขึ้น +0
+                }
+
+                bets.player = 0; bets.banker = 0; bets.tie = 0;
+                bets.p_pair = 0; bets.b_pair = 0; bets.perfect_pair = 0;
+                updateUI();
+
+                speakThai(`${winner === 'tie' ? 'เสมอ' : winner === 'player' ? 'ผู้เล่นชนะ' : 'เจ้ามือชนะ'}`);
             }
-            else if (bets.player + bets.banker + bets.tie > 0) { playLoseSound(); }
-
-            bets.player = 0; bets.banker = 0; bets.tie = 0;
-            bets.p_pair = 0; bets.b_pair = 0; bets.perfect_pair = 0;
-            updateUI();
-
-            if (result.isSpecialWin) speakThai(`ไพ่พิเศษ! ${winner === 'tie' ? 'เสมอ' : winner.toUpperCase() + ' ชนะ'}`);
-            else speakThai(`${winner === 'tie' ? 'เสมอ' : winner === 'player' ? 'ผู้เล่นชนะ' : 'เจ้ามือชนะ'}`);
 
             gameState = 'BETTING';
+            document.getElementById('dragon-tiger-grid').classList.remove('disabled');
             document.getElementById('betting-grid').classList.remove('disabled');
             document.getElementById('side-bets-grid').classList.remove('disabled');
             document.getElementById('chip-selection').classList.remove('disabled');
@@ -1211,6 +1411,12 @@
             if (mode === 'force_wok' || mode === 'force_fuang') group.style.display = 'flex';
             else group.style.display = 'none';
             socket.emit('adminAction', { type: 'SET_WIN_MODE', mode: mode, side: side });
+        }
+
+        // ⭐ อัปเดตโหมดเสือมังกร
+        function updateDragonMode() {
+            const mode = document.getElementById('admin-dragon-mode').value;
+            socket.emit('adminAction', { type: 'SET_DRAGON_MODE', dragonMode: mode });
         }
 
         function updateAdminStatusDisplay() {
@@ -1272,8 +1478,10 @@
             gameState = state.gameState;
             adminWinMode = state.adminWinMode || 'normal';
             adminSpecialSide = state.adminSpecialSide || 'player';
+            adminDragonMode = state.adminDragonMode || 'normal';
             document.getElementById('admin-win-mode').value = adminWinMode;
             document.getElementById('admin-special-side').value = adminSpecialSide;
+            document.getElementById('admin-dragon-mode').value = adminDragonMode;
             if (adminWinMode === 'force_wok' || adminWinMode === 'force_fuang') {
                 document.getElementById('special-side-group').style.display = 'flex';
             }
@@ -1306,6 +1514,7 @@
             document.getElementById('player-cards').innerHTML = '';
             document.getElementById('banker-cards').innerHTML = '';
             gameState = 'DEALING';
+            document.getElementById('dragon-tiger-grid').classList.add('disabled');
             document.getElementById('betting-grid').classList.add('disabled');
             document.getElementById('side-bets-grid').classList.add('disabled');
             document.getElementById('chip-selection').classList.add('disabled');
@@ -1323,8 +1532,10 @@
                 document.getElementById('banker-cards').appendChild(cardDiv);
             });
 
-            setScoreBadge('player-score', liveScore.pScore || 0);
-            setScoreBadge('banker-score', liveScore.bScore || 0);
+            if (liveScore.dVal > 0) setScoreBadge('player-score', liveScore.dVal);
+            if (liveScore.tVal > 0) setScoreBadge('banker-score', liveScore.tVal);
+            if (liveScore.pScore > 0) setScoreBadge('player-score', liveScore.pScore);
+            if (liveScore.bScore > 0) setScoreBadge('banker-score', liveScore.bScore);
         }
 
         socket.on('stateSync', (state) => {
@@ -1332,8 +1543,10 @@
             gameState = state.gameState;
             adminWinMode = state.adminWinMode || 'normal';
             adminSpecialSide = state.adminSpecialSide || 'player';
+            adminDragonMode = state.adminDragonMode || 'normal';
             document.getElementById('admin-win-mode').value = adminWinMode;
             document.getElementById('admin-special-side').value = adminSpecialSide;
+            document.getElementById('admin-dragon-mode').value = adminDragonMode;
             if (adminWinMode === 'force_wok' || adminWinMode === 'force_fuang') {
                 document.getElementById('special-side-group').style.display = 'flex';
             }
@@ -1384,7 +1597,7 @@
             serverHistory = [];
             document.getElementById('bead-plate').innerHTML = '';
             document.getElementById('big-road').innerHTML = '';
-            document.getElementById('big-road').style.transform = 'translateX(0)'; // ⭐ รีเซ็ตกลับ 0
+            document.getElementById('big-road').style.transform = 'translateX(0)'; 
             updateStatsUI();
         });
 
@@ -1412,6 +1625,7 @@
             if (res.success) {
                 adminWinMode = res.mode;
                 adminSpecialSide = res.specialSide;
+                adminDragonMode = res.dragonMode;
                 updateAdminStatusDisplay();
             }
         });
