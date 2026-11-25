@@ -112,12 +112,12 @@
 
         .admin-panel { background: rgba(124,58,237,0.15); border: 1px dashed var(--admin-purple); border-radius: 8px; padding: 6px 8px; display: none; flex-shrink: 0; }
         .admin-panel h3 { color: #c084fc; margin-bottom: 4px; font-size: 0.75rem; display: flex; align-items: center; gap: 6px; }
-        .admin-controls-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; }
+        .admin-controls-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap: 6px; }
         .admin-group { display: flex; flex-direction: column; gap: 2px; }
         .admin-group label { font-size: 0.65rem; color: #e9d5ff; }
         .admin-input, .admin-select { padding: 3px 6px; border-radius: 4px; border: 1px solid var(--admin-purple); background: #1e1b4b; color: #fff; font-size: 0.7rem; outline: none; width: 100%; }
 
-        /* ⭐ 5 ช่องเสือมังกร (ตามรูป) */
+        /* ⭐ 5 ช่องเสือมังกร */
         .dragon-tiger-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; flex-shrink: 0; margin-bottom: 4px; }
         .dt-zone { 
             background: #0d2818; border: 1.5px solid #1a4a2a; border-radius: 6px; padding: 8px 4px; text-align: center; cursor: pointer; 
@@ -148,6 +148,41 @@
             from { box-shadow: 0 0 5px #fff, 0 0 10px #4ade80; opacity: 0.8; }
             to { box-shadow: 0 0 15px #fff, 0 0 30px #4ade80; opacity: 1; }
         }
+
+        /* ⭐ Animation เสือชนมังกร กลางจอ */
+        .duel-animation-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 3000;
+            display: none; justify-content: center; align-items: center;
+            flex-direction: column; pointer-events: none;
+        }
+        .duel-animation-overlay.show { display: flex; }
+        .duel-clash {
+            display: flex; align-items: center; justify-content: center; gap: 20px;
+            animation: clashZoom 1.5s ease-out forwards;
+        }
+        .duel-clash img {
+            width: 120px; height: 120px; object-fit: contain;
+            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.8));
+        }
+        .duel-clash img.dragon { animation: dashRight 1.5s ease-out forwards; }
+        .duel-clash img.tiger { animation: dashLeft 1.5s ease-out forwards; }
+        .duel-impact {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 100px; height: 100px; border-radius: 50%;
+            background: radial-gradient(circle, #fff, #f59e0b, transparent);
+            opacity: 0; animation: impactFlash 1.5s ease-out forwards;
+        }
+        .duel-text {
+            font-size: 2rem; font-weight: bold; color: var(--gold);
+            text-shadow: 0 0 20px #f59e0b; margin-top: 20px;
+            animation: textPop 1.5s ease-out forwards;
+        }
+        @keyframes clashZoom { 0% { transform: scale(0.5); opacity: 0; } 20% { transform: scale(1.2); opacity: 1; } 80% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+        @keyframes dashRight { 0% { transform: translateX(-200px); } 100% { transform: translateX(0); } }
+        @keyframes dashLeft { 0% { transform: translateX(200px); } 100% { transform: translateX(0); } }
+        @keyframes impactFlash { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 30% { opacity: 1; transform: translate(-50%, -50%) scale(2); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(3); } }
+        @keyframes textPop { 0% { opacity: 0; transform: scale(0.5); } 50% { opacity: 1; transform: scale(1.2); } 100% { opacity: 0; transform: scale(1); } }
 
         .cards-display { display: flex; justify-content: space-around; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 4px; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; gap: 6px; transition: opacity 0.3s; }
         .cards-display.dimmed { opacity: 0.3; pointer-events: none; }
@@ -237,8 +272,8 @@
         .bead-circle.p-win { background: var(--player-blue); }
         .bead-circle.b-win { background: var(--banker-red); }
         .bead-circle.t-win { background: var(--tie-green); }
-        .bead-circle.d-win { background: #3b82f6; } /* Dragon Blue */
-        .bead-circle.g-win { background: #ef4444; } /* Tiger Red */
+        .bead-circle.d-win { background: #3b82f6; }
+        .bead-circle.g-win { background: #ef4444; }
 
         .big-road-container { flex-grow: 1; overflow: hidden; background: #fff; border: 1px solid #000; position: relative; min-width: 0; pointer-events: none; touch-action: none; }
         .big-road { display: grid; grid-template-columns: repeat(60, var(--road-cell)); grid-template-rows: repeat(6, var(--road-cell)); gap: 0; width: max-content; transition: transform 0.4s ease-out; will-change: transform; transform: translateX(0); }
@@ -249,7 +284,7 @@
         .road-marker.streak.p-win { background: var(--player-blue); color: #fff; border: 1.5px solid var(--player-blue); }
         .road-marker.streak.b-win { background: var(--banker-red); color: #fff; border: 1.5px solid var(--banker-red); }
         .road-marker.tie-win { background: var(--tie-green); color: #fff; border: 1.5px solid var(--tie-green); }
-        /* ⭐ สัญลักษณ์เสือมังกร */
+        
         .road-marker.dt-marker { border-radius: 4px; font-size: 0.65rem; }
         .road-marker.dt-dragon { border: 1.5px solid #3b82f6; color: #3b82f6; background: #fff; }
         .road-marker.dt-tiger { border: 1.5px solid #ef4444; color: #ef4444; background: #fff; }
@@ -310,6 +345,16 @@
 <body>
     <div class="bg-animation">
         <div class="bg-glow"></div>
+    </div>
+
+    <!-- ⭐ Animation เสือชนมังกร กลางจอ -->
+    <div class="duel-animation-overlay" id="duel-animation-overlay">
+        <div class="duel-clash">
+            <img src="https://img.icons8.com/color/96/000000/dragon.png" class="dragon" alt="Dragon">
+            <img src="https://img.icons8.com/color/96/000000/tiger.png" class="tiger" alt="Tiger">
+            <div class="duel-impact"></div>
+        </div>
+        <div class="duel-text">DRAGON TIGER DUEL!</div>
     </div>
 
     <div class="status-bar">
@@ -420,7 +465,7 @@
 
         <div class="admin-panel" id="admin-panel">
             <h3><i class="fa-solid fa-user-shield"></i> ADMIN PANEL (min888)</h3>
-            <div class="admin-controls-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr 1fr;">
+            <div class="admin-controls-grid">
                 <div class="admin-group">
                     <label>เครดิต:</label>
                     <div style="display:flex; gap:3px;">
@@ -446,14 +491,11 @@
                         <option value="banker">BANKER</option>
                     </select>
                 </div>
-                <!-- ⭐ เพิ่มล็อกเสือมังกร -->
                 <div class="admin-group">
-                    <label>ล็อกเสือมังกร:</label>
+                    <label>ล็อกเสือมังกร (Duel):</label>
                     <select id="admin-dragon-mode" class="admin-select" onchange="updateDragonMode()">
                         <option value="normal">สุ่มปกติ</option>
-                        <option value="force_dragon">มังกรชนะ</option>
-                        <option value="force_tiger">เสือชนะ</option>
-                        <option value="force_duel">เสมอ (Duel)</option>
+                        <option value="force_duel">บังคับ 7-6 (Duel)</option>
                     </select>
                 </div>
                 <div class="admin-group">
@@ -463,21 +505,21 @@
             </div>
         </div>
 
-        <!-- ⭐ 5 ช่องเสือมังกร (เหนือปุ่ม PLAYER/BANKER/TIE) -->
+        <!-- ⭐ 5 ช่องเสือมังกร (Side Bet) -->
         <div class="dragon-tiger-grid" id="dragon-tiger-grid">
-            <div class="dt-zone" onclick="placeDragonTigerBet('small_dragon')" id="dt-zone-small_dragon">
+            <div class="dt-zone" onclick="placeSideBet('small_dragon')" id="dt-zone-small_dragon">
                 <div class="dt-image"><img src="https://img.icons8.com/color/96/000000/dragon.png" class="dt-img-inner" style="object-position: center bottom;"></div>
                 <div class="dt-title blue">SMALL<br>DRAGON</div>
                 <div class="dt-odds gold">1:15</div>
                 <div id="chip-small_dragon"></div>
             </div>
-            <div class="dt-zone" onclick="placeDragonTigerBet('big_dragon')" id="dt-zone-big_dragon">
+            <div class="dt-zone" onclick="placeSideBet('big_dragon')" id="dt-zone-big_dragon">
                 <div class="dt-image"><img src="https://img.icons8.com/color/96/000000/dragon.png" class="dt-img-inner" style="object-position: center top;"></div>
                 <div class="dt-title blue">BIG<br>DRAGON</div>
                 <div class="dt-odds gold">1:30</div>
                 <div id="chip-big_dragon"></div>
             </div>
-            <div class="dt-zone" onclick="placeDragonTigerBet('duel')" id="dt-zone-duel">
+            <div class="dt-zone" onclick="placeSideBet('duel')" id="dt-zone-duel">
                 <div class="dt-image" style="display:flex; justify-content:space-between; width:100%; padding:0 2px;">
                     <img src="https://img.icons8.com/color/48/000000/dragon.png" style="width:45%; object-fit:contain;">
                     <img src="https://img.icons8.com/color/48/000000/tiger.png" style="width:45%; object-fit:contain;">
@@ -486,13 +528,13 @@
                 <div class="dt-odds gold">MAX 1:100</div>
                 <div id="chip-duel"></div>
             </div>
-            <div class="dt-zone" onclick="placeDragonTigerBet('big_tiger')" id="dt-zone-big_tiger">
+            <div class="dt-zone" onclick="placeSideBet('big_tiger')" id="dt-zone-big_tiger">
                 <div class="dt-image"><img src="https://img.icons8.com/color/96/000000/tiger.png" class="dt-img-inner" style="object-position: center top;"></div>
                 <div class="dt-title red">BIG<br>TIGER</div>
                 <div class="dt-odds gold">1:50</div>
                 <div id="chip-big_tiger"></div>
             </div>
-            <div class="dt-zone" onclick="placeDragonTigerBet('small_tiger')" id="dt-zone-small_tiger">
+            <div class="dt-zone" onclick="placeSideBet('small_tiger')" id="dt-zone-small_tiger">
                 <div class="dt-image"><img src="https://img.icons8.com/color/96/000000/tiger.png" class="dt-img-inner" style="object-position: center bottom;"></div>
                 <div class="dt-title red">SMALL<br>TIGER</div>
                 <div class="dt-odds gold">1:22</div>
@@ -780,6 +822,17 @@
             }, 20);
         }
 
+        function playDuelSound() {
+            const ctx = ensureAudioCtx(); if (!ctx) return;
+            // เสียงคำรามต่ำๆ ตอนชนกัน
+            const osc = ctx.createOscillator(); const gain = ctx.createGain();
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(80, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 1);
+            gain.gain.setValueAtTime(0.4, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
+            osc.connect(gain).connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 1.3);
+        }
+
         function speakThai(text) {
             if (!window.speechSynthesis) return;
             speechSynthesis.cancel();
@@ -905,16 +958,6 @@
             playChipPlaceSound();
         }
 
-        // ⭐ เดิมพันเสือมังกร
-        function placeDragonTigerBet(zone) {
-            if (gameState !== 'BETTING') return;
-            if (!currentUser) { alert('กรุณาเข้าสู่ระบบก่อนเดิมพัน!'); document.getElementById('auth-modal').style.display = 'flex'; return; }
-            if (balance <= 0) { alert('เครดิตไม่เพียงพอ!'); return; }
-            const actualBet = Math.min(currentSelectedChip, balance);
-            bets[zone] += actualBet; balance -= actualBet; updateUI();
-            playChipPlaceSound();
-        }
-
         function placeSideBet(zone) {
             if (gameState !== 'BETTING') return;
             if (!currentUser) { alert('กรุณาเข้าสู่ระบบก่อนเดิมพัน!'); document.getElementById('auth-modal').style.display = 'flex'; return; }
@@ -1031,7 +1074,7 @@
                 if (result === 'player') { cls = 'p-win'; txt = 'P'; }
                 else if (result === 'banker') { cls = 'b-win'; txt = 'B'; }
                 else if (result === 'dragon') { cls = 'd-win'; txt = 'D'; }
-                else if (result === 'tiger') { cls = 'g-win'; txt = 'T'; } // Tiger ใช้ T แต่สีแดง
+                else if (result === 'tiger') { cls = 'g-win'; txt = 'T'; }
                 
                 circle.className = `bead-circle ${cls}`;
                 circle.innerText = txt;
@@ -1046,9 +1089,7 @@
             let currentCol = 0; let currentRow = 0; let lastResult = null; let lastIndex = -1;
 
             serverHistory.forEach((result, index) => {
-                // จัดกลุ่ม Tie/Duel เป็นตัวเบรคเกอร์ (ไม่นับ streak)
                 const isTieType = result === 'tie' || result === 'duel';
-                const isDT = result === 'dragon' || result === 'tiger';
                 
                 if (isTieType) {
                     if (lastIndex >= 0) {
@@ -1073,7 +1114,6 @@
                     grid[currentRow][currentCol] = result; streakCounters[currentRow][currentCol] = 1;
                     lastResult = result; lastIndex = currentRow * cols + currentCol; currentRow++;
                 } else {
-                    // ถ้าผลเหมือนเดิมให้ต่อ streak (ถ้าเป็น D/T)
                     if (result === lastResult) {
                         if (currentRow < rows) {
                             grid[currentRow][currentCol] = result;
@@ -1112,7 +1152,6 @@
                             marker.className = 'road-marker dt-duel'; marker.innerText = 'D';
                         } else if (val === 'dragon') {
                             marker.className = `road-marker dt-dragon ${isStreak ? 'streak' : ''}`; 
-                            // ⭐ รูปหัวเสือชนมังกร
                             marker.innerHTML = `<img src="https://img.icons8.com/color/24/000000/dragon.png" style="width:100%;height:100%;object-fit:contain;">`;
                         } else if (val === 'tiger') {
                             marker.className = `road-marker dt-tiger ${isStreak ? 'streak' : ''}`;
@@ -1195,23 +1234,13 @@
 
         async function onDealStart(data) {
             gameState = 'DEALING';
-            const isDT = data.result.type === 'dragon_tiger';
-            
-            if (isDT) {
-                document.getElementById('dragon-tiger-grid').classList.add('disabled');
-                document.getElementById('betting-grid').classList.add('disabled');
-                document.getElementById('side-bets-grid').classList.add('disabled');
-            } else {
-                document.getElementById('dragon-tiger-grid').classList.add('disabled');
-                document.getElementById('betting-grid').classList.add('disabled');
-                document.getElementById('side-bets-grid').classList.add('disabled');
-            }
-            
+            document.getElementById('dragon-tiger-grid').classList.add('disabled');
+            document.getElementById('betting-grid').classList.add('disabled');
+            document.getElementById('side-bets-grid').classList.add('disabled');
             document.getElementById('chip-selection').classList.add('disabled');
             document.getElementById('clear-btn').disabled = true;
             document.getElementById('timer-display').innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`;
 
-            // ⭐ ทำช่องมืดลงตอนแจก
             document.querySelectorAll('.dt-zone').forEach(el => el.classList.remove('winner-highlight', 'active'));
             document.getElementById('cards-display-container').classList.add('dimmed');
 
@@ -1265,7 +1294,6 @@
 
             const target = (data.side === 'player' || data.side === 'dragon') ? 'player-cards' : 'banker-cards';
             
-            // ⭐ ถ้าเป็นเสือมังกร ให้ล้างไพ่ก่อนแจกใหม่ทีละใบ
             if (data.side === 'dragon' || data.side === 'tiger') {
                 document.getElementById(target).innerHTML = '';
             }
@@ -1288,100 +1316,67 @@
             const result = data.result;
             await sleep(2500);
 
-            const isDT = result.type === 'dragon_tiger';
+            document.getElementById('cards-display-container').classList.remove('dimmed');
 
-            if (isDT) {
-                // ⭐ เสือมังกร
-                const winner = result.winner; // 'dragon', 'tiger', 'duel'
+            // ⭐ ตรวจสอบว่าเป็น Duel (Player 7 Banker 6)
+            if (result.isDuelWin) {
+                // เล่นแอนิเมชันเสือชนมังกร
+                const overlay = document.getElementById('duel-animation-overlay');
+                overlay.classList.add('show');
+                playDuelSound();
+                speakThai('ศึกเสือชนมังกร!');
                 
-                // เปิดไฟสว่างช่องที่ชนะ
-                let highlightId = '';
-                if (winner === 'dragon') {
-                    highlightId = result.dVal <= 6 ? 'dt-zone-small_dragon' : 'dt-zone-big_dragon';
-                } else if (winner === 'tiger') {
-                    highlightId = result.tVal <= 6 ? 'dt-zone-small_tiger' : 'dt-zone-big_tiger';
-                } else if (winner === 'duel') {
-                    highlightId = 'dt-zone-duel';
-                }
-                
-                if (highlightId) {
-                    const el = document.getElementById(highlightId);
-                    el.classList.add('winner-highlight', 'active');
-                }
-                document.getElementById('cards-display-container').classList.remove('dimmed');
+                setTimeout(() => {
+                    overlay.classList.remove('show');
+                }, 2500);
+
+                // ไฮไลท์ช่อง Duel
+                const el = document.getElementById('dt-zone-duel');
+                el.classList.add('winner-highlight', 'active');
 
                 const banner = document.getElementById('announcement-banner');
                 banner.style.display = 'block';
-                banner.innerText = winner === 'dragon' ? '🐉 DRAGON WINNER!' : (winner === 'tiger' ? '🐯 TIGER WINNER!' : '🤝 DUEL (TIE)!');
+                banner.innerText = '🎯 PLAYER 7 - BANKER 6 (DUEL WIN)!';
+            }
 
-                let payout = 0;
-                // คำนวณเงินเสือมังกร
-                if (winner === 'dragon' && result.dVal <= 6 && bets.small_dragon > 0) payout += bets.small_dragon * 16;
-                if (winner === 'dragon' && result.dVal >= 8 && bets.big_dragon > 0) payout += bets.big_dragon * 31;
-                if (winner === 'tiger' && result.tVal <= 6 && bets.small_tiger > 0) payout += bets.small_tiger * 23;
-                if (winner === 'tiger' && result.tVal >= 8 && bets.big_tiger > 0) payout += bets.big_tiger * 51;
-                
-                // Duel
-                if (winner === 'duel' && bets.duel > 0) {
-                    // ถ้าไพ่ 7 เท่ากัน จ่าย 100 เท่า, ถ้า 8-13 เท่ากัน จ่าย 50 เท่า (หรือกำหนดเอง)
-                    const duelPayout = result.dVal === 7 ? 100 : 50; 
-                    payout += bets.duel * (duelPayout + 1);
-                }
+            // คำนวณเงินบาคาร่าปกติ (ถ้าชนะ Player/Banker)
+            const winner = result.winner;
+            let payout = 0;
+            
+            if (winner === 'player' && bets.player > 0) payout += bets.player * 2;
+            if (winner === 'banker' && bets.banker > 0) payout += bets.banker * 1.95;
+            if (winner === 'tie' && bets.tie > 0) payout += bets.tie * 9;
 
-                if (payout > 0) { balance += payout; showFloatingText(`+${payout.toFixed(0)}`, true); playWinSound(); }
-                else if (bets.small_dragon + bets.big_dragon + bets.duel + bets.big_tiger + bets.small_tiger > 0) { playLoseSound(); }
+            // คำนวณโบนัส Duel (ถ้าลงถูก)
+            if (result.isDuelWin && bets.duel > 0) {
+                payout += bets.duel * 101; // จ่าย 1:100 (รวมทุน)
+            }
 
-                // คืนเงินถ้าเดิมพันหลักแล้วเสมอ
-                const tieRefund = bets.dragon_base + bets.tiger_base;
-                if (tieRefund > 0) {
-                    balance += tieRefund;
-                    showFloatingText(`+0`, true); // ⭐ คืนตังค์แต่ขึ้น +0
-                }
+            if (payout > 0) { 
+                balance += payout; 
+                showFloatingText(`+${payout.toFixed(0)}`, true); 
+                playWinSound(); 
+                const balEl = document.getElementById('balance-display');
+                balEl.classList.add('flash');
+                setTimeout(() => balEl.classList.remove('flash'), 500);
+            }
+            else if (bets.player + bets.banker + bets.tie + bets.duel > 0) { playLoseSound(); }
 
-                bets.small_dragon = 0; bets.big_dragon = 0; bets.duel = 0; bets.big_tiger = 0; bets.small_tiger = 0;
-                bets.dragon_base = 0; bets.tiger_base = 0;
-                updateUI();
+            // ⭐ คืนเงินถ้าออก Tie แล้วเราลง Player/Banker
+            if (winner === 'tie' && (bets.player > 0 || bets.banker > 0)) {
+                const refund = bets.player + bets.banker;
+                balance += refund;
+                showFloatingText(`+0`, true); 
+            }
 
-                speakThai(`${winner === 'dragon' ? 'มังกรชนะ' : winner === 'tiger' ? 'เสือชนะ' : 'เสมอ'}`);
+            // Reset bets
+            bets = { 
+                player: 0, banker: 0, tie: 0, p_pair: 0, b_pair: 0, perfect_pair: 0,
+                small_dragon: 0, big_dragon: 0, duel: 0, big_tiger: 0, small_tiger: 0
+            };
+            updateUI();
 
-            } else {
-                // ⭐ บาคาร่าเดิม
-                setScoreBadge('player-score', result.pScore);
-                setScoreBadge('banker-score', result.bScore);
-
-                const winner = result.winner;
-                const winnerBox = winner === 'player' ? 'player-side-box' : winner === 'banker' ? 'banker-side-box' : null;
-                if (winnerBox) document.getElementById(winnerBox).classList.add('win-glow');
-
-                const banner = document.getElementById('announcement-banner');
-                banner.style.display = 'block';
-                if (winner === 'player') banner.innerText = '🎉 PLAYER WINNER!';
-                else if (winner === 'banker') banner.innerText = '🎉 BANKER WINNER!';
-                else banner.innerText = '🤝 TIE!';
-
-                let payout = 0;
-                if (winner === 'player' && bets.player > 0) payout += bets.player * 2;
-                if (winner === 'banker' && bets.banker > 0) payout += bets.banker * 1.95;
-                if (winner === 'tie' && bets.tie > 0) payout += bets.tie * 9;
-
-                if (payout > 0) { 
-                    balance += payout; 
-                    showFloatingText(`+${payout.toFixed(0)}`, true); 
-                    playWinSound(); 
-                }
-                else if (bets.player + bets.banker + bets.tie > 0) { playLoseSound(); }
-
-                // ⭐ คืนเงินถ้าออก Tie แล้วเราลง Player/Banker (ตามสั่ง)
-                if (winner === 'tie' && (bets.player > 0 || bets.banker > 0)) {
-                    const refund = bets.player + bets.banker;
-                    balance += refund;
-                    showFloatingText(`+0`, true); // ⭐ ขึ้น +0
-                }
-
-                bets.player = 0; bets.banker = 0; bets.tie = 0;
-                bets.p_pair = 0; bets.b_pair = 0; bets.perfect_pair = 0;
-                updateUI();
-
+            if (!result.isDuelWin) {
                 speakThai(`${winner === 'tie' ? 'เสมอ' : winner === 'player' ? 'ผู้เล่นชนะ' : 'เจ้ามือชนะ'}`);
             }
 
@@ -1413,7 +1408,6 @@
             socket.emit('adminAction', { type: 'SET_WIN_MODE', mode: mode, side: side });
         }
 
-        // ⭐ อัปเดตโหมดเสือมังกร
         function updateDragonMode() {
             const mode = document.getElementById('admin-dragon-mode').value;
             socket.emit('adminAction', { type: 'SET_DRAGON_MODE', dragonMode: mode });
@@ -1435,9 +1429,6 @@
             document.getElementById('admin-status-display').innerText = txt;
         }
 
-        // ==========================================
-        // ⭐ ระบบ ADMIN: dropdown user + เพิ่ม/ลบเงิน
-        // ==========================================
         function loadUsersList() {
             const select = document.getElementById('admin-target-user-select');
             select.innerHTML = '<option value="">— กำลังโหลด... —</option>';
