@@ -32,6 +32,7 @@ let globalState = {
   roundEndTime: Date.now() + 10000,
   adminWinMode: 'normal',
   adminSpecialSide: 'player',
+  adminDragonMode: 'normal', // ⭐ เพิ่มโหมดล็อกเสือมังกร
   history: [],
   lastResult: null,
   liveScore: null,
@@ -68,7 +69,15 @@ const getVal = (card) => {
 };
 const calcScore = (hand) => hand.reduce((sum, c) => sum + getVal(c), 0) % 10;
 
-function generateGameResult() {
+// ⭐ ดึงค่าดิบสำหรับเสือมังกร (2-14)
+const getRawVal = (card) => {
+    if (card.isSpecial) return 0;
+    if (card.value === 'A') return 14; // A ใหญ่สุดในเสือมังกร หรือ 1 ก็ได้ แต่ปกติ A = 1
+    if (['J','Q','K'].includes(card.value)) return 11 + ['J','Q','K'].indexOf(card.value);
+    return parseInt(card.value);
+};
+
+function generateBaccaratResult() {
   const mode = globalState.adminWinMode;
   const specialSide = globalState.adminSpecialSide;
   let deck = shuffleDeck(createDeck());
@@ -87,6 +96,7 @@ function generateGameResult() {
     }
     const winner = specialSide === 'player' ? 'player' : 'banker';
     return {
+      type: 'baccarat',
       pHand, bHand, pScore: calcScore(pHand), bScore: calcScore(bHand), winner,
       isSpecialWin: true, specialCardIndex: 2, specialSide: specialSide
     };
@@ -158,29 +168,78 @@ function generateGameResult() {
           }
       }
   }
+  result.type = 'baccarat';
   return result;
+}
+
+// ⭐ ฟังก์ชันสร้างผลเสือมังกร
+function generateDragonTigerResult() {
+  const mode = globalState.adminDragonMode;
+  let deck = shuffleDeck(createDeck());
+  
+  let dCard = deck.pop();
+  let tCard = deck.pop();
+  
+  let dVal = getRawVal(dCard);
+  let tVal = getRawVal(tCard);
+  
+  // โหมดล็อกผล
+  if (mode === 'force_dragon' && dVal <= tVal) {
+      // สลับไพ่ถ้า Dragon ไม่ชนะ
+      const tmp = dCard; dCard = tCard; tCard = tmp;
+      dVal = getRawVal(dCard); tVal = getRawVal(tCard);
+  } else if (mode === 'force_tiger' && tVal <= dVal) {
+      const tmp = dCard; dCard = tCard; tCard = tmp;
+      dVal = getRawVal(dCard); tVal = getRawVal(tCard);
+  } else if (mode === 'force_duel' && dVal !== tVal) {
+      // บังคับไพ่เท่ากัน
+      let tries = 0;
+      while (dVal !== tVal && tries < 50) {
+          deck = shuffleDeck(createDeck());
+          dCard = deck.pop(); tCard = deck.pop();
+          dVal = getRawVal(dCard); tVal = getRawVal(tCard);
+          tries++;
+      }
+  }
+  
+  let winner = 'dragon';
+  if (tVal > dVal) winner = 'tiger';
+  else if (dVal === tVal) winner = 'duel';
+  
+  return {
+      type: 'dragon_tiger',
+      dCard, tCard, dVal, tVal, winner
+  };
 }
 
 async function runDealingSequence(result) {
   globalState.dealPhase = 'dealing';
-  globalState.liveScore = { pScore: 0, bScore: 0, pCards: [], bCards: [], step: 0 };
+  globalState.liveScore = { pScore: 0, bScore: 0, dVal: 0, tVal: 0, pCards: [], bCards: [], step: 0 };
   io.emit('dealStart', { result });
 
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
   const steps = [];
-  steps.push({ side: 'player', card: result.pHand[0], index: 0 });
-  steps.push({ side: 'banker', card: result.bHand[0], index: 0 });
-  steps.push({ side: 'player', card: result.pHand[1], index: 1 });
-  steps.push({ side: 'banker', card: result.bHand[1], index: 1 });
-  if (result.pHand.length > 2) steps.push({ side: 'player', card: result.pHand[2], index: 2 });
-  if (result.bHand.length > 2) steps.push({ side: 'banker', card: result.bHand[2], index: 2 });
+  if (result.type === 'baccarat') {
+      steps.push({ side: 'player', card: result.pHand[0], index: 0 });
+      steps.push({ side: 'banker', card: result.bHand[0], index: 0 });
+      steps.push({ side: 'player', card: result.pHand[1], index: 1 });
+      steps.push({ side: 'banker', card: result.bHand[1], index: 1 });
+      if (result.pHand.length > 2) steps.push({ side: 'player', card: result.pHand[2], index: 2 });
+      if (result.bHand.length > 2) steps.push({ side: 'banker', card: result.bHand[2], index: 2 });
+  } else {
+      // เสือมังกร
+      steps.push({ side: 'dragon', card: result.dCard, index: 0 });
+      steps.push({ side: 'tiger', card: result.tCard, index: 0 });
+  }
 
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
     await sleep(800);
     if (step.side === 'player') globalState.liveScore.pCards.push(step.card);
-    else globalState.liveScore.bCards.push(step.card);
+    else if (step.side === 'banker') globalState.liveScore.bCards.push(step.card);
+    else if (step.side === 'dragon') globalState.liveScore.dVal = getRawVal(step.card);
+    else if (step.side === 'tiger') globalState.liveScore.tVal = getRawVal(step.card);
 
     const pLive = calcScore(globalState.liveScore.pCards);
     const bLive = calcScore(globalState.liveScore.bCards);
@@ -190,6 +249,7 @@ async function runDealingSequence(result) {
 
     io.emit('liveScoreUpdate', {
       pScore: pLive, bScore: bLive,
+      dVal: globalState.liveScore.dVal, tVal: globalState.liveScore.tVal,
       pCards: globalState.liveScore.pCards,
       bCards: globalState.liveScore.bCards,
       step: i + 1, totalSteps: steps.length,
@@ -202,6 +262,7 @@ async function runDealingSequence(result) {
   globalState.dealPhase = 'done';
   io.emit('dealEnd', { result, liveScore: globalState.liveScore });
 
+  // จัดเก็บประวัติตามประเภท (คั่นด้วยเฉพาะ result.winner)
   globalState.history.push(result.winner);
   globalState.lastResult = result;
   io.emit('historyUpdate', { history: globalState.history });
@@ -233,7 +294,11 @@ function startRound() {
       clearInterval(timerInterval);
       globalState.gameState = 'DEALING';
       io.emit('stateSync', globalState);
-      const result = generateGameResult();
+      
+      // ⭐ สลับรอบ: บาคาร่า -> เสือมังกร
+      const isDragon = globalState.history.length % 2 !== 0;
+      const result = isDragon ? generateDragonTigerResult() : generateBaccaratResult();
+      
       runDealingSequence(result);
       setTimeout(() => { startRound(); }, 15000);
     }
@@ -246,6 +311,7 @@ io.on('connection', (socket) => {
     countdown: globalState.countdown,
     adminWinMode: globalState.adminWinMode,
     adminSpecialSide: globalState.adminSpecialSide,
+    adminDragonMode: globalState.adminDragonMode,
     history: globalState.history,
     lastResult: globalState.lastResult,
     liveScore: globalState.liveScore,
@@ -277,7 +343,6 @@ io.on('connection', (socket) => {
       try { await User.updateOne({ username: data.username }, { balance: data.newBalance }); } catch (err) {}
   });
 
-  // ⭐ ดึงรายชื่อผู้เล่นทั้งหมด (สำหรับ dropdown)
   socket.on('getAllUsers', async () => {
       try {
           const users = await User.find({}, 'username balance isAdmin').sort({ username: 1 });
@@ -291,7 +356,6 @@ io.on('connection', (socket) => {
       }
   });
 
-  // ⭐ adminAdjustCredit แบบใหม่: รับ mode (add/subtract)
   socket.on('adminAdjustCredit', async (data) => {
       const { targetUser, amount, mode } = data;
       try {
@@ -330,8 +394,14 @@ io.on('connection', (socket) => {
                 globalState.adminSpecialSide = data.side;
             }
         }
-        io.emit('adminActionResult', { success: true, mode: globalState.adminWinMode, specialSide: globalState.adminSpecialSide });
-        socket.emit('adminActionResult', { success: true, mode: globalState.adminWinMode, specialSide: globalState.adminSpecialSide });
+        io.emit('adminActionResult', { success: true, mode: globalState.adminWinMode, specialSide: globalState.adminSpecialSide, dragonMode: globalState.adminDragonMode });
+    }
+    // ⭐ ล็อกผลเสือมังกร
+    if (data.type === 'SET_DRAGON_MODE') {
+        const allowedDragon = ['normal','force_dragon','force_tiger','force_duel'];
+        if (!allowedDragon.includes(data.dragonMode)) return;
+        globalState.adminDragonMode = data.dragonMode;
+        io.emit('adminActionResult', { success: true, mode: globalState.adminWinMode, specialSide: globalState.adminSpecialSide, dragonMode: globalState.adminDragonMode });
     }
   });
 });
